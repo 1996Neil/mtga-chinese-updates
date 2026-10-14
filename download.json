@@ -2,8 +2,8 @@
   "channel": "testing",
   "feed": "https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/feed",
   "fingerprint": {
-    "bytes": 265738,
-    "sha256": "bac4e6d642a7c694242ab70fc50457a2cce89289faef58b271012f11f7261810"
+    "bytes": 305167,
+    "sha256": "0179fea3a56a926bc19e33832e7c2a49fb3d7a12d5027a14f8c037ab1fcec211"
   },
-  "installer_url": "https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.0-25763111-r1/MTGA-Chinese-Subscriber-v2.zip"
+  "installer_url": "https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.0-25763111-r1/MTGA-Chinese-Subscriber-v2.1.zip"
 }

@@ -2,12 +2,14 @@
 
 安装一次，之后打开桌面的「MTGA 订阅更新」，检查并应用维护者发布的适配版本。不需要 GitHub 账号、Codex、Python、Git 或管理员权限。
 
-[下载安装包 v2](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.0-25763111-r1/MTGA-Chinese-Subscriber-v2.zip) · [发布记录](https://github.com/1996Neil/mtga-chinese-updates/releases)
+[下载安装包 v2.1](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.0-25763111-r1/MTGA-Chinese-Subscriber-v2.1.zip) · [发布记录](https://github.com/1996Neil/mtga-chinese-updates/releases)
 
 1. 下载 ZIP 并解压，双击「安装 MTGA 中文维护.command」。
 2. 打开桌面的「MTGA 订阅更新.command」，选择「检查更新」，再「预演」。
 3. 退出 MTGA 后选择「应用更新」，完成后启动游戏。游戏语言保持 English。
 4. Steam 更新游戏后，再次检查。维护者未发布匹配版本时，工具会停止，等待适配。
+
+v2.1 支持断点续传；预演后再应用会复用经过完整哈希复核的差分缓存。下载中断后重新执行即可继续。
 
 这是按需检查更新的维护工具；不会后台操作游戏，也不会自动下载安装客户端程序。恢复功能回到上次应用之前的状态。已装其他补丁而无法识别时，会拒绝覆盖。
 

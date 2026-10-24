@@ -51,26 +51,59 @@ print '#!/bin/zsh' > "$STATE/MTGA 中文维护.command"
         self.assertEqual(before,entry.read_bytes())
         self.assertEqual([],list(desktop.glob(".mtga-subscriber-entry.*")))
 
-    def test_unknown_desktop_file_is_never_overwritten_or_claimed_as_entry(self):
+    def test_existing_desktop_entry_is_replaced(self):
         root,desktop,state,script=self.fixture()
         entry=desktop/"MTGA 订阅更新.command"
-        entry.write_bytes(b"unrelated user file")
+        entry.write_bytes(b"old launcher")
         result=self.run_fixture(root,script)
         self.assertEqual(result.returncode,0,result.stderr)
-        self.assertEqual(entry.read_bytes(),b"unrelated user file")
-        self.assertIn("没有覆盖",result.stdout)
-        self.assertIn("未能建立桌面入口",result.stdout)
-        self.assertNotIn("桌面入口：",result.stdout)
+        self.assertIn('MTGA 中文维护.command',entry.read_text())
+        self.assertTrue(os.access(entry,os.X_OK))
+        self.assertIn('桌面入口：',result.stdout)
+        self.assertEqual([],list(desktop.glob('.mtga-subscriber-entry.*')))
 
-    def test_unrelated_symlink_is_preserved(self):
+    def test_unrelated_symlink_is_replaced_without_writing_its_target(self):
         root,desktop,state,script=self.fixture()
         outside=root/"outside";outside.write_bytes(b"unrelated")
         entry=desktop/"MTGA 订阅更新.command";entry.symlink_to(outside)
         result=self.run_fixture(root,script)
         self.assertEqual(result.returncode,0,result.stderr)
-        self.assertTrue(entry.is_symlink())
+        self.assertFalse(entry.is_symlink())
+        self.assertTrue(entry.is_file())
         self.assertEqual(outside.read_bytes(),b"unrelated")
-        self.assertIn("未能建立桌面入口",result.stdout)
+        self.assertIn('桌面入口：',result.stdout)
+
+    def test_symlink_to_directory_is_replaced_without_entering_directory(self):
+        root,desktop,state,script=self.fixture()
+        outside=root/'outside';outside.mkdir()
+        kept=outside/'keep.txt';kept.write_text('keep')
+        entry=desktop/'MTGA 订阅更新.command';entry.symlink_to(outside,target_is_directory=True)
+        result=self.run_fixture(root,script)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertFalse(entry.is_symlink())
+        self.assertTrue(entry.is_file())
+        self.assertEqual(list(outside.iterdir()),[kept])
+        self.assertEqual(kept.read_text(),'keep')
+
+    def test_same_name_directory_uses_fallback_without_deleting_contents(self):
+        root,desktop,state,script=self.fixture()
+        entry=desktop/'MTGA 订阅更新.command';entry.mkdir()
+        kept=entry/'keep.txt';kept.write_text('keep')
+        result=self.run_fixture(root,script)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(kept.read_text(),'keep')
+        self.assertIn('未能建立桌面入口',result.stdout)
+        self.assertEqual([],list(desktop.glob('.mtga-subscriber-entry.*')))
+
+    def test_replace_failure_keeps_previous_entry_and_cleans_temporary_file(self):
+        root,desktop,state,script=self.fixture()
+        entry=desktop/'MTGA 订阅更新.command';entry.write_text('old entry')
+        fail=root/'mv';fail.write_text('#!/bin/zsh\nexit 73\n');fail.chmod(0o755)
+        result=self.run_fixture(root,script)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(entry.read_text(),'old entry')
+        self.assertIn('未能建立桌面入口',result.stdout)
+        self.assertEqual([],list(desktop.glob('.mtga-subscriber-entry.*')))
 
     def test_desktop_temp_creation_failure_uses_installed_library_entry(self):
         root,desktop,state,script=self.fixture()
@@ -90,13 +123,13 @@ print '#!/bin/zsh' > "$STATE/MTGA 中文维护.command"
         self.assertIn("未能建立桌面入口",result.stdout)
         self.assertEqual([],list(desktop.glob(".mtga-subscriber-entry.*")))
 
-    def test_existing_correct_legacy_symlink_is_preserved_and_reported(self):
+    def test_existing_correct_legacy_symlink_is_replaced_and_reported(self):
         root,desktop,state,script=self.fixture()
         state.mkdir()
         original=state/"MTGA 中文维护.command";original.write_text("#!/bin/zsh\n")
         entry=desktop/"MTGA 订阅更新.command";entry.symlink_to(original)
         result=self.run_fixture(root,script)
         self.assertEqual(result.returncode,0,result.stderr)
-        self.assertTrue(entry.is_symlink())
-        self.assertEqual(entry.resolve(),original)
+        self.assertFalse(entry.is_symlink())
+        self.assertIn("MTGA 中文维护.command",entry.read_text())
         self.assertIn("桌面入口：",result.stdout)

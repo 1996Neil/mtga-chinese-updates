@@ -461,6 +461,6 @@ class FullFallbackTests(unittest.TestCase):
             text=True, capture_output=True, timeout=30,
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-        self.assertIn("预演通过", result.stdout)
+        self.assertIn("下载和检查完成", result.stdout)
         self.assertEqual(before, self.game_hashes())
         self.assertFalse((state / "installation.json").exists())

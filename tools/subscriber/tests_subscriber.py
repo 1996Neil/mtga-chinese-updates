@@ -241,6 +241,24 @@ class SubscriberTests(unittest.TestCase):
         r=subprocess.run([str(state/'mtga-cn'),'help'],text=True,capture_output=True,env={'PATH':'/usr/bin:/bin'},timeout=10)
         self.assertEqual(r.returncode,0);self.assertIn('中文维护',r.stdout)
 
+    def test_menu_dispatches_every_number_and_guide_needs_no_game(self):
+        state=self.root/'menu install'
+        self.invoke('setup','--profile',str(self.profile),'--state',str(state),base=False)
+        menu=state/'MTGA 中文维护.command'
+        subprocess.run(['/bin/zsh','-n',str(menu)],check=True,capture_output=True)
+        # Exercise the generated menu as a user would, with a harmless command recorder.
+        recorder=state/'mtga-cn'
+        recorder.write_text('#!/bin/zsh\nprint -r -- "$1" >> "${0:A:h}/calls"\n')
+        recorder.chmod(0o755)
+        r=subprocess.run(['/bin/zsh',str(menu)],input='1\n\n2\n\n3\n\n4\n\n5\n\n6\n\n0\n',text=True,capture_output=True,timeout=10)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual((state/'calls').read_text().splitlines(),['status','check','preview','update','recover','guide'])
+        # The ordinary help screen remains accessible without setup, Steam, or a feed.
+        unused=self.root/'no state needed'
+        r=self.invoke('guide','--state',str(unused),base=False)
+        self.assertIn('English',r.stdout)
+        self.assertFalse(unused.exists())
+
     def test_bundled_profile_can_install_after_folder_move(self):
         from package_installer import package as installer
         kit=installer(BINARY,self.profile,self.root/'kit',self.feed)

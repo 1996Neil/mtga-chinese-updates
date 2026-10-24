@@ -182,7 +182,7 @@ func protectedPath(_ rel: String) -> Bool {
 func validateRelease(_ release: Release, _ ref: ReleaseRef, _ game: Game, _ channel: String) throws {
     try need(release.schema == "MTGA_CN_RELEASE_V1" && release.id == ref.id && release.revision == ref.revision && release.revision > 0, "发布清单身份不匹配。")
     try need(release.client_version == ref.client_version && release.steam_build == ref.steam_build && release.client_version == game.version && release.steam_build == game.build, "发布包不适用于当前游戏版本。")
-    try need(release.minimum_client <= clientVersion && release.minimum_client > 0, "需要升级维护工具，请安装维护者提供的新版安装包。")
+    try need(release.minimum_client <= clientVersion && release.minimum_client > 0, "需要升级维护工具。请从 https://github.com/1996Neil/mtga-chinese-updates 重新下载安装包，双击「安装 MTGA 中文维护.command」。原有配置和备份会保留。")
     #if arch(arm64)
     let arch = "arm64"
     #else
@@ -509,7 +509,7 @@ final class Client {
     func update(_ release: Release, dryRun: Bool) throws {
         if !dryRun { try stopped() }
         let old = try journal()
-        try need(old == nil || ["installed", "rolled-back"].contains(old!.state), "上次操作未完成，请先执行 recover 恢复。")
+        try need(old == nil || ["installed", "rolled-back"].contains(old!.state), "上次操作未完成，请回到菜单选择 5「撤销上次更新」。")
         try verifyProtected(game.root, release.protected_files)
         if let old = old, old.state == "installed" && old.release_id == release.id, try release.resources.allSatisfy({ try fingerprint(target(game.root, $0.relative)) == $0.output }) { try guardGame(old, partial: false); print("当前已安装此版本，无需重复更新。"); return }
         let required = release.resources.reduce(Int64(0)) { $0 + $1.input.bytes * 2 + $1.output.bytes * 2 + $1.patch.fingerprint.bytes } + 64 * 1024 * 1024
@@ -517,7 +517,7 @@ final class Client {
         let gameFree = (try fm.attributesOfFileSystem(forPath: game.root.path)[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
         let gameRequired = release.resources.reduce(Int64(0)) { $0 + max($1.input.bytes, $1.output.bytes) }
         try need(gameFree >= gameRequired + 64 * 1024 * 1024, "游戏所在磁盘空间不足，无法安全替换或恢复资源。")
-        try need(free >= required, "磁盘空间不足，需为底稿、候选及恢复留出足够空间。")
+        try need(free >= required, "磁盘空间不足，无法同时保存下载文件和更新前备份。请先腾出空间后重试。")
         let id = UUID().uuidString; let work = state.appendingPathComponent("transactions").appendingPathComponent(id); try folder(work)
         var rows: [Row] = []
         for row in release.resources {
@@ -554,7 +554,7 @@ final class Client {
                 try applyDelta(work.appendingPathComponent("original-" + row.layer), patch, work.appendingPathComponent("after-" + row.layer), row.output)
             } else {
                 let cachedOutput = state.appendingPathComponent("patch-cache").appendingPathComponent(row.output.sha256 + "-" + String(row.output.bytes) + ".delta")
-                print("\(row.layer)：使用完整资源覆盖；已保存当前文件供恢复。")
+                let names = ["card": "卡牌文字", "client": "菜单和活动文字", "resources": "界面资源", "bootstrap_fonts": "基础字体", "font_bundle": "卡牌字体"]; print("\(names[row.layer] ?? row.layer)：正在准备完整更新文件；已保存当前文件供恢复。")
                 if fm.fileExists(atPath: cachedOutput.path) {
                     _ = try cacheRegular(cachedOutput)
                     // The selected signed output authenticates cached bytes even when
@@ -570,7 +570,7 @@ final class Client {
         }
         var j = Journal(schema: "MTGA_CN_SUBSCRIBER_TX_V1", id: id, release_id: release.id, revision: release.revision, game: game.root.path, client_version: game.version, steam_build: game.build, rows: rows, protected_files: release.protected_files, state: "prepared")
         try guardGame(j, partial: true)
-        if dryRun { print("离线预演通过：5 层候选完整性正确，游戏文件未修改。\n预演目录：\(work.path)"); return }
+        if dryRun { print("下载和检查完成，游戏文件未修改。\n下一步：完全退出 MTGA，回到菜单选择 4「安装或更新汉化」。游戏语言必须保持 English（英语）。"); return }
         let remaining = (try fm.attributesOfFileSystem(forPath: game.root.path)[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
         let needed = rows.reduce(Int64(0)) { $0 + max($1.before.bytes, $1.after.bytes) }
         try need(remaining >= needed + 64 * 1024 * 1024, "游戏磁盘剩余空间不足，尚未修改游戏。")
@@ -585,10 +585,10 @@ final class Client {
                 #endif
             }
             try guardGame(j, partial: false); j.state = "installed"; try save(j, journalURL)
-            print("更新已应用，五层资源校验通过。更新前文件已备份，可使用恢复功能。\n请打开游戏检查中文显示和导入。")
+            print("更新已应用，文件检查通过。现在可以打开 MTGA，游戏语言必须保持 English（英语）。\n更新前的文件已备份；如有问题，完全退出游戏后选择 5「撤销上次更新」。")
         } catch {
             let initial = String(describing: error)
-            do { try restore(j) } catch { throw Problem(description: "安装中断：\(initial)\n恢复也已停止：\(error)\n请保留文件，退出游戏后执行 recover；不要覆盖安装记录。") }
+            do { try restore(j) } catch { throw Problem(description: "安装中断：\(initial)\n恢复也已停止：\(error)\n请保留文件，退出游戏后选择 5「撤销上次更新」；不要删除备份和恢复记录。") }
             throw Problem(description: "安装失败，已恢复更新前状态：\(initial)")
         }
     }
@@ -600,16 +600,36 @@ func options(_ args: [String]) throws -> (String, [String: String]) {
     while i < args.count { try need(flags.contains(args[i]) && i+1 < args.count && values[args[i]] == nil, "参数无效，执行 help 查看说明。") ; values[args[i]] = args[i+1]; i += 2 }
     return (command, values)
 }
+let userGuide = """
+MTGA 中文维护 · 使用说明
+
+游戏语言必须一直保持 English（英语）。完成 Steam 和游戏内下载后，完全退出 MTGA。
+打开桌面入口，依次输入数字并按回车：
+  2 检查更新 → 3 下载并检查（不改游戏）→ 4 安装或更新汉化
+看到“更新已应用”后再打开游戏。操作结束后按回车返回菜单，0 退出。
+
+1 查看当前汉化；5 撤销上次更新（安装中断也用它，必须先退出游戏）。
+撤销恢复到更新前实际状态，不一定是官方原版；Steam 已升级游戏时可能无法恢复。
+下载失败可重选 3；没有适配版本就等待发布。出错请保留完整提示反馈。
+
+普通汉化修正不用重装工具。安装完成后，联网安装包的 ZIP 和解压文件夹都可删除。
+保留桌面入口及工具的安装目录：~/Library/Application Support/MTGAChineseSubscriber
+该目录存有备份和恢复记录，不要手动删除。离线演示包需保留解压目录。
+
+最新工具、图文步骤和反馈：https://github.com/1996Neil/mtga-chinese-updates
+收到朋友转发的安装包也可从这里找到后续更新；提示需要升级工具时再重新下载安装。
+"""
 let help = """
 MTGA 中文维护订阅客户端 v3.2（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
-preview    下载并在本地重建，核对全部文件；不修改游戏
+preview    下载并检查更新文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏
 status     查看本机安装状态
 rollback   恢复到最近一次更新前的文件状态
 recover    恢复未完成的安装；游戏更新后会拒绝跨版本覆盖
 setup      从当前安装包安装到用户目录（不需要管理员权限）
-help       显示本说明
+guide      显示中文菜单使用说明
+help       显示命令行说明
 
 默认配置在用户 Library/Application Support/MTGAChineseSubscriber/profile.json。
 可用 --steam-library 指定 Steam 库目录，--state 指定独立状态目录。
@@ -621,6 +641,7 @@ func main() throws {
     let defaultState = fm.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/MTGAChineseSubscriber")
     let state = URL(fileURLWithPath: opt["--state"] ?? defaultState.path).standardizedFileURL.resolvingSymlinksInPath()
     if command == "help" { print(help); return }
+    if command == "guide" { print(userGuide); return }
     #if TESTING
     if command == "validate-release-url" {
         guard let value = opt["--input"], let feed = opt["--profile"], let name = opt["--output"] else { throw Problem(description: "测试参数不完整。") }
@@ -666,18 +687,39 @@ func main() throws {
         if fm.fileExists(atPath: profilePath.path) { let old = try json(Profile.self, small(profilePath)); try need(old.public_key == profile.public_key && old.feed == profile.feed && old.channel == profile.channel, "此安装使用不同的订阅源或公钥。请选择独立 --state 目录，不自动替换信任设置。") }
         try atomic(Data(contentsOf: exe), state.appendingPathComponent("mtga-cn"), mode: 0o755)
         try save(profile, profilePath)
-        let shell = "#!/bin/zsh\nROOT=\"${0:A:h}\"\nwhile true; do\n print '\\nMTGA 中文维护：1 查看状态  2 检查更新  3 预演  4 应用更新  5 恢复  6 帮助  0 退出'\n read -r 'choice?请选择：' || exit 0\n case \"$choice\" in\n 1) cmd=status;; 2) cmd=check;; 3) cmd=preview;; 4) cmd=update;; 5) cmd=recover;; 6) cmd=help;; 0) exit 0;; *) continue;;\n esac\n \"$ROOT/mtga-cn\" \"$cmd\" --state \"$ROOT\"\n read -r '?按回车返回菜单。' || exit 0\ndone\n"
+        let shell = """
+        #!/bin/zsh
+        ROOT="${0:A:h}"
+        while true; do
+         print '\nMTGA 中文维护'
+         print '游戏语言必须为 English（英语）；安装或撤销汉化更新前，请完全退出游戏。'
+         print '  1 查看当前汉化'
+         print '  2 检查更新'
+         print '  3 下载并检查（不改游戏）'
+         print '  4 安装或更新汉化（先备份，再安装）'
+         print '  5 撤销上次更新（也用于安装中断）'
+         print '  6 使用说明'
+         print '  0 退出'
+         read -r 'choice?请输入数字并按回车：' || exit 0
+         case "$choice" in
+         1) cmd=status;; 2) cmd=check;; 3) cmd=preview;; 4) cmd=update;; 5) cmd=recover;; 6) cmd=guide;; 0) exit 0;; *) print '请输入菜单中的数字。'; continue;;
+         esac
+         "$ROOT/mtga-cn" "$cmd" --state "$ROOT"
+         read -r '?按回车返回菜单。' || exit 0
+        done
+
+        """
         try atomic(Data(shell.utf8), state.appendingPathComponent("MTGA 中文维护.command"), mode: 0o755)
-        print("安装完成。以后打开：\(state.appendingPathComponent("MTGA 中文维护.command").path)\n工具版本：v3.2；订阅配置已保留。"); return
+        print("安装完成。以后打开：\(state.appendingPathComponent("MTGA 中文维护.command").path)\n工具已安装到本机。以后使用桌面入口；普通联网安装包的 ZIP 和解压文件夹可以删除。"); return
     }
     try need(["check", "preview", "update", "status", "rollback", "recover"].contains(command), "未知命令，请执行 help。")
     let profile = try json(Profile.self, small(URL(fileURLWithPath: opt["--profile"] ?? state.appendingPathComponent("profile.json").path)))
     let (library, game) = try discover(opt["--steam-library"])
     let client = try Client(state: state, profile: profile, library: library, game: game)
     print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.2")
-    if command == "status" { if let j = try client.journal() { print("记录：\(j.release_id)；状态：\(j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
+    if command == "status" { if let j = try client.journal() { let labels = ["prepared": "文件已准备，安装未完成", "installing": "上次安装中断，请选择 5 撤销上次更新", "installed": "已安装", "rolling-back": "上次恢复中断，请选择 5 继续恢复", "rolled-back": "已撤销上次更新"]; print("上次更新：\(j.release_id)；状态：\(labels[j.state] ?? j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
     if command == "rollback" || command == "recover" { guard let j = try client.journal() else { print("没有需要恢复的安装记录。"); return }; if j.state == "rolled-back" { print("此前已完成恢复。"); return }; try client.restore(j); return }
-    guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。无需 Codex，等待兼容版本发布后再次检查即可。"); return }
+    guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。请等待适配当前游戏的汉化发布后，再选择 2「检查更新」。"); return }
     print("可用版本：\(release.id)；发布者签名校验通过。")
     if command == "check" { return }
     try client.update(release, dryRun: command == "preview")

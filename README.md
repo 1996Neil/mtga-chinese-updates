@@ -61,11 +61,24 @@ flowchart TD
 
 其他来源的旧汉化也可更新，工具会先备份。普通汉化修正**不需要重装工具**；只有提示需要升级工具时，才从本页重新下载安装，原配置和备份会保留。
 
-## 找到后续更新
+## 邮件订阅
 
-**项目主页：[github.com/1996Neil/mtga-chinese-updates](https://github.com/1996Neil/mtga-chinese-updates)**。即使安装包是朋友转发的，也可以从这里找到最新版工具和反馈入口。
+想在新版发布时收到邮件，先登录 GitHub，再按下面操作：
 
-想收新版邮件：**Watch → Custom → Releases → Apply**，并开启 GitHub 邮件通知。欢迎点 **Star** 支持维护；Star 不等于订阅。不订阅也能在桌面工具里主动检查更新。
+```mermaid
+flowchart LR
+    A[登录 GitHub] --> B[本页右上角 Watch]
+    B --> C[Custom：勾选 Releases]
+    C --> D[点 Apply 保存]
+    D --> E[通知设置：Watching 勾选 Email]
+    E --> F[新版发布后收到邮件]
+```
+
+最后一步在 **头像 → Settings → Notifications → Watching → Email** 中设置。只点 Star 不会订阅邮件。
+
+收到邮件后，打开桌面工具，依次选 **2 → 3 → 4** 更新汉化；邮件不会自动修改游戏。若发布说明要求升级工具，再从本页下载按钮获取新版安装包。
+
+欢迎点 **Star** 支持维护。不订阅也能在桌面工具里主动检查更新。
 
 ## 参与维护
 

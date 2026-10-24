@@ -1,0 +1,76 @@
+{
+  "automatic_admission": false,
+  "files": {
+    "sources.json": {
+      "bytes": 259061,
+      "sha256": "f368942f82a3ea8d1144e5868d7d79f9dcfd8602903fd0c5e52ec10dcaf43c59"
+    },
+    "translations.jsonl": {
+      "bytes": 1260580,
+      "sha256": "166f99c07137012ba3a7981b9debd380f64a5ce11285593ab1e64f12ff83296e"
+    }
+  },
+  "human_acceptance": false,
+  "raw_evidence_included": false,
+  "review_scope": "Preserves independently AI-reviewed source coverage; not new human or runtime acceptance",
+  "runtime_acceptance": false,
+  "schema": "MTGA_PUBLIC_MAINTENANCE_DATA_V1",
+  "source_batches": [
+    {
+      "id": "20261024",
+      "pack": {
+        "bytes": 6683009,
+        "sha256": "48c4008a079cc6072ae450ad3014dd8c63512d688969347c9b5ed68303606c6c"
+      },
+      "review": {
+        "bytes": 6090,
+        "sha256": "98b9ad425262c332f44de33f2c0c3bd2e68ecbe7ce4f10384d87bb53a80b092f"
+      }
+    },
+    {
+      "id": "20261024-mode-descriptions",
+      "pack": {
+        "bytes": 34142,
+        "sha256": "9e7439395839b8d267baadb443ea57c221336fb969dbe68987de44321f42e27b"
+      },
+      "review": {
+        "bytes": 5774,
+        "sha256": "a2a772c00ddd40fb40f8b270b70648893b30568e83dbe39f66e50930966ad4b7"
+      }
+    },
+    {
+      "id": "20261024-text-fixes",
+      "pack": {
+        "bytes": 43195,
+        "sha256": "4a403fa817e0d4f44d233f0d6b7e00bfb140d9e6e224c8f166a67d7b07a35145"
+      },
+      "review": {
+        "bytes": 4288,
+        "sha256": "b8acd2354afe70a7fe77fb2efb0d973f5b7ba5c5a9354fcbd743223388125b14"
+      }
+    }
+  ],
+  "source_version": "2026.64.50",
+  "statistics": {
+    "by_layer": {
+      "card": 1113,
+      "client": 733,
+      "ui": 4
+    },
+    "records": 1850,
+    "source_entries": 967,
+    "source_websites": [
+      "7975-yun-ling-0gl3e5xk84b98404-1321648151.tcb.qcloud.la",
+      "magic.wizards.com",
+      "mtgch.com",
+      "www.cnwizards.com"
+    ],
+    "unique_source_urls": 942,
+    "verification_levels": {
+      "exact-full-text": 309,
+      "intentional-preserved": 14,
+      "source-backed-concepts": 998,
+      "source-unavailable": 529
+    }
+  }
+}

@@ -24,4 +24,6 @@ Windows 用户可查看[其他维护者提供的工具](https://shiqidi.lenitati
 
 [完整使用说明](tools/chinese-maintainer/SUBSCRIBER_FLOW.md) · [构建与贡献](docs/DEVELOPMENT.md) · [汉化来源规范](tools/chinese-maintainer/SOURCE_LOOKUP.md) · [Agent 入口](AGENTS.md)
 
+可复用的译文和具体来源索引见 [精简维护数据](maintenance-data/README.md)。普通玩家更新汉化不需要下载维护数据或证据包。
+
 源码、更新工具和监控均在本仓库；官方、社区及 AI 译文分别记录来源。社区项目，与 Wizards of the Coast 或 Steam 无关联。[源码许可与第三方内容边界](THIRD_PARTY_NOTICES.md)。

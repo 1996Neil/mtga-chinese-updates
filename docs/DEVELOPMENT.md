@@ -45,7 +45,7 @@ export MTGA_BACKUP_ROOT="/你的本地备份目录"
 export MTGA_HISTORY_ROOT="/你的已核验历史导入资料目录"
 ```
 
-备份默认位于当前用户 `Library/Application Support/MTGAChineseMaintainer/backups`。维护状态默认在 `tools/chinese-maintainer/state/`；它和审译包、外部数据不会随 Git 同步。
+备份默认位于当前用户 `Library/Application Support/MTGAChineseMaintainer/backups`。维护状态默认在 `tools/chinese-maintainer/state/`；真实Registry、原始审查包及外部数据库不会随Git同步。筛选后的可复用译文和来源索引位于 [`maintenance-data/`](../maintenance-data/README.md)，不附带原始证据包。
 
 ## 为什么只拉源码还不能立即生成完整汉化
 
@@ -53,7 +53,7 @@ export MTGA_HISTORY_ROOT="/你的已核验历史导入资料目录"
 
 目前 Registry 的首次导入仍包含历史资料结构（`registry.bootstrap`）；自己维护时须准备自己的合法历史来源及对应结构，或开发新的显式导入器并为其建立测试。没有这些资料时可编译客户端、跑通用测试、检查协议和贡献代码，但不能声称一次命令就能重建作者的整库汉化。原机器的固定底稿 pin 也不是新机器通用验收凭证。修改 `capture_base.py` 的 pin 之前必须完成它所要求的独立来源核验。
 
-新补译按 [来源查询规范](../tools/chinese-maintainer/SOURCE_LOOKUP.md) 查找并保存逐项证据。`source_check.py export` 导出核对队列，`validate` 校验 V2 记录与原始快照。官方、社区及 AI 来源分开。原有1,837项本地来源包没有公开整库上传；不要将源码合并当作发布这批候选。
+新补译按 [来源查询规范](../tools/chinese-maintainer/SOURCE_LOOKUP.md) 查找并保存逐项证据。`source_check.py export` 导出核对队列，`validate` 校验 V2 记录与原始快照。官方、社区及AI来源分开。原有1,837项本地审查包和后续13条修正的精简投影已公开到 `maintenance-data/2026.64.50/`；原始审查包、快照和数据库仍未整库上传。公开投影不替代当前官方底稿和准入，不将审查状态升级为人工或游戏验收，也不表示新的玩家资源已经发布。
 
 历史证据中的旧绝对路径有专门兼容映射；保留其原始内容与哈希，不批量替换。对新资料使用当前路径和明确证据。
 

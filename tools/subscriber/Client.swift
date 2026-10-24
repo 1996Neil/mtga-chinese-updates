@@ -553,10 +553,18 @@ final class Client {
                 let patch = try fetch(row.patch.name, expected: row.patch.fingerprint, limit: 512*1024*1024, remote: row.patch.url)
                 try applyDelta(work.appendingPathComponent("original-" + row.layer), patch, work.appendingPathComponent("after-" + row.layer), row.output)
             } else {
-                guard let full = row.full else { throw Problem(description: "本机资源不是匹配的官方文件或本工具已知版本：\(row.layer)。缺少这一层的官方重建底稿，且此发布尚无完整资源，请等待维护者发布支持覆盖的版本。") }
+                let cachedOutput = state.appendingPathComponent("patch-cache").appendingPathComponent(row.output.sha256 + "-" + String(row.output.bytes) + ".delta")
                 print("\(row.layer)：使用完整资源覆盖；已保存当前文件供恢复。")
-                let downloaded = try fetch(full.name, expected: row.output, limit: 1024*1024*1024, remote: full.url)
-                try copyVerified(downloaded, work.appendingPathComponent("after-" + row.layer), row.output)
+                if fm.fileExists(atPath: cachedOutput.path) {
+                    _ = try cacheRegular(cachedOutput)
+                    // The selected signed output authenticates cached bytes even when
+                    // an earlier manifest did not advertise a full download location.
+                    try copyVerified(cachedOutput, work.appendingPathComponent("after-" + row.layer), row.output)
+                } else {
+                    guard let full = row.full else { throw Problem(description: "本机资源不是匹配的官方文件或本工具已知版本：\(row.layer)。缺少这一层的官方重建底稿，且此发布尚无完整资源，请等待维护者发布支持覆盖的版本。") }
+                    let downloaded = try fetch(full.name, expected: row.output, limit: 1024*1024*1024, remote: full.url)
+                    try copyVerified(downloaded, work.appendingPathComponent("after-" + row.layer), row.output)
+                }
             }
             rows.append(Row(layer: row.layer, relative: row.relative, before: actual, after: row.output, original: row.input, original_available: source != nil))
         }

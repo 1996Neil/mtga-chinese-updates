@@ -1,6 +1,7 @@
 """Signed full-resource fallback against disposable Steam trees; never real MTGA."""
 import copy
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -140,6 +141,59 @@ class FullFallbackTests(unittest.TestCase):
             (self.feed / row["patch"]["name"]).unlink()
         self.invoke("update")
         self.assert_signed_outputs()
+
+    def cache_signed_outputs(self):
+        cache = self.state / "patch-cache"
+        cache.mkdir(parents=True)
+        cached = {}
+        for row in self.release["resources"]:
+            output = row["output"]
+            path = cache / (output["sha256"] + "-" + str(output["bytes"]) + ".delta")
+            shutil.copyfile(self.root / (row["layer"] + "-r1"), path)
+            cached[row["layer"]] = path
+        return cached
+
+    def test_cached_signed_outputs_need_neither_full_manifest_nor_delta_files(self):
+        self.unknown_game()
+        self.cache_signed_outputs()
+        for row in self.release["resources"]:
+            self.assertNotIn("full", row)
+            (self.feed / row["patch"]["name"]).unlink()
+        before = self.game_hashes()
+        self.invoke("preview")
+        self.assertEqual(before, self.game_hashes())
+        self.assertFalse((self.state / "installation.json").exists())
+        self.invoke("update")
+        self.assert_signed_outputs()
+        self.invoke("rollback")
+        self.assertEqual(before, self.game_hashes())
+
+    def test_cached_signed_output_with_bad_hash_rejected(self):
+        self.add_full_resources()
+        self.unknown_game()
+        cached = self.cache_signed_outputs()
+        cached["card"].write_bytes(b"corrupted cached output")
+        for command in ("preview", "update"):
+            result = self.assert_refused_without_game_write(command)
+            self.assertIn("完整性不匹配", result.stderr)
+
+    def test_cached_signed_output_symlink_and_hardlink_rejected(self):
+        self.add_full_resources()
+        self.unknown_game()
+        cached = self.cache_signed_outputs()["card"]
+        original = self.root / "card-r1"
+        original_bytes = original.read_bytes()
+        for link_type, message in (("symbolic", "符号链接"), ("hard", "硬链接")):
+            with self.subTest(link_type=link_type):
+                cached.unlink()
+                if link_type == "symbolic":
+                    cached.symlink_to(original)
+                else:
+                    os.link(original, cached)
+                for command in ("preview", "update"):
+                    result = self.assert_refused_without_game_write(command)
+                    self.assertIn(message, result.stderr)
+                self.assertEqual(original_bytes, original.read_bytes())
 
     def test_existing_install_without_official_base_upgrades_and_rolls_back(self):
         self.add_full_resources()

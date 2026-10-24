@@ -30,4 +30,4 @@ Journal `MTGA_CN_SUBSCRIBER_TX_V1` binds UUID transaction, game path and exact b
 
 ## 协议 4：完整资源覆盖
 
-资源行可含 `full: {name, fingerprint, url?}`。文件为未压缩的完整输出，名称以 `.full` 结束，fingerprint 必须等于该层 output；HTTPS 地址与差分使用相同仓库限制。发布包含 full 时 minimum_client 为4。客户端优先使用官方或已验证底稿的差分；无底稿时以完整输出覆盖未知补丁。before 记录实际当前文件，original_available=false，不伪造官方底稿；回滚仍恢复 before。受保护文件和活动路径校验保持有效。
+资源行可含 `full: {name, fingerprint, url?}`。文件为未压缩的完整输出，名称以 `.full` 结束，fingerprint 必须等于该层 output；HTTPS 地址与差分使用相同仓库限制。发布包含 full 时 minimum_client 为4。客户端优先使用官方或已验证底稿的差分；无底稿时先复用已校验的完整输出缓存，再下载完整输出覆盖未知补丁。即使旧清单没有 full 地址，匹配已签名 output 的本地缓存仍可使用；缓存损坏或包含链接时拒绝操作。before 记录实际当前文件，original_available=false，不伪造官方底稿；回滚仍恢复 before。受保护文件和活动路径校验保持有效。

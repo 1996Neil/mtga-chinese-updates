@@ -5,7 +5,7 @@
 - MTGA、卡牌及相关商标/内容属于各自权利人。既有差分分发不等于获得完整游戏或卡牌再分发许可。
 - 字体处理读取用户系统可用字体；不将字体二进制随源码分发。字体的许可独立。
 - 维护器依赖 UnityPy（MIT）、fonttools（MIT，所含外部内容另有许可）等，准确版本见 `tools/chinese-maintainer/requirements.lock`。依赖不在本仓库 vendor；安装后查看各依赖实际许可证。`DEPENDENCIES.json` 是历史盘点，旧机器路径不是安装要求。
-- 大学院废墟、MTGZH/MTGso、Scryfall 等资料需要分别记录来源与范围。公开网站的访问权限不等于任意重发其全部内容的许可。整库、网页快照和批量审译包不随源码提交。
+- 大学院废墟、MTGZH/MTGso、Scryfall 等资料需要分别记录来源与范围。公开网站的访问权限不等于任意重发其全部内容的许可。原始整库、网页快照和带本机证据的审译包不随源码提交。`maintenance-data/` 是筛选后的维护文本及来源索引；其中第三方文字、社区译文和适配保留各自来源归属，不因本仓MIT源码许可而被重新授权。
 - `tools/chinese-maintainer/audit-releases/base-capture-20261021/independent-review.json` 是维护器引用的精确历史审查记录，包含历史文件身份与路径，不是可移植游戏资源包。保留原始哈希，不将其中第三方文本重新授权为项目代码。
 - SteamCMD 仅在运行监控时从 Valve 官方来源获取，遵循其上游许可；不随源码分发。
 - GitHub Actions 使用固定提交的上游 actions，依其各自许可证。Python、Swift、GitHub CLI、OpenSSL、macOS 工具及系统框架也依其上游条款使用。

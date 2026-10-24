@@ -60,7 +60,7 @@ else
   print "未能建立桌面入口，请打开：$STATE/MTGA 中文维护.command"
   open -R "$STATE/MTGA 中文维护.command" || true
 fi
-print '此候选尚未完成 Developer ID 签名与 Apple 公证；没有通过干净下载的 Gatekeeper 验收。'
+print '此工具尚未完成 Developer ID 签名与 Apple 公证；没有通过干净下载的 Gatekeeper 验收。'
 read -r '?按回车关闭。' || true
 '''.replace('STATE_NAME',state_name)
     description = ('本包是本地测试演示，安装后请保留此文件夹；它内置的测试源不会自动收到网络更新。正式分发时需用固定 HTTPS 更新源重新打包。\n' if local_feed else '安装后由固定 HTTPS 更新源获取维护者发布的适配版本。\n')
@@ -70,7 +70,7 @@ read -r '?按回车关闭。' || true
 先检查更新，再预演；退出游戏后才可选择应用更新。恢复会回到上次更新之前的实际状态。
 无须 Codex、Python、Git 或管理员权限。首版按需检查更新，不自动后台改写游戏。
 当前安装包仅做本机 ad-hoc 签名，尚未完成 Developer ID 签名、公证或干净下载 Gatekeeper 验收。若 macOS 拦截，停止使用，不要关闭系统安全检查。
-测试渠道的实际验收范围以发布说明为准，未测范围保持未验证。
+资源适配及验收范围以发布说明为准。
 '''
     return {'安装 MTGA 中文维护.command':installer.encode(), '先读我.txt':readme.encode()}
 

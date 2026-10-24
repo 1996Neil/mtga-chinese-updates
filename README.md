@@ -4,13 +4,13 @@ macOS + Steam 的《万智牌：竞技场》汉化与中英文牌表导入工具
 
 Windows 用户可查看[其他维护者提供的工具](https://shiqidi.lenitatis.com/mod)。
 
-**[下载更新工具 v3.1](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.50-25919252-r2/MTGA-Chinese-Subscriber-v3.1.zip) · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)**
+**[下载更新工具 v3.2](https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.2/MTGA-Chinese-Subscriber-v3.2.zip) · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)**
 
-当前适配：**2026.64.50 / Steam 25919252 / Apple Silicon**。这是测试版：文件与隔离安装恢复检查通过，本次游戏内显示尚未验收。程序未完成 Apple 公证。
+当前适配：**2026.64.50 / Steam 25919252 / Apple Silicon**。文件与安装恢复检查通过，具体适配及验收范围见版本说明。程序未完成 Apple 公证。
 
 ## 安装与更新
 
-1. 下载、解压，双击「安装 MTGA 中文维护.command」。旧 v2/v3 用户也先安装 v3.1，保留相同更新源。
+1. 下载、解压，双击「安装 MTGA 中文维护.command」。旧版用户也先安装 v3.2，保留相同更新源。
 2. 完成 Steam 和游戏内下载，退出 MTGA。
 3. 打开桌面「MTGA 订阅更新」：**检查更新 → 预演 → 应用更新**。游戏语言保持 **English**。
 

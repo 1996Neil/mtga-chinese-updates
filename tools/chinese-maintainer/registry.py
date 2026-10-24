@@ -92,6 +92,12 @@ def add(c, layer, key, en, zh, origin, status, priority, use, verified_version=N
                verified_version, verified_version))
 
 
+def is_mode_description(key):
+    """A legacy Title path can contain a body; English-name policy stops there."""
+    return bool(re.search(r'(?:^|[/_])(?:Desc(?:ription)?|Body|Instructions|Tooltip)(?:[/_]|$)',
+                          str(key), re.IGNORECASE))
+
+
 def bootstrap(c):
     """Import immutable, hash-guarded historical artifacts; never run old installers."""
     manifest = read_json(OLD / 'manifest.json')
@@ -149,7 +155,7 @@ def bootstrap(c):
     retained = read_json(wpn / 'evidence/client-update.json').get('retained_English_event_titles', [])
     mode_keys.update(r['key'] for r in retained)
     for key in mode_keys:
-        if key in old_en:
+        if key in old_en and not is_mode_description(key):
             add(c, 'client', key, old_en[key], old_en[key], 'historical-mode-name-policy',
                 'keep-english', 250, ['Loc.enUS'], '2026.63.10')
     # Persist both donors. Unseen donor text remains a candidate until reviewed.
@@ -242,7 +248,9 @@ def decide(c, run, layer, key, english, use, *, persist=True):
         verified = [r for r in verified if r[1].startswith('independent-resolution-')]
     status, origin, value, reason = 'needs-review', None, english, 'new-key-or-locid' if not rows else 'english-changed-or-no-verified-translation'
     conflicts = []
-    intentional = [r for r in matches if r[2] == 'keep-english' and r[3] >= 250]
+    intentional = [r for r in matches if r[2] == 'keep-english' and r[3] >= 250
+                   and not (layer == 'client' and r[1] == 'historical-mode-name-policy'
+                            and is_mode_description(key))]
     if intentional and (not verified or intentional[0][3] >= verified[0][3]):
         status, origin, value, reason = 'keep-english', intentional[0][1], english, 'explicit-reviewed-English-name-policy'
     elif not use and not any(r[1].startswith('independent-resolution-') for r in verified):

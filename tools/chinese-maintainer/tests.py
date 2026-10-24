@@ -116,6 +116,44 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(value, 'Standard')
         self.assertEqual(result['status'], 'keep-english')
 
+    def test_legacy_mode_name_policy_does_not_cover_description_under_title(self):
+        key = 'Events/Event_Title_MWM_Cascade_Alchemy_Desc'
+        en = 'Welcome to this event!'
+        add(self.c, 'client', key, en, en, 'historical-mode-name-policy',
+            'keep-english', 250, ['Loc.enUS'], 'old')
+        add(self.c, 'client', key, en, '欢迎参加此赛事！', 'reviewed-donor',
+            'verified', 150, ['Loc.enUS'], 'old')
+        value, result = decide(self.c, 'new_run', 'client', key, en, ['Loc.enUS'])
+        self.assertEqual(value, '欢迎参加此赛事！')
+        self.assertEqual(result['status'], 'verified')
+
+    def test_description_without_verified_translation_is_not_auto_approved(self):
+        key = 'Events/Event_Desc_Untranslated'
+        en = 'Build a deck and play.'
+        add(self.c, 'client', key, en, en, 'historical-mode-name-policy',
+            'keep-english', 250, ['Loc.enUS'], 'old')
+        value, result = decide(self.c, 'new_run', 'client', key, en, ['Loc.enUS'])
+        self.assertEqual(value, en)
+        self.assertNotEqual(result['status'], 'verified')
+        self.assertNotEqual(result['reason'], 'explicit-reviewed-English-name-policy')
+
+    def test_legacy_policy_still_keeps_real_mode_title_english(self):
+        key = 'Events/Event_Title_FRA_Quick_Draft'
+        add(self.c, 'client', key, 'Quick Draft', 'Quick Draft',
+            'historical-mode-name-policy', 'keep-english', 250, ['Loc.enUS'], 'old')
+        add(self.c, 'client', key, 'Quick Draft', '快速轮抽', 'reviewed-donor',
+            'verified', 150, ['Loc.enUS'], 'old')
+        value, result = decide(self.c, 'new_run', 'client', key, 'Quick Draft', ['Loc.enUS'])
+        self.assertEqual(value, 'Quick Draft')
+        self.assertEqual(result['reason'], 'explicit-reviewed-English-name-policy')
+
+    def test_description_classifier_does_not_match_a_similar_title_word(self):
+        from registry import is_mode_description
+        self.assertTrue(is_mode_description('Events/Event_Title_MWM_Cascade_Alchemy_Desc'))
+        self.assertTrue(is_mode_description('Events/Event_Desc_FRA_Quick_Draft'))
+        self.assertFalse(is_mode_description('Events/Event_Title_Descend_Into_Adventure'))
+        self.assertFalse(is_mode_description('Events/Event_Title_FRA_Quick_Draft'))
+
 
 class DatabaseTests(unittest.TestCase):
     def test_wrong_card_binding_and_token_only_variant_rejected(self):

@@ -34,9 +34,16 @@ def validate_db(baseline, candidate, layer, updates, additions=()):
                 cols = [r[1] for r in a.execute('PRAGMA table_info(Loc)')]
                 ki, ei = cols.index('Key'), cols.index('enUS')
                 expected = {r[ki]: list(r) for r in a.execute('SELECT * FROM Loc')}
+                from registry import is_english_event_name, english_event_text
+                original_english = {key: row[ei] for key, row in expected.items()}
                 for key, value in updates.items():
                     require(key in expected, 'Localization update cannot invent keys')
-                    require(not safe_format(expected[key][ei], value), f'Unsafe text: {key}')
+                    if is_english_event_name(key):
+                        resolved = english_event_text(original_english[key], original_english.get)
+                        require(value == resolved, f'Event name differs from official English: {key}')
+                        require(not safe_format(resolved, value), f'Unsafe event name: {key}')
+                    else:
+                        require(not safe_format(expected[key][ei], value), f'Unsafe text: {key}')
                     expected[key][ei] = value
                 actual = {r[ki]: list(r) for r in b.execute('SELECT * FROM Loc')}
                 require(expected == actual, 'Unrelated client fields/languages changed')

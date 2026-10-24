@@ -1,0 +1,77 @@
+{
+  "schema": "MTGA_SUBSCRIBER_PRIVATE_SOURCE_RECOVERY_V1",
+  "source_commit": "ebd4135a30066e26483304e114d805aa3188e406",
+  "imported_files": [
+    {
+      "path": "tools/subscriber/Client.swift",
+      "bytes": 52035,
+      "sha256": "8cd9b2eededf101ad4991a0087d888dec2e3149d355fba78f13cbcdbe9aa7e4f"
+    },
+    {
+      "path": "tools/subscriber/FORMAT.md",
+      "bytes": 3889,
+      "sha256": "cb0d40144c89475d9f3980bfc658fd351d671c6d927a04e79bb340c33a521a87"
+    },
+    {
+      "path": "tools/subscriber/NETWORK.md",
+      "bytes": 4967,
+      "sha256": "35c7b01a0728d02000280d66fdac3c7635cf599d76bbffa921727f089e43232b"
+    },
+    {
+      "path": "tools/subscriber/README.md",
+      "bytes": 8041,
+      "sha256": "61ddae2c26c6f2a83381ec6c7455557a406c73c86f0a2a79c97dc3c59681e0d3"
+    },
+    {
+      "path": "tools/subscriber/build.sh",
+      "bytes": 452,
+      "sha256": "b11cb57cf9daff6e57457ecaad9897c632fcd8a0de2cb71683b65e24c1a30bdd"
+    },
+    {
+      "path": "tools/subscriber/fake_curl_fixture.py",
+      "bytes": 1575,
+      "sha256": "d6fa500eed734af609aa955506866dcb8f5ef04c89c98d9c9ecee90394b75f9c"
+    },
+    {
+      "path": "tools/subscriber/github_publish.py",
+      "bytes": 18072,
+      "sha256": "68f3f15f3ca10d5f51a13e45a5bf2b0e100c033e7845adf9b980a323ead96120"
+    },
+    {
+      "path": "tools/subscriber/package_installer.py",
+      "bytes": 3796,
+      "sha256": "96ababdb80da11bb03526c9ce2329ba9f1d82278da4ca075cdc6f1257edb604c"
+    },
+    {
+      "path": "tools/subscriber/publish_github.sh",
+      "bytes": 1561,
+      "sha256": "20bebfbc1727b637a622147ec3aa270b44212415fd077a18372b8c1e795715d0"
+    },
+    {
+      "path": "tools/subscriber/publisher.py",
+      "bytes": 15406,
+      "sha256": "fa53f4bd7f9dba24d314c2eb1cdda0eb5915303f1defacc7baa4fbe00bb77d01"
+    },
+    {
+      "path": "tools/subscriber/tests_cache.py",
+      "bytes": 5837,
+      "sha256": "0b2f7632417583b4713bb5d0f923205c3358b3fd9d99cb9d95a7b45f277d107c"
+    },
+    {
+      "path": "tools/subscriber/tests_network.py",
+      "bytes": 17107,
+      "sha256": "64672b141f47ed95985f7723f4e6d723eef3c86a0eb874a9788a15f6229b8475"
+    },
+    {
+      "path": "tools/subscriber/tests_subscriber.py",
+      "bytes": 17540,
+      "sha256": "717da7b4dad4c5f7837d79bd8661fe831c97fe9c72fceb3f84078b86c81948bd"
+    }
+  ],
+  "regular_files_only": true,
+  "working_bytes_equal_committed_blobs": true,
+  "high_confidence_private_key_token_pattern_scan": "PASS",
+  "local_scope": "Read-only source/bootstrap and current-client diagnosis only; no local build/test/install",
+  "private_repository": "1996Neil/mtga-chinese-bilingual-maintainer",
+  "production_ref_changed": false
+}

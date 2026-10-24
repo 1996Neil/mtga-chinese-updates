@@ -1,0 +1,15 @@
+{
+  "scope": "Two fixed format repair examples, not a live resolution approval",
+  "records": [
+    {
+      "layer": "card",
+      "key": "615435",
+      "derived_translation": "{2, plural, =1 {至多选择{2, Number}个由你操控的生物或鹏洛客。}other{至多选择{2, Number}个由你操控的生物和／或鹏洛客。}}"
+    },
+    {
+      "layer": "client",
+      "key": "Codex/ThePlayBlade_FindMatch",
+      "derived_translation": "<color #E9E9F6><b>寻找对局</b><color #CCCCCC>则让你可以投身构筑赛制对战，有<i>天梯、对战和争锋</i>三种模式可供选择！<br><br><color #E9E9F6><b><indent=5%>• 天梯</b><color #CCCCCC>中提供了四种构筑赛制，你可以任选其一来挑战技艺：标准、炼金、史迹和先驱。你在此队列中的对局结果将会影响你的赛季段位。你可以在单盘制（只进行一盘对局）或三盘制（包含备牌，先夺取两盘对战胜利的牌手便赢下整局对战）。<br><br><color #E9E9F6><b><indent=5%>• 对战</b><color #CCCCCC>同样提供了这四种赛制的对战队列，但对局结果不会影响你的构筑段位。你也可以在此选择单盘制或三盘制，甚至还能在人机对战中跟辉辉切磋！<br><br><color #E9E9F6><b><indent=5%>• 争锋</b><color #CCCCCC>则是进行休闲无双对战（每种只能加入一张）的好去处，有争锋和标准争锋供你选择！因此快快来选择一位指挥官，然后投身对战！"
+    }
+  ]
+}

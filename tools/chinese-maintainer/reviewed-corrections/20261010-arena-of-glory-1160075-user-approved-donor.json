@@ -1,0 +1,187 @@
+{
+  "review_kind": "human",
+  "reviewed_by": "Neil (explicit approval in this conversation)",
+  "reviewed_at": "2026-10-09T18:41:46.346893+00:00",
+  "source_version": "MTGA 2026.63.20; donor 26.9.30; Oracle clarification 2026-09-21",
+  "note": "用户批准采用的 donor 译文；不是官方原文。仅记录批准，后续明确授权构建时由既有 importer 校验。",
+  "approval_quote": "同意采用 Arena of Glory（荣光竞技场）LocId 1160075 的现有 donor 中文译文。仅授权记录批准结果，不授权现在修改游戏文件、重新生成补丁或执行安装。后续获准构建新版候选时再应用，且必须继续通过原有格式、版本及客户端验收。",
+  "approval_scope": {
+    "record_only": true,
+    "build_authorized": false,
+    "install_authorized": false,
+    "future_requirements": [
+      "exact-English-and-use-match",
+      "safe-format",
+      "identity-and-version-guards",
+      "native-client-acceptance"
+    ]
+  },
+  "records": [
+    {
+      "layer": "card",
+      "key": "1160075",
+      "english": "{oR}, {oT}, Exert this land: Add {oRoR}. If any of that mana is spent on a creature spell, it gains haste until end of turn.",
+      "chinese": "{oR}，{oT}，耗竭此地：加{oRoR}。如果该份法术力中包含用以支付生物咒语者，则该生物获得敏捷异能直到回合结束。",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "replaces_source_ids": [],
+      "identity": {
+        "cards": [
+          {
+            "GrpId": 91066,
+            "TitleId": 760695,
+            "ExpansionCode": "MH3",
+            "CollectorNumber": "215",
+            "IsToken": 0,
+            "IsPrimaryCard": 1,
+            "IsDigitalOnly": 0,
+            "IsRebalanced": 0,
+            "LinkedFaceType": 0,
+            "LinkedFaceGrpIds": ""
+          },
+          {
+            "GrpId": 91950,
+            "TitleId": 760695,
+            "ExpansionCode": "MH3",
+            "CollectorNumber": "351",
+            "IsToken": 0,
+            "IsPrimaryCard": 0,
+            "IsDigitalOnly": 0,
+            "IsRebalanced": 0,
+            "LinkedFaceType": 0,
+            "LinkedFaceGrpIds": ""
+          }
+        ]
+      },
+      "title_id": 760695,
+      "translation_origin": "user-approved-donor",
+      "official_verbatim": false,
+      "english_hash": "f4455cb04f57feac9dc4bb402700f446b82c87b1e28ed622a2e30918c4cb9207",
+      "evidence": {
+        "official_translation_evidence_id": "14d54f09e1c23a62c34e29d1c31617a5f4de172ffb80dfc40109e9d3f15090e7",
+        "official_documents": [
+          {
+            "id": "aaaf514217a123912f4ae1e73dd365b73fa0f82af72d77d81f7ba41551c36f34",
+            "cache_path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/source-cache/f2fa1b7bbd94440019b1f6553cd6e53bffdb7bfcced1bb78b7fcb74ba96c3332",
+            "file": "MH3-CS.pdf",
+            "fingerprint": {
+              "bytes": 1087337,
+              "sha256": "f2fa1b7bbd94440019b1f6553cd6e53bffdb7bfcced1bb78b7fcb74ba96c3332"
+            },
+            "label": "mh3-cs",
+            "language": "zh-Hans",
+            "publication_date_basis": "document filename",
+            "published_at": "2024-05-15",
+            "retrieved_at": "2026-10-10",
+            "role": "historical-translation",
+            "source_type": "official",
+            "url": "https://media.wizards.com/2024/downloads/MH3_Release_Notes_9d01wihakukg/CS_MTGMH3_ReleaseNotes_20240515.pdf",
+            "verification": {
+              "kind": "independent-source-verification",
+              "pack_fingerprint": {
+                "bytes": 4514,
+                "sha256": "a4087b63de273e295a1c07a586c38f29c400a26628472007c2a400619e075c2b"
+              },
+              "review_kind": "independent-agent-source-check",
+              "reviewed_at": "2026-10-10",
+              "reviewer": "independent agent /root/donor_review",
+              "scope": "Official CS p65 and EN p16 excerpts, deterministic mana/self-name adapter, bulletin clarification, actual official/donor Cards.AbilityIds 172456:1160075, GrpId 91066/91950 TitleId760695 MH3 215/351. Source extraction and identity only. Not human semantic approval or native client acceptance.",
+              "status": "PASS"
+            }
+          },
+          {
+            "id": "8930ec55313616fc95fb633d8bc8584d17458f89ef0219c5733e5a3ae941281d",
+            "cache_path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/source-cache/df38ac93b6df910fa5623891331608a38552b3263737086ba30645c9d8f309d8",
+            "file": "MH3-EN.pdf",
+            "fingerprint": {
+              "bytes": 794716,
+              "sha256": "df38ac93b6df910fa5623891331608a38552b3263737086ba30645c9d8f309d8"
+            },
+            "label": "mh3-en",
+            "language": "en",
+            "publication_date_basis": "document filename",
+            "published_at": "2024-05-15",
+            "retrieved_at": "2026-10-10",
+            "role": "historical-rules",
+            "source_type": "official",
+            "url": "https://media.wizards.com/2024/downloads/MH3_Release_Notes_9d01wihakukg/EN_MTGMH3_ReleaseNotes_20240515.pdf",
+            "verification": {
+              "kind": "independent-source-verification",
+              "pack_fingerprint": {
+                "bytes": 4514,
+                "sha256": "a4087b63de273e295a1c07a586c38f29c400a26628472007c2a400619e075c2b"
+              },
+              "review_kind": "independent-agent-source-check",
+              "reviewed_at": "2026-10-10",
+              "reviewer": "independent agent /root/donor_review",
+              "scope": "Official CS p65 and EN p16 excerpts, deterministic mana/self-name adapter, bulletin clarification, actual official/donor Cards.AbilityIds 172456:1160075, GrpId 91066/91950 TitleId760695 MH3 215/351. Source extraction and identity only. Not human semantic approval or native client acceptance.",
+              "status": "PASS"
+            }
+          },
+          {
+            "id": "db16121f1ffee9649396127dfa477a93cc90f02cc7b6ab235f91497f9cce8541",
+            "cache_path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/source-cache/8887a2dfe628a2ddba26696632e8c6ba552f1fc78425590589947240b1dfda77",
+            "file": "bulletin.html",
+            "fingerprint": {
+              "bytes": 184067,
+              "sha256": "8887a2dfe628a2ddba26696632e8c6ba552f1fc78425590589947240b1dfda77"
+            },
+            "label": "bulletin",
+            "language": "en",
+            "publication_date_basis": "article metadata",
+            "published_at": "2026-09-21",
+            "retrieved_at": "2026-10-10",
+            "role": "oracle-current",
+            "source_type": "official",
+            "url": "https://magic.wizards.com/en/news/announcements/reality-fracture-update-bulletin",
+            "verification": {
+              "kind": "independent-source-verification",
+              "pack_fingerprint": {
+                "bytes": 4514,
+                "sha256": "a4087b63de273e295a1c07a586c38f29c400a26628472007c2a400619e075c2b"
+              },
+              "review_kind": "independent-agent-source-check",
+              "reviewed_at": "2026-10-10",
+              "reviewer": "independent agent /root/donor_review",
+              "scope": "Official CS p65 and EN p16 excerpts, deterministic mana/self-name adapter, bulletin clarification, actual official/donor Cards.AbilityIds 172456:1160075, GrpId 91066/91950 TitleId760695 MH3 215/351. Source extraction and identity only. Not human semantic approval or native client acceptance.",
+              "status": "PASS"
+            }
+          }
+        ],
+        "source_review": {
+          "path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/v1.1/source-pack/source-review.json",
+          "sha256": "a96a30f4ef9f1b0b6f985411fa010a8a1757ebf85a19080bce21434ef8bdd0d4",
+          "bytes": 640
+        },
+        "oracle": {
+          "basis": "Haste Without Waste explicitly names Arena of Glory and states only one mana is necessary; 2024 CS p65 explicitly permits two creature spells. Full current ability is client text corroborated by bulletin, not a claim of Gatherer live fetch.",
+          "classification": "template-clarification",
+          "client_english": "{oR}, {oT}, Exert this land: Add {oRoR}. If any of that mana is spent on a creature spell, it gains haste until end of turn.",
+          "document": "bulletin",
+          "document_id": "db16121f1ffee9649396127dfa477a93cc90f02cc7b6ab235f91497f9cce8541",
+          "hash": "f4455cb04f57feac9dc4bb402700f446b82c87b1e28ed622a2e30918c4cb9207",
+          "text": "{oR}, {oT}, Exert this land: Add {oRoR}. If any of that mana is spent on a creature spell, it gains haste until end of turn.",
+          "version": "2026-09-21 Reality Fracture update / MTGA 2026.63.20"
+        },
+        "donor": {
+          "source_type": "local-donor",
+          "label": "MTGA Mod(MacOS) 26.9.30-card",
+          "url": null,
+          "original_path": "/Users/neil/Downloads/MTGA Mod(MacOS) 26.9.30/Raw/Raw_CardDatabase_5e586167ed4916330fafb3b939699ac5.mtga",
+          "cache_path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/source-cache/07da73a4b349572a8207a4b2eae869dcd95028cd846c76a0b1883ad8640be2b3",
+          "fingerprint": {
+            "sha256": "07da73a4b349572a8207a4b2eae869dcd95028cd846c76a0b1883ad8640be2b3",
+            "bytes": 47611904
+          },
+          "source_version": "{\"Data\": \"2026.63.0.270\", \"GRP\": \"270.1318799\"}",
+          "published_at": null,
+          "retrieved_at": "2026-10-09T18:41:46.346893+00:00",
+          "language": "zh-Hans",
+          "role": "donor-card-database",
+          "locator": "Localizations_jaJP LocId=1160075 Formatted=1"
+        }
+      }
+    }
+  ]
+}

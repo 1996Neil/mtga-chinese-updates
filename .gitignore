@@ -1,0 +1,37 @@
+node_modules/
+output/
+*.log
+.DS_Store
+viewer/dist/
+
+# Local MTGA Maintainer binary snapshots and dependency environment
+tools/chinese-maintainer/.venv/
+tools/chinese-maintainer/state/
+tools/chinese-maintainer/__pycache__/
+
+# Private working evidence and locally generated localization resources
+deliverables/
+QuickDraft-v0.2-local-validation-20261011/
+tools/chinese-maintainer/reviewed-resolutions/
+tools/card-name-map/sets/
+tools/card-name-map/current-quickdraft.json
+__pycache__/
+*.pyc
+
+# Local build products, integration data and publishing secrets
+/dist/
+*.dSYM/
+*.sqlite
+*.sqlite3
+*.mtga
+*.delta
+*.assets
+*.pem
+*.p12
+*.p8
+.env
+.env.*
+!*.example
+/compatibility/card-language-2026-10-07/
+watch-report.json
+/mtga-watch/.steamcmd/

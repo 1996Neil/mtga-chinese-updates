@@ -1,0 +1,9 @@
+#!/bin/sh
+# 英文牌名 -> 已核对中文牌名（离线，需先生成 sets 下的卡表）
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+if [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+else
+  PY="$(command -v python3 || echo /opt/homebrew/bin/python3)"
+fi
+exec "$PY" "$ROOT/lookup.py" "$@"

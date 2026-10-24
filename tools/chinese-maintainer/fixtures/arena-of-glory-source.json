@@ -1,0 +1,43 @@
+{
+  "source_pack": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/v1.1/source-pack/pack.json",
+  "current_english": "{oR}, {oT}, Exert this land: Add {oRoR}. If any of that mana is spent on a creature spell, it gains haste until end of turn.",
+  "old_english": "{oR}, {oT}, Exert this land: Add {oRoR}. If that mana is spent on a creature spell, it gains haste until end of turn.",
+  "official_chinese": "{oR}，{oT}，耗竭此地：加{oRoR}。如果该法术力用以支付生物咒语，则它获得敏捷异能直到回合结束。",
+  "donor_chinese": "{oR}，{oT}，耗竭此地：加{oRoR}。如果该份法术力中包含用以支付生物咒语者，则该生物获得敏捷异能直到回合结束。",
+  "identity": {
+    "cards": [
+      {
+        "GrpId": 91066,
+        "TitleId": 760695,
+        "ExpansionCode": "MH3",
+        "CollectorNumber": "215",
+        "IsToken": 0,
+        "IsPrimaryCard": 1,
+        "IsDigitalOnly": 0,
+        "IsRebalanced": 0,
+        "LinkedFaceType": 0,
+        "LinkedFaceGrpIds": ""
+      },
+      {
+        "GrpId": 91950,
+        "TitleId": 760695,
+        "ExpansionCode": "MH3",
+        "CollectorNumber": "351",
+        "IsToken": 0,
+        "IsPrimaryCard": 0,
+        "IsDigitalOnly": 0,
+        "IsRebalanced": 0,
+        "LinkedFaceType": 0,
+        "LinkedFaceGrpIds": ""
+      }
+    ]
+  },
+  "field_use": [
+    "Cards.AbilityTextId"
+  ],
+  "source_urls": [
+    "https://media.wizards.com/2024/downloads/MH3_Release_Notes_9d01wihakukg/CS_MTGMH3_ReleaseNotes_20240515.pdf",
+    "https://media.wizards.com/2024/downloads/MH3_Release_Notes_9d01wihakukg/EN_MTGMH3_ReleaseNotes_20240515.pdf",
+    "https://magic.wizards.com/en/news/announcements/reality-fracture-update-bulletin"
+  ]
+}

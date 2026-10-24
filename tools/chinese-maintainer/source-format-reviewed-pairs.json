@@ -1,0 +1,188 @@
+{
+  "schema": "MTGA_EXACT_SOURCE_FORMAT_PAIRS_V1",
+  "review_kind": "AI reviewed source compatibility, not runtime acceptance",
+  "pairs": [
+    {
+      "layer": "card",
+      "key": "189",
+      "english_sha256": "730abb602a64befc09e725b20e0d6888d315ad1b9bba0e8d265aa52ab969542f",
+      "chinese_sha256": "92b14cd36cc37cb2ce962386a73815343c26cf97302a1fd7139c6750a27167a6",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Codex/WaysToPlay/Formats/Precons_SparkRank_A",
+      "english_sha256": "1daee93c55804e1c234f241c5eef61ce6d9f972ad62830e1f2c3428bc87e4b91",
+      "chinese_sha256": "469414cd3c103c27771716215bd6a34c301261c4d6618d1dd384058112cb7bf0",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2",
+      "english_sha256": "1b95420997dfca95c6126135dbed3e4f8f1705f70e5d9bbd62ec1194f145abec",
+      "chinese_sha256": "b4a7adb303895e799255e80b650ef8c1a0d5e09ba3187020fd3f4c3f2acaeea2",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_Alt",
+      "english_sha256": "b21357dd29d313c58c3121d2e1984d6b91176406d3677cd9494a8a15f4396419",
+      "chinese_sha256": "54235fc91a3f2d00965c7f0e6f08821f13888aa84305f73f2fcf50685bf1980a",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftOne",
+      "english_sha256": "785c8763c9e9d132d5e7571ed5fac601983d412f05367f29f282300054e463d8",
+      "chinese_sha256": "20598f04bf1c3e9bcb22dbb56b9201f13b76f0d0a98f56562e7ed450fc091c28",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftOne_KHM",
+      "english_sha256": "9a432ddcf0163adee047c32b60cef654cc7e00e2800a6ea06876c6bdb522c043",
+      "chinese_sha256": "cf1e4854de3aa83810be3aca75ee2c24dbc6ec55689bb899c3dbea15540ab3df",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftTwo",
+      "english_sha256": "6086c283fed580013cee94a90d17c91686eb0e0c04824094f7c3c1dee692934c",
+      "chinese_sha256": "4a2ac25a7845cd210fe0c96ea59234e24530445c0fa0c2736c1087ebb57fe835",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftTwo_Fix",
+      "english_sha256": "1c06172a8059bfaed03a51dfa506d788e0802ccd6fc132a4267c55ac8a07c692",
+      "chinese_sha256": "24967f9e9cad2fe4c5d6400cefa68e1a0db4e5be75eb01dd05763907ac23d8c3",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftTwoA",
+      "english_sha256": "2851bc3e30b4ebb054f7bb66931567c5affbbc637799b10f02016ca28406f9fb",
+      "chinese_sha256": "669ef1a280a5722ff9c145f6fe703ac38d79fb8c92d30658b2087b40c52128da",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftTwoA_KHM",
+      "english_sha256": "13e96d253f50a6042c2d33bf3d5168c577e9dd157104d2ddbd476410731faffe",
+      "chinese_sha256": "af89f9265e6e4eeaec6550b40366a3071f08ee3eb11ea190cc7f727b778c4e0e",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftTwoB",
+      "english_sha256": "1c5b77e69c212d9b613270062a86b9f8f3b0b7cce4a67a47e9b6d7ffa20c153f",
+      "chinese_sha256": "94343b34e43211add962592c9efc19b30f994844a4f4dee16df0da72fa0e1106",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_DraftTwoB_KHM",
+      "english_sha256": "dbd54ff02a806152c33f3901be87835b240a4768044bb2068c47126f0b670b5b",
+      "chinese_sha256": "62bf0af3e14d6b4217fb7b14c4fe8dfe683b80409b070499b71b305458bda844",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_Fix",
+      "english_sha256": "2a8b3f441f9de6ce19e6ff2b5ed780a62ae0ad4edfaace0905a567dcd61d13ec",
+      "chinese_sha256": "513d1f2baf67af202b1fd59648898dda4e9f0375ac15009627ca13e192fcc0b8",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_SealedOne",
+      "english_sha256": "5fda6235f60c9e2f167e46e5ca51c15007ac3944bf8e27d95611657bd4cf137b",
+      "chinese_sha256": "835ecccfbf509918fdd8fbb74f8537bf779421fa828913147eeda66fc6d3cecf",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2_SealedTwo",
+      "english_sha256": "b62c25c4715bfb3bd7757538025671407791d7ffea427f85a7f0890bf97ca42b",
+      "chinese_sha256": "bc462bcb19cbb71e3105fdad54ed92a02a6d2ef0ed97bf0eba30360ede8cb713",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_FestivalGods_Artisan",
+      "english_sha256": "5668db75b0ec85031ed1596bde31229064c9464fdff53201969ee2ffef99f935",
+      "chinese_sha256": "8623411c1cb172152aa946a610c38277754516c24b92be059a4f4e69049ecbe6",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_FestivalGods_GiantMonsters",
+      "english_sha256": "a9dcc44b1efbde7e6fa5f8a3a1f188a95f577369d473c8f6d6af6cd04a379a85",
+      "chinese_sha256": "fe04cf74b7b22009fdf9bc8cf50eebec149dcab801336bc75d2c596734164c77",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_FestivalGods_HistoricBrawl",
+      "english_sha256": "befffd9bfb14ad5dc2cb691576f2c9f35506cc63265c05715053d9b0de8d3433",
+      "chinese_sha256": "c1997cff57cf95a26a7d784fccc6af76b1a188f9ccbb5bfead4dbc9d4017a052",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_FestivalGods_ImmortalSun",
+      "english_sha256": "71fa3e956986299d72b31fe87aa278d39f490df792a33d0830c75e7cf813719c",
+      "chinese_sha256": "8a43043743764a69581d30ef8c9b0b72f7e2b124686f86d5e96508449e18c0e8",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_FestivalGods_ThassaDeck",
+      "english_sha256": "4ad0e91f8b47ef4e2b7440e664075601809722ff30ed3662580af966a017e8ea",
+      "chinese_sha256": "c6f454cae5edad0811a5efbf3f5dc76e1739253774f7ea2c6dd3bc3c76690f63",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_Precon_Brawl_ELD",
+      "english_sha256": "ee75b9aa196bfad245046b66944eaed2e0bca75496e2dd20ab2a82caf75f88a9",
+      "chinese_sha256": "facc949406f9225c7e7671a006aaf6fe16cddfd7358f8afce92009ccf4ec8366",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_Workshop_Artisan",
+      "english_sha256": "dd2e4a9f68eff36590f213a11caf992484541df22b32e2b99b9f7f302237c02f",
+      "chinese_sha256": "dadaef3ec8555d001c7a9b351b69ad117fd5663c5cf6365ad822393e9696c7cf",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "MainNav/HomePage/Carousel/Secret_Lair_Day6_Title",
+      "english_sha256": "1350ba1b49427094a1d92206e64726b59fb8a4e09baae3e87ebd344075253091",
+      "chinese_sha256": "3a88696af0ef99d24b4c3369effb296594d756f34adaed038f17e0015052be49",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "MainNav/Mailbox/Patch_Notes_Description_Y22-DMU",
+      "english_sha256": "5edab3e4a46493f073890b9f9180360f9a62c93f3a3a45c4000e94387977389b",
+      "chinese_sha256": "e3962f8c59957cb63d512fdfd08394fd9084861af40323baaef7efec240442b8",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "MainNav/PrivateGame/WaitingWithSub",
+      "english_sha256": "7c714ee995153067e4debab590e9e2533749dd4280fcefa1e0cd8e827b8bf3a2",
+      "chinese_sha256": "cfa46cf20d1a8badf5a84f60781070b906acf0c32112c944d9a253f683834f36",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    },
+    {
+      "layer": "client",
+      "key": "NPE/Game01/Turn07/ActionReminder_29",
+      "english_sha256": "89431424da3b9e990241ad776314fb09806700ecbcf1782a6ccb3c0e0623d2ff",
+      "chinese_sha256": "7fdac7e7c349dbe12229ce25134135e94c1c45c689da057787b76cff8219f1b4",
+      "reason": "Exact independently AI-reviewed malformed official source; full global control skeleton retained"
+    }
+  ]
+}

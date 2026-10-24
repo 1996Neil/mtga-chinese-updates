@@ -1,0 +1,96 @@
+[
+  {
+    "name": "UnityPy",
+    "version": "1.23.0",
+    "license_files": [
+      {
+        "path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/.venv/lib/python3.11/site-packages/unitypy-1.23.0.dist-info/licenses/LICENSE",
+        "sha256": "d86f8e7dd654370bfe954deb63a8fc972a0eaea943880ba691ff540104bd4c8f"
+      }
+    ],
+    "license_metadata": "MIT License\n\nCopyright (c) 2019-2021 K0lb3\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+    "dependencies": [
+      "lz4",
+      "brotli",
+      "Pillow",
+      "texture2ddecoder>=1.0.5",
+      "etcpak",
+      "astc-encoder-py>=0.1.8",
+      "pyfmodex>=0.7.1",
+      "fsspec",
+      "attrs",
+      "typetreegeneratorapi>=0.0.5; extra == \"ttgen\"",
+      "unitypy[ttgen]; extra == \"full\"",
+      "pytest; extra == \"tests\"",
+      "pillow; extra == \"tests\"",
+      "psutil; extra == \"tests\"",
+      "unitypy[full]; extra == \"tests\"",
+      "ruff; extra == \"dev\"",
+      "unitypy[tests]; extra == \"dev\""
+    ]
+  },
+  {
+    "name": "fonttools",
+    "version": "4.60.1",
+    "license_files": [
+      {
+        "path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/.venv/lib/python3.11/site-packages/fonttools-4.60.1.dist-info/licenses/LICENSE",
+        "sha256": "6787208f83f659ccbc2223b2fde952ffa6f7e8aca62f1a8a2bf5bc51bb1b2383"
+      },
+      {
+        "path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/.venv/lib/python3.11/site-packages/fonttools-4.60.1.dist-info/licenses/LICENSE.external",
+        "sha256": "94a83aaee0729a0f302d34acc4acecbd9d58366f262429075fe557e4a54b2e69"
+      }
+    ],
+    "license_metadata": "MIT",
+    "dependencies": [
+      "lxml>=4.0; extra == \"lxml\"",
+      "brotli>=1.0.1; platform_python_implementation == \"CPython\" and extra == \"woff\"",
+      "brotlicffi>=0.8.0; platform_python_implementation != \"CPython\" and extra == \"woff\"",
+      "zopfli>=0.1.4; extra == \"woff\"",
+      "unicodedata2>=15.1.0; python_version <= \"3.12\" and extra == \"unicode\"",
+      "lz4>=1.7.4.2; extra == \"graphite\"",
+      "scipy; platform_python_implementation != \"PyPy\" and extra == \"interpolatable\"",
+      "munkres; platform_python_implementation == \"PyPy\" and extra == \"interpolatable\"",
+      "pycairo; extra == \"interpolatable\"",
+      "matplotlib; extra == \"plot\"",
+      "sympy; extra == \"symfont\"",
+      "xattr; sys_platform == \"darwin\" and extra == \"type1\"",
+      "skia-pathops>=0.5.0; extra == \"pathops\"",
+      "uharfbuzz>=0.23.0; extra == \"repacker\"",
+      "lxml>=4.0; extra == \"all\"",
+      "brotli>=1.0.1; platform_python_implementation == \"CPython\" and extra == \"all\"",
+      "brotlicffi>=0.8.0; platform_python_implementation != \"CPython\" and extra == \"all\"",
+      "zopfli>=0.1.4; extra == \"all\"",
+      "unicodedata2>=15.1.0; python_version <= \"3.12\" and extra == \"all\"",
+      "lz4>=1.7.4.2; extra == \"all\"",
+      "scipy; platform_python_implementation != \"PyPy\" and extra == \"all\"",
+      "munkres; platform_python_implementation == \"PyPy\" and extra == \"all\"",
+      "pycairo; extra == \"all\"",
+      "matplotlib; extra == \"all\"",
+      "sympy; extra == \"all\"",
+      "xattr; sys_platform == \"darwin\" and extra == \"all\"",
+      "skia-pathops>=0.5.0; extra == \"all\"",
+      "uharfbuzz>=0.23.0; extra == \"all\""
+    ]
+  },
+  {
+    "name": "lz4",
+    "version": "4.4.5",
+    "license_files": [
+      {
+        "path": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/.venv/lib/python3.11/site-packages/lz4-4.4.5.dist-info/licenses/LICENSE",
+        "sha256": "e2ac43d6eb80eb4e52141817c812437e0b981b1d7b2dc7cc86c7ef5524044c6f"
+      }
+    ],
+    "license_metadata": null,
+    "dependencies": [
+      "pytest!=3.3.0; extra == \"tests\"",
+      "psutil; extra == \"tests\"",
+      "pytest-cov; extra == \"tests\"",
+      "sphinx>=1.6.0; extra == \"docs\"",
+      "sphinx_bootstrap_theme; extra == \"docs\"",
+      "flake8; extra == \"flake8\""
+    ]
+  }
+]

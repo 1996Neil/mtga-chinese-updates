@@ -1,0 +1,91 @@
+{
+  "schema": "MTGA_PRIVATE_DELIVERY_VERIFICATION_V1",
+  "receiver_source_commit": "cb2ec975bd0734dcab0a46baab0458e63fc40297",
+  "cloud_reviewed_source_commit": "3844385caaf475ad3f7ee3890839082a3eb9e9a5",
+  "cloud_source_private": true,
+  "receiver_source_private": true,
+  "receiver_ci": {
+    "run_id": "39041837834",
+    "tests": 28,
+    "status": "PASS",
+    "scope": "synthetic Steam trees with real native and bounded range subprocesses"
+  },
+  "cloud_unit_ci": {
+    "run_id": "39040066375",
+    "tests": 20,
+    "status": "PASS",
+    "scope": "synthetic remote boundaries with real SQLite, deltas and signatures"
+  },
+  "first_cloud_run": {
+    "run_id": "39040374410",
+    "status": "PASS_PRIVATE_NATIVE_DATA",
+    "report": {
+      "commit": "8f3dcd007a5c8a0bcf36c52d40e3e2c332340157",
+      "path": "cloud-maintenance/results/unattended-39040374410-1.json",
+      "sha256": "4790eb686dd4aed336ab9db5105034145b6dbe8c2cc973fc73f889b34d7dc473"
+    },
+    "artifact": {
+      "bytes": 145094076,
+      "id": "12103394868",
+      "name": "mtga-private-native-data-39040374410",
+      "sha256": "636d8c4fc6b20cf72ea334d7ff3328234054b6999c5565d0a1a08231c46e6158"
+    }
+  },
+  "second_cloud_run": {
+    "commit": "78a63f74d22855328228a0fd72814ac7e31e90aa",
+    "path": "cloud-maintenance/results/unattended-39040551272-1.json",
+    "bytes": 5271,
+    "sha256": "b8e9de4bff434df20f6add4902cf4738c0340ee3161ce4f1e6d2ef1b74e77c38",
+    "run_id": "39040551272",
+    "status": "NO_CHANGE",
+    "source_commit": "a49ef37f015242e04c7557e22f1908cd94022353",
+    "reused_delivery_run_id": "39040374410"
+  },
+  "native_game_runtime": "NOT_RUN",
+  "local_actual_receive": "PASS_PRIVATE_RECEIVE_AND_NATIVE_PREVIEW",
+  "public_publication": false,
+  "new_schedule": false,
+  "global_latest": "UNKNOWN_POINTER_NOT_AUTOMATED",
+  "official_input_cache_expiry": "2026-10-29T16:50:07Z",
+  "long_term_input_renewal": "UNRESOLVED",
+  "cloud_final_acceptance": {
+    "commit": "0e6adc1ec8d9b4afaa08012b620ac686a7afba8a",
+    "path": "cloud-maintenance/results/unattended-delivery-acceptance-39040785917.json",
+    "sha256": "fa5707567d56f350bda680cfe937f256784648a59ed414d40464f11d76fabfdf"
+  },
+  "replay_runs": [
+    {
+      "run_id": "39040749589",
+      "status": "REPLAY",
+      "prior_run_id": "39040551272",
+      "prior_status": "NO_CHANGE"
+    },
+    {
+      "run_id": "39040785917",
+      "status": "REPLAY",
+      "prior_run_id": "39040551272",
+      "prior_status": "NO_CHANGE"
+    }
+  ],
+  "desktop_verification": {
+    "exact_data_members": 10,
+    "full_zip_sha256": "636d8c4fc6b20cf72ea334d7ff3328234054b6999c5565d0a1a08231c46e6158",
+    "full_zip_bytes": 145094076,
+    "five_layer_native_preview": "PASS",
+    "game_and_protected_files_unchanged": 13,
+    "original_desktop_entries_unchanged": 2,
+    "game_update_invoked": false,
+    "new_native_installation_journal": false,
+    "range_resume": "ACTUALLY_COMPLETED_WITH_FINAL_FULL_ARCHIVE_SHA256",
+    "native_preview_mode": "PREINSTALLED_R3_EXACT_OUTPUTS_PRESERVED",
+    "mac_actual_official_delta_reconstruction": false,
+    "real_game_update_or_recover_invoked": false
+  },
+  "independent_postflight": {
+    "status": "PASS",
+    "report_sha256": "cff675d3abfdf2ff62fe295fd5d201483633aa3091858be34b3fdd03505ce69f",
+    "cloud_real_delta_reconstruction": "PASS",
+    "mac_preview_preserved_matching_r3": true,
+    "actual_game_runtime": "NOT_RUN"
+  }
+}

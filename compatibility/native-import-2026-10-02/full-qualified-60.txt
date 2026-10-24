@@ -1,0 +1,24 @@
+Deck
+4 Hearth Elemental (WOE) 136
+4 Eddymurk Crab (BLB) 48
+4 Sunderflock (ECL) 74
+4 Opt (FDN) 512
+3 Sleight of Hand (WOE) 67
+1 Sleight of Hand (SOA) 22
+4 Burst Lightning (FDN) 192
+4 Prismari Charm (SOS) 211
+3 Flow State (SOS) 49
+2 Spell Snare (ECL) 71
+1 Spell Pierce (NEO) 80
+1 Get Out (DSK) 60
+1 Impractical Joke (SOS) 119
+1 Abrade (LCI) 131
+1 Into the Flood Maw (BLB) 52
+1 Three Steps Ahead (OTJ) 75
+8 Island (ANB) 113
+4 Mountain (ANB) 114
+4 Steam Vents (ECL) 267
+2 Riverpyre Verge (DFT) 260
+1 Spirebluff Canal (OTJ) 270
+1 Temple of Epiphany (FDN) 699
+1 Swiftwater Cliffs (M21) 251

@@ -1,0 +1,43 @@
+name: Source and subscriber verification
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'feed/**'
+      - 'mtga-watch/state.json'
+      - 'download.json'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: source-verification-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  macos-synthetic:
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install pinned maintainer dependencies in isolated environment
+        run: |
+          python3 -m venv tools/chinese-maintainer/.venv
+          tools/chinese-maintainer/.venv/bin/python -m pip install -r tools/chinese-maintainer/requirements.lock
+      - name: Maintainer unit tests (local game integration explicitly excluded)
+        run: |
+          cd tools/chinese-maintainer
+          .venv/bin/python -m unittest discover -v
+      - name: Build universal client and synthetic test executable
+        run: |
+          zsh tools/subscriber/build.sh "$RUNNER_TEMP/mtga-production-client"
+          xcrun swiftc -D TESTING -swift-version 5 -O tools/subscriber/Client.swift -o "$RUNNER_TEMP/mtga-client-tests" -lz
+      - name: Subscriber and publisher synthetic regression tests
+        env:
+          MTGA_SUBSCRIBER_TEST_BINARY: ${{ runner.temp }}/mtga-client-tests
+        run: python3 -m unittest discover -s tools/subscriber -p 'tests*.py' -v
+      - name: Watch and optional reader unit tests
+        run: |
+          python3 -m unittest discover -s mtga-watch -p 'test_*.py' -v
+          python3 -m unittest discover -s tools/card-overlay -p 'test_*.py' -v

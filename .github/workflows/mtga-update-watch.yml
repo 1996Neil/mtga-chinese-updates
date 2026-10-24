@@ -1,0 +1,65 @@
+name: MTGA update watch
+
+# Discovery and owner maintenance notices only. Never builds/publishes localization.
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Read public metadata and report without updating state or creating issues'
+        type: boolean
+        required: false
+        default: true
+      notify_maintainer:
+        description: 'Allow new-event owner issues on a non-dry run (ordinary users subscribe to Releases only)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: mtga-update-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Watch regression checks
+        run: python3 -m unittest discover -s mtga-watch -p 'test_*.py' -v
+      - name: Steam runtime libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends lib32gcc-s1 lib32stdc++6
+      - name: Probe public resources and signed subscriber feed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          WATCH_EVENT: ${{ github.event_name }}
+          WATCH_DRY_RUN: ${{ inputs.dry_run }}
+          WATCH_NOTIFY: ${{ inputs.notify_maintainer }}
+        run: |
+          args=(--with-steam)
+          if [ "$WATCH_EVENT" = "workflow_dispatch" ] && [ "$WATCH_DRY_RUN" = "true" ]; then
+            args+=(--dry-run)
+          fi
+          if [ "$WATCH_EVENT" = "schedule" ] || [ "$WATCH_NOTIFY" = "true" ]; then
+            args+=(--notify-maintainer)
+          fi
+          python3 mtga-watch/watch_mtga.py "${args[@]}"
+      - name: Preserve report in run summary
+        if: always()
+        run: |
+          if [ -f watch-report.json ]; then
+            printf '\n<details><summary>Public metadata monitoring evidence</summary>\n\n```json\n' >> "$GITHUB_STEP_SUMMARY"
+            cat watch-report.json >> "$GITHUB_STEP_SUMMARY"
+            printf '\n```\n</details>\n' >> "$GITHUB_STEP_SUMMARY"
+          fi

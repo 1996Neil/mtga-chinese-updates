@@ -1,0 +1,1879 @@
+{
+  "scope": "Frozen 40-row text/identity regression fixtures; synthetic databases, no private state or original resources",
+  "A": [
+    {
+      "layer": "card",
+      "key": "281000",
+      "status": "needs-review",
+      "english": "Revolt",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Revolt",
+          "chinese": "反抗",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Revolt",
+          "chinese": "反抗",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Revolt",
+          "chinese": "反抗",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Revolt",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281144",
+      "status": "needs-review",
+      "english": "Raid",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Raid",
+          "chinese": "突击",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Raid",
+          "chinese": "突击",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Raid",
+          "chinese": "突击",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Raid",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281412",
+      "status": "needs-review",
+      "english": "Historic",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Historic",
+          "chinese": "史迹",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Historic",
+          "chinese": "史迹",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Historic",
+          "chinese": "史迹",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Historic",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281499",
+      "status": "needs-review",
+      "english": "Undergrowth",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Undergrowth",
+          "chinese": "朽力",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Undergrowth",
+          "chinese": "朽力",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Undergrowth",
+          "chinese": "朽力",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Undergrowth",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281632",
+      "status": "needs-review",
+      "english": "Surveil",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Surveil",
+          "chinese": "刺探",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Surveil",
+          "chinese": "刺探",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Surveil",
+          "chinese": "刺探",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Surveil",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281667",
+      "status": "needs-review",
+      "english": "Morbid",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Morbid",
+          "chinese": "丧心",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Morbid",
+          "chinese": "丧心",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Morbid",
+          "chinese": "丧心",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Morbid",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281706",
+      "status": "needs-review",
+      "english": "Constellation",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Constellation",
+          "chinese": "星彩",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Constellation",
+          "chinese": "星彩",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Constellation",
+          "chinese": "星彩",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Constellation",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281722",
+      "status": "needs-review",
+      "english": "Imprint",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Imprint",
+          "chinese": "压印",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Imprint",
+          "chinese": "压印",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Imprint",
+          "chinese": "压印",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Imprint",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281744",
+      "status": "needs-review",
+      "english": "Hellbent",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Hellbent",
+          "chinese": "背水战",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Hellbent",
+          "chinese": "背水战",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Hellbent",
+          "chinese": "背水战",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Hellbent",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281755",
+      "status": "needs-review",
+      "english": "Grandeur",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Grandeur",
+          "chinese": "声威",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Grandeur",
+          "chinese": "声威",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Grandeur",
+          "chinese": "声威",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Grandeur",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281775",
+      "status": "needs-review",
+      "english": "Threshold",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Threshold",
+          "chinese": "门槛",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Threshold",
+          "chinese": "门槛",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Threshold",
+          "chinese": "门槛",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Threshold",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "281809",
+      "status": "needs-review",
+      "english": "Landfall",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Landfall",
+          "chinese": "地落",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Landfall",
+          "chinese": "地落",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Landfall",
+          "chinese": "地落",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Landfall",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "285415",
+      "status": "needs-review",
+      "english": "Domain",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Domain",
+          "chinese": "领土",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Domain",
+          "chinese": "领土",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Domain",
+          "chinese": "领土",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Domain",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "298681",
+      "status": "needs-review",
+      "english": "Metalcraft",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Metalcraft",
+          "chinese": "金技",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Metalcraft",
+          "chinese": "金技",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Metalcraft",
+          "chinese": "金技",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Metalcraft",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "323477",
+      "status": "needs-review",
+      "english": "Addendum",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Addendum",
+          "chinese": "附案",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Addendum",
+          "chinese": "附案",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Addendum",
+          "chinese": "附案",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Addendum",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "326503",
+      "status": "needs-review",
+      "english": "Battalion",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Battalion",
+          "chinese": "协战",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Battalion",
+          "chinese": "协战",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Battalion",
+          "chinese": "协战",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Battalion",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "326789",
+      "status": "needs-review",
+      "english": "Bloodrush",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Bloodrush",
+          "chinese": "血激",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Bloodrush",
+          "chinese": "血激",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Bloodrush",
+          "chinese": "血激",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Bloodrush",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "328197",
+      "status": "needs-review",
+      "english": "Heroic",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Heroic",
+          "chinese": "勇行",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Heroic",
+          "chinese": "勇行",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Heroic",
+          "chinese": "勇行",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Heroic",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "333223",
+      "status": "needs-review",
+      "english": "Spell mastery",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Spell mastery",
+          "chinese": "精熟咒语",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Spell mastery",
+          "chinese": "精熟咒语",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Spell mastery",
+          "chinese": "精熟咒语",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Spell mastery",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "478101",
+      "status": "needs-review",
+      "english": "Party",
+      "field_use": [],
+      "reason": "unknown-field-use",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Party",
+          "chinese": "冒险团",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Party",
+          "chinese": "冒险团",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Party",
+          "chinese": "冒险团",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[]"
+        }
+      ],
+      "context": {
+        "english": "Party",
+        "field_use": [],
+        "identity": {
+          "cards": []
+        }
+      }
+    }
+  ],
+  "B": [
+    {
+      "layer": "card",
+      "key": "189",
+      "status": "needs-review",
+      "english": "The match has ended in victory. Team {1, WinningTeamId} has won the match{2, select, =0 {.} =1 {3, select, =0 { because the opposing team ran out of time.} =1 { because the opposing team was inactive for too long.}}}",
+      "field_use": [
+        "Prompts.LocId"
+      ],
+      "reason": "format-unsafe:unbalanced-format",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "The match has ended in victory. Team {1, WinningTeamId} has won the match{2, select, =0 {.} =1 {3, select, =0 { because the opposing team ran out of time.} =1 { because the opposing team was inactive for too long.}}}",
+          "chinese": "本盘游戏最终获胜。队伍{1, WinningTeamId}赢得这局对局{2, select, =0{。}=1 {3, select, =0 {因为对手队伍逾时。} =1 {因为对手队伍闲置过久。}}}",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Prompts.LocId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "The match has ended in victory. Team {1, WinningTeamId} has won the match{2, select, =0 {.} =1 {3, select, =0 { because the opposing team ran out of time.} =1 { because the opposing team was inactive for too long.}}}",
+          "chinese": "本盘游戏最终获胜。队伍{1, WinningTeamId}赢得这局对局{2, select, =0{。}=1 {3, select, =0 {因为对手队伍逾时。} =1 {因为对手队伍闲置过久。}}}",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Prompts.LocId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "The match has ended in victory. Team {1, WinningTeamId} has won the match{2, select, =0 {.} =1 {3, select, =0 { because the opposing team ran out of time.} =1 { because the opposing team was inactive for too long.}}}",
+          "chinese": "本盘游戏最终获胜。队伍{1, WinningTeamId}赢得这局对局{2, select, =0{。}=1 {3, select, =0 {因为对手队伍逾时。} =1 {因为对手队伍闲置过久。}}}",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Prompts.LocId\"]"
+        }
+      ],
+      "context": {
+        "english": "The match has ended in victory. Team {1, WinningTeamId} has won the match{2, select, =0 {.} =1 {3, select, =0 { because the opposing team ran out of time.} =1 { because the opposing team was inactive for too long.}}}",
+        "field_use": [
+          "Prompts.LocId"
+        ],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1111004",
+      "status": "needs-review",
+      "english": "Target player draws <cspace=.1em>2<sup>X</sup></cspace> cards.",
+      "field_use": [
+        "Abilities.TextId"
+      ],
+      "reason": "format-unsafe:critical_tags",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Target player draws <cspace=.1em>2<sup>X</sup></cspace> cards.",
+          "chinese": "目标牌手抓2ˣ张牌。",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Abilities.TextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Target player draws <cspace=.1em>2<sup>X</sup></cspace> cards.",
+          "chinese": "目标牌手抓2ˣ张牌。",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Abilities.TextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Target player draws <cspace=.1em>2<sup>X</sup></cspace> cards.",
+          "chinese": "目标牌手抓2ˣ张牌。",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Abilities.TextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Target player draws <cspace=.1em>2<sup>X</sup></cspace> cards.",
+        "field_use": [
+          "Abilities.TextId"
+        ],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "558526",
+      "status": "needs-review",
+      "english": "Lantern Flare deals X damage to target creature or planeswalker and you gain X life. <s>[X is the number of creatures you control.]</s>",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "format-unsafe:critical_tags",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Lantern Flare deals X damage to target creature or planeswalker and you gain X life. <s>[X is the number of creatures you control.]</s>",
+          "chinese": "提灯闪光对目标生物或鹏洛客造成X点伤害，且你获得X点生命。［X为由你操控的生物数量。］",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Lantern Flare deals X damage to target creature or planeswalker and you gain X life. <s>[X is the number of creatures you control.]</s>",
+          "chinese": "提灯闪光对目标生物或鹏洛客造成X点伤害，且你获得X点生命。［X为由你操控的生物数量。］",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Lantern Flare deals X damage to target creature or planeswalker and you gain X life. <s>[X is the number of creatures you control.]</s>",
+          "chinese": "提灯闪光对目标生物或鹏洛客造成X点伤害，且你获得X点生命。［X为由你操控的生物数量。］",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Lantern Flare deals X damage to target creature or planeswalker and you gain X life. <s>[X is the number of creatures you control.]</s>",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 78803,
+              "TitleId": 545615,
+              "ExpansionCode": "VOW",
+              "CollectorNumber": "23",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "564706",
+      "status": "needs-review",
+      "english": "Destroy target <s>[attacking]</s> creature.",
+      "field_use": [
+        "Abilities.TextId",
+        "Cards.AbilityTextId"
+      ],
+      "reason": "format-unsafe:critical_tags",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Destroy target <s>[attacking]</s> creature.",
+          "chinese": "消灭目标［进行攻击的］生物。",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Abilities.TextId\", \"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Destroy target <s>[attacking]</s> creature.",
+          "chinese": "消灭目标［进行攻击的］生物。",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Abilities.TextId\", \"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "Destroy target <s>[attacking]</s> creature.",
+          "chinese": "消灭目标［进行攻击的］生物。",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Abilities.TextId\", \"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Destroy target <s>[attacking]</s> creature.",
+        "field_use": [
+          "Abilities.TextId",
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 78791,
+              "TitleId": 545576,
+              "ExpansionCode": "VOW",
+              "CollectorNumber": "13",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            },
+            {
+              "GrpId": 90700,
+              "TitleId": 545576,
+              "ExpansionCode": "OTP",
+              "CollectorNumber": "2",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "615435",
+      "status": "needs-review",
+      "english": "{2, plural, =1 {Choose up to {2, Number} creature or planeswalker you control.} other {Choose up to {2, Number} creatures and/or planeswalkers you control.}}",
+      "field_use": [
+        "Prompts.LocId"
+      ],
+      "reason": "format-unsafe:placeholders,selectors,unbalanced-format",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "{2, plural, =1 {Choose up to {2, Number} creature or planeswalker you control.} other {Choose up to {2, Number} creatures and/or planeswalkers you control.}}",
+          "chinese": "{2, plural, =1 {至多选择{2, Number}个由你操控的生物或鹏洛客。}另外{至多选择{2, Number}个由你操控的生物和／或鹏洛客。}}",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Prompts.LocId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "{2, plural, =1 {Choose up to {2, Number} creature or planeswalker you control.} other {Choose up to {2, Number} creatures and/or planeswalkers you control.}}",
+          "chinese": "{2, plural, =1 {至多选择{2, Number}个由你操控的生物或鹏洛客。}另外{至多选择{2, Number}个由你操控的生物和／或鹏洛客。}}",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Prompts.LocId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "{2, plural, =1 {Choose up to {2, Number} creature or planeswalker you control.} other {Choose up to {2, Number} creatures and/or planeswalkers you control.}}",
+          "chinese": "{2, plural, =1 {至多选择{2, Number}个由你操控的生物或鹏洛客。}另外{至多选择{2, Number}个由你操控的生物和／或鹏洛客。}}",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Prompts.LocId\"]"
+        }
+      ],
+      "context": {
+        "english": "{2, plural, =1 {Choose up to {2, Number} creature or planeswalker you control.} other {Choose up to {2, Number} creatures and/or planeswalkers you control.}}",
+        "field_use": [
+          "Prompts.LocId"
+        ],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "701529",
+      "status": "needs-review",
+      "english": "{2, plural, =1 {Target {2, Number} land you control.} other {Target {2, Number} lands you control.}}",
+      "field_use": [
+        "Prompts.LocId"
+      ],
+      "reason": "format-unsafe:placeholders",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "{2, plural, =1 {Target {2, Number} land you control.} other {Target {2, Number} lands you control.}}",
+          "chinese": "{2, plural, =1 {选择目标由你操控的地。} other {选择{2, Number}个目标由你操控的地。}}",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Prompts.LocId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "{2, plural, =1 {Target {2, Number} land you control.} other {Target {2, Number} lands you control.}}",
+          "chinese": "{2, plural, =1 {选择目标由你操控的地。} other {选择{2, Number}个目标由你操控的地。}}",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Prompts.LocId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-card",
+          "english": "{2, plural, =1 {Target {2, Number} land you control.} other {Target {2, Number} lands you control.}}",
+          "chinese": "{2, plural, =1 {选择目标由你操控的地。} other {选择{2, Number}个目标由你操控的地。}}",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Prompts.LocId\"]"
+        }
+      ],
+      "context": {
+        "english": "{2, plural, =1 {Target {2, Number} land you control.} other {Target {2, Number} lands you control.}}",
+        "field_use": [
+          "Prompts.LocId"
+        ],
+        "identity": {
+          "cards": []
+        }
+      }
+    },
+    {
+      "layer": "client",
+      "key": "EPP/Nodes/G4A_Desc",
+      "status": "needs-review",
+      "english": "Evolve {card title} with a new card style!",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "reason": "format-unsafe:placeholders",
+      "sources": [
+        {
+          "source_id": "historical-final-client",
+          "english": "Evolve {card title} with a new card style!",
+          "chinese": "用新卡牌样式提升{card title}！以全新卡牌样式为{card title}加礼！",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-client",
+          "english": "Evolve {card title} with a new card style!",
+          "chinese": "用新卡牌样式提升{card title}！以全新卡牌样式为{card title}加礼！",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-client",
+          "english": "Evolve {card title} with a new card style!",
+          "chinese": "用新卡牌样式提升{card title}！以全新卡牌样式为{card title}加礼！",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        }
+      ],
+      "context": {
+        "english": "Evolve {card title} with a new card style!",
+        "field_use": [
+          "Loc.enUS"
+        ],
+        "identity": {
+          "client_key": "EPP/Nodes/G4A_Desc"
+        }
+      }
+    },
+    {
+      "layer": "client",
+      "key": "Codex/RotationRenewal_6",
+      "status": "needs-review",
+      "english": "<color #E9E9F6><i><indent=5%>• Innistrad: Crimson Vow<br><indent=5%>• Innistrad: Midnight Hunt<br><indent=5%>• Kamigawa: Neon Dynasty<br><indent=5%>• Streets of New Capenna<br><indent=5%>• Alchemy Horizons: Baldur's Gate</i>",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "reason": "format-unsafe:unbalanced-format",
+      "sources": [
+        {
+          "source_id": "historical-final-client",
+          "english": "<color #E9E9F6><i><indent=5%>• Innistrad: Crimson Vow<br><indent=5%>• Innistrad: Midnight Hunt<br><indent=5%>• Kamigawa: Neon Dynasty<br><indent=5%>• Streets of New Capenna<br><indent=5%>• Alchemy Horizons: Baldur's Gate</i>",
+          "chinese": "<color #E9E9F6><i><indent=5%>依尼翠：腥红婚誓<br><indent=5%>依尼翠：黯夜猎踪{<br><indent=5%>神河霓朝纪<br><indent=5%>新卡佩纳：喧嚣黑街<br><indent=5%>炼金新篇：博德之门</i>",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-client",
+          "english": "<color #E9E9F6><i><indent=5%>• Innistrad: Crimson Vow<br><indent=5%>• Innistrad: Midnight Hunt<br><indent=5%>• Kamigawa: Neon Dynasty<br><indent=5%>• Streets of New Capenna<br><indent=5%>• Alchemy Horizons: Baldur's Gate</i>",
+          "chinese": "<color #E9E9F6><i><indent=5%>依尼翠：腥红婚誓<br><indent=5%>依尼翠：黯夜猎踪{<br><indent=5%>神河霓朝纪<br><indent=5%>新卡佩纳：喧嚣黑街<br><indent=5%>炼金新篇：博德之门</i>",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-client",
+          "english": "<color #E9E9F6><i><indent=5%>• Innistrad: Crimson Vow<br><indent=5%>• Innistrad: Midnight Hunt<br><indent=5%>• Kamigawa: Neon Dynasty<br><indent=5%>• Streets of New Capenna<br><indent=5%>• Alchemy Horizons: Baldur's Gate</i>",
+          "chinese": "<color #E9E9F6><i><indent=5%>依尼翠：腥红婚誓<br><indent=5%>依尼翠：黯夜猎踪{<br><indent=5%>神河霓朝纪<br><indent=5%>新卡佩纳：喧嚣黑街<br><indent=5%>炼金新篇：博德之门</i>",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        }
+      ],
+      "context": {
+        "english": "<color #E9E9F6><i><indent=5%>• Innistrad: Crimson Vow<br><indent=5%>• Innistrad: Midnight Hunt<br><indent=5%>• Kamigawa: Neon Dynasty<br><indent=5%>• Streets of New Capenna<br><indent=5%>• Alchemy Horizons: Baldur's Gate</i>",
+        "field_use": [
+          "Loc.enUS"
+        ],
+        "identity": {
+          "client_key": "Codex/RotationRenewal_6"
+        }
+      }
+    },
+    {
+      "layer": "client",
+      "key": "Codex/ThePlayBlade_FindMatch",
+      "status": "needs-review",
+      "english": "<color #E9E9F6><b>Find Match</b><color #CCCCCC> lets you join constructed queues: <i>Ranked, Play, and Brawl!</i><br><br><color #E9E9F6><b><indent=5%>• Ranked</b><color #CCCCCC> puts your skills to the test in four constructed formats: Standard, Alchemy, Historic, and Pioneer. Matches in this queue will affect your seasonal ranking. You can toggle to choose to play in Best of One, where you play a single game, or Best of Three, where games include sideboarding, and the first player to win two games wins the match.<br><br><color #E9E9F6><b><indent=5%>• Play</b><color #CCCCCC> lets you play the same four formats, but these do not impact your constructed rank. You can still choose Best of One or Best of Three, and you can even play against Sparky in a Bot Match!<br><br><color #E9E9F6><b><indent=5%>• Brawl</b><color #CCCCCC> is where you play the casual singleton formats (where only one copy of each card is allowed in your deck) of Brawl and Standard Brawl! Choose your Commander to build around and battle!",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "reason": "format-unsafe:unbalanced-format",
+      "sources": [
+        {
+          "source_id": "historical-final-client",
+          "english": "<color #E9E9F6><b>Find Match</b><color #CCCCCC> lets you join constructed queues: <i>Ranked, Play, and Brawl!</i><br><br><color #E9E9F6><b><indent=5%>• Ranked</b><color #CCCCCC> puts your skills to the test in four constructed formats: Standard, Alchemy, Historic, and Pioneer. Matches in this queue will affect your seasonal ranking. You can toggle to choose to play in Best of One, where you play a single game, or Best of Three, where games include sideboarding, and the first player to win two games wins the match.<br><br><color #E9E9F6><b><indent=5%>• Play</b><color #CCCCCC> lets you play the same four formats, but these do not impact your constructed rank. You can still choose Best of One or Best of Three, and you can even play against Sparky in a Bot Match!<br><br><color #E9E9F6><b><indent=5%>• Brawl</b><color #CCCCCC> is where you play the casual singleton formats (where only one copy of each card is allowed in your deck) of Brawl and Standard Brawl! Choose your Commander to build around and battle!",
+          "chinese": "<color #E9E9F6><b>寻找对局</b><color #CCCCCC>则让你可以投身构筑赛制对战，有<i>天梯、对战和争锋</i>三种模式可供选择！<br><br><color #E9E9F6><b><indent=5%>• 天梯</b><color #CCCCCC>中提供了四种构筑赛制，你可以任选其一来挑战技艺：标准、炼金、史迹和先驱。你在此队列中的对局结果将会影响你的赛季段位。你可以在单盘制（只进行一盘对局）或三盘制（包含备牌，先夺取两盘对战胜利的牌手便赢下整局对战）。<br><br><color #E9E9F6><b><indent=5%>• 对战</b><color #CCCCCC>同样提供了这四种赛制的对战队列，但对局结果不会影响你的构筑段位。你也可以在此选择单盘制或三盘制，甚至还能在人机对战中跟辉辉切磋！<br><br><color #E9E9F6><b><indent=5%>• 争锋</b><color #CCCCCC>则是进行休闲无双对战（每种只能加入一张）的好去处，有争锋和标准争锋供你选择！因此快快来选择一位指挥官，然后投身对战！",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-client",
+          "english": "<color #E9E9F6><b>Find Match</b><color #CCCCCC> lets you join constructed queues: <i>Ranked, Play, and Brawl!</i><br><br><color #E9E9F6><b><indent=5%>• Ranked</b><color #CCCCCC> puts your skills to the test in four constructed formats: Standard, Alchemy, Historic, and Pioneer. Matches in this queue will affect your seasonal ranking. You can toggle to choose to play in Best of One, where you play a single game, or Best of Three, where games include sideboarding, and the first player to win two games wins the match.<br><br><color #E9E9F6><b><indent=5%>• Play</b><color #CCCCCC> lets you play the same four formats, but these do not impact your constructed rank. You can still choose Best of One or Best of Three, and you can even play against Sparky in a Bot Match!<br><br><color #E9E9F6><b><indent=5%>• Brawl</b><color #CCCCCC> is where you play the casual singleton formats (where only one copy of each card is allowed in your deck) of Brawl and Standard Brawl! Choose your Commander to build around and battle!",
+          "chinese": "<color #E9E9F6><b>寻找对局</b><color #CCCCCC>则让你可以投身构筑赛制对战，有<i>天梯、对战和争锋</i>三种模式可供选择！<br><br><color #E9E9F6><b><indent=5%>• 天梯</b><color #CCCCCC>中提供了四种构筑赛制，你可以任选其一来挑战技艺：标准、炼金、史迹和先驱。你在此队列中的对局结果将会影响你的赛季段位。你可以在单盘制（只进行一盘对局）或三盘制（包含备牌，先夺取两盘对战胜利的牌手便赢下整局对战）。<br><br><color #E9E9F6><b><indent=5%>• 对战</b><color #CCCCCC>同样提供了这四种赛制的对战队列，但对局结果不会影响你的构筑段位。你也可以在此选择单盘制或三盘制，甚至还能在人机对战中跟辉辉切磋！<br><br><color #E9E9F6><b><indent=5%>• 争锋</b><color #CCCCCC>则是进行休闲无双对战（每种只能加入一张）的好去处，有争锋和标准争锋供你选择！因此快快来选择一位指挥官，然后投身对战！",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-client",
+          "english": "<color #E9E9F6><b>Find Match</b><color #CCCCCC> lets you join constructed queues: <i>Ranked, Play, and Brawl!</i><br><br><color #E9E9F6><b><indent=5%>• Ranked</b><color #CCCCCC> puts your skills to the test in four constructed formats: Standard, Alchemy, Historic, and Pioneer. Matches in this queue will affect your seasonal ranking. You can toggle to choose to play in Best of One, where you play a single game, or Best of Three, where games include sideboarding, and the first player to win two games wins the match.<br><br><color #E9E9F6><b><indent=5%>• Play</b><color #CCCCCC> lets you play the same four formats, but these do not impact your constructed rank. You can still choose Best of One or Best of Three, and you can even play against Sparky in a Bot Match!<br><br><color #E9E9F6><b><indent=5%>• Brawl</b><color #CCCCCC> is where you play the casual singleton formats (where only one copy of each card is allowed in your deck) of Brawl and Standard Brawl! Choose your Commander to build around and battle!",
+          "chinese": "<color #E9E9F6><b>寻找对局</b><color #CCCCCC>则让你可以投身构筑赛制对战，有<i>天梯、对战和争锋</i>三种模式可供选择！<br><br><color #E9E9F6><b><indent=5%>• 天梯</b><color #CCCCCC>中提供了四种构筑赛制，你可以任选其一来挑战技艺：标准、炼金、史迹和先驱。你在此队列中的对局结果将会影响你的赛季段位。你可以在单盘制（只进行一盘对局）或三盘制（包含备牌，先夺取两盘对战胜利的牌手便赢下整局对战）。<br><br><color #E9E9F6><b><indent=5%>• 对战</b><color #CCCCCC>同样提供了这四种赛制的对战队列，但对局结果不会影响你的构筑段位。你也可以在此选择单盘制或三盘制，甚至还能在人机对战中跟辉辉切磋！<br><br><color #E9E9F6><b><indent=5%>• 争锋</b><color #CCCCCC>则是进行休闲无双对战（每种只能加入一张）的好去处，有争锋和标准争锋供你选择！因此快快来选择一位指挥官，然后投身对战！",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        }
+      ],
+      "context": {
+        "english": "<color #E9E9F6><b>Find Match</b><color #CCCCCC> lets you join constructed queues: <i>Ranked, Play, and Brawl!</i><br><br><color #E9E9F6><b><indent=5%>• Ranked</b><color #CCCCCC> puts your skills to the test in four constructed formats: Standard, Alchemy, Historic, and Pioneer. Matches in this queue will affect your seasonal ranking. You can toggle to choose to play in Best of One, where you play a single game, or Best of Three, where games include sideboarding, and the first player to win two games wins the match.<br><br><color #E9E9F6><b><indent=5%>• Play</b><color #CCCCCC> lets you play the same four formats, but these do not impact your constructed rank. You can still choose Best of One or Best of Three, and you can even play against Sparky in a Bot Match!<br><br><color #E9E9F6><b><indent=5%>• Brawl</b><color #CCCCCC> is where you play the casual singleton formats (where only one copy of each card is allowed in your deck) of Brawl and Standard Brawl! Choose your Commander to build around and battle!",
+        "field_use": [
+          "Loc.enUS"
+        ],
+        "identity": {
+          "client_key": "Codex/ThePlayBlade_FindMatch"
+        }
+      }
+    },
+    {
+      "layer": "client",
+      "key": "Events/Event_Desc_ArenaOpen_Day2",
+      "status": "needs-review",
+      "english": "<size=150%><color=#e1a154>Compete for monetary rewards!\n\nPlayers must join the Day 2 event between 6 a.m. PT - 8 a.m. PT (1400 UTC - 1600 UTC).</size></color>\n\nThis second day of competition is open only to qualified players from Day 1.\n\nThe Day 2 format is Traditional Alchemy with best-of-three matches using sideboards and individual timers. Players may only enter once, even if they have qualified multiple times. For assistance, click <u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>here</link></u> to contact Customer Service.\n\n<b><color=red>Must be 18 years or older to participate. Not available in all regions/territories. Void where prohibited. Receiving monetary rewards requires creating or having existing Wizards, DCI, and i-Payout accounts. See <u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>here</link></u> for full details.</color></b>",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "reason": "format-unsafe:unbalanced-format",
+      "sources": [
+        {
+          "source_id": "historical-final-client",
+          "english": "<size=150%><color=#e1a154>Compete for monetary rewards!\n\nPlayers must join the Day 2 event between 6 a.m. PT - 8 a.m. PT (1400 UTC - 1600 UTC).</size></color>\n\nThis second day of competition is open only to qualified players from Day 1.\n\nThe Day 2 format is Traditional Alchemy with best-of-three matches using sideboards and individual timers. Players may only enter once, even if they have qualified multiple times. For assistance, click <u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>here</link></u> to contact Customer Service.\n\n<b><color=red>Must be 18 years or older to participate. Not available in all regions/territories. Void where prohibited. Receiving monetary rewards requires creating or having existing Wizards, DCI, and i-Payout accounts. See <u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>here</link></u> for full details.</color></b>",
+          "chinese": "<size=150%><color=#e1a154>参加赛事，竞夺奖金！</color></size>\n\n牌手必须在6 a.m. PT - 8 a.m. PT（1400 UTC - 1600 UTC）之间加入第2天赛事。\n\n此「第2天」赛事仅向经由「第1天」赛事获得参赛资格的牌手开放。\n\n第2天的赛制为三盘两胜制（可更换备牌且牌手个别计时）的传统调谐赛。就算牌手多次经第1天赢得资格，也只能参加一次第2天赛事。若需协助，请点按<u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>此处</link></u>联系客户支持。\n\n<b><color=red>须年满18周岁方能参加。部分地区／地域不能参加本赛事。在法律禁止的地区无效。须创建或具现有威世智、DCI及i-Payout帐户方能领取奖金。完整详细信息，请参阅<u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>此处</link></u>。</color></b>",
+          "status": "verified",
+          "priority": 200,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-client",
+          "english": "<size=150%><color=#e1a154>Compete for monetary rewards!\n\nPlayers must join the Day 2 event between 6 a.m. PT - 8 a.m. PT (1400 UTC - 1600 UTC).</size></color>\n\nThis second day of competition is open only to qualified players from Day 1.\n\nThe Day 2 format is Traditional Alchemy with best-of-three matches using sideboards and individual timers. Players may only enter once, even if they have qualified multiple times. For assistance, click <u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>here</link></u> to contact Customer Service.\n\n<b><color=red>Must be 18 years or older to participate. Not available in all regions/territories. Void where prohibited. Receiving monetary rewards requires creating or having existing Wizards, DCI, and i-Payout accounts. See <u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>here</link></u> for full details.</color></b>",
+          "chinese": "<size=150%><color=#e1a154>参加赛事，竞夺奖金！</color></size>\n\n牌手必须在6 a.m. PT - 8 a.m. PT（1400 UTC - 1600 UTC）之间加入第2天赛事。\n\n此「第2天」赛事仅向经由「第1天」赛事获得参赛资格的牌手开放。\n\n第2天的赛制为三盘两胜制（可更换备牌且牌手个别计时）的传统调谐赛。就算牌手多次经第1天赢得资格，也只能参加一次第2天赛事。若需协助，请点按<u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>此处</link></u>联系客户支持。\n\n<b><color=red>须年满18周岁方能参加。部分地区／地域不能参加本赛事。在法律禁止的地区无效。须创建或具现有威世智、DCI及i-Payout帐户方能领取奖金。完整详细信息，请参阅<u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>此处</link></u>。</color></b>",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.9-client",
+          "english": "<size=150%><color=#e1a154>Compete for monetary rewards!\n\nPlayers must join the Day 2 event between 6 a.m. PT - 8 a.m. PT (1400 UTC - 1600 UTC).</size></color>\n\nThis second day of competition is open only to qualified players from Day 1.\n\nThe Day 2 format is Traditional Alchemy with best-of-three matches using sideboards and individual timers. Players may only enter once, even if they have qualified multiple times. For assistance, click <u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>here</link></u> to contact Customer Service.\n\n<b><color=red>Must be 18 years or older to participate. Not available in all regions/territories. Void where prohibited. Receiving monetary rewards requires creating or having existing Wizards, DCI, and i-Payout accounts. See <u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>here</link></u> for full details.</color></b>",
+          "chinese": "<size=150%><color=#e1a154>参加赛事，竞夺奖金！</color></size>\n\n牌手必须在6 a.m. PT - 8 a.m. PT（1400 UTC - 1600 UTC）之间加入第2天赛事。\n\n此「第2天」赛事仅向经由「第1天」赛事获得参赛资格的牌手开放。\n\n第2天的赛制为三盘两胜制（可更换备牌且牌手个别计时）的传统调谐赛。就算牌手多次经第1天赢得资格，也只能参加一次第2天赛事。若需协助，请点按<u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>此处</link></u>联系客户支持。\n\n<b><color=red>须年满18周岁方能参加。部分地区／地域不能参加本赛事。在法律禁止的地区无效。须创建或具现有威世智、DCI及i-Payout帐户方能领取奖金。完整详细信息，请参阅<u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>此处</link></u>。</color></b>",
+          "status": "verified",
+          "priority": 100,
+          "field_use": "[\"Loc.enUS\"]"
+        }
+      ],
+      "context": {
+        "english": "<size=150%><color=#e1a154>Compete for monetary rewards!\n\nPlayers must join the Day 2 event between 6 a.m. PT - 8 a.m. PT (1400 UTC - 1600 UTC).</size></color>\n\nThis second day of competition is open only to qualified players from Day 1.\n\nThe Day 2 format is Traditional Alchemy with best-of-three matches using sideboards and individual timers. Players may only enter once, even if they have qualified multiple times. For assistance, click <u><link=https://mtgarena-support.wizards.com/hc/requests/new?ticket_form_id=360000419612>here</link></u> to contact Customer Service.\n\n<b><color=red>Must be 18 years or older to participate. Not available in all regions/territories. Void where prohibited. Receiving monetary rewards requires creating or having existing Wizards, DCI, and i-Payout accounts. See <u><link=https://magic.wizards.com/en/news/mtg-arena/arena-open-terms-and-conditions>here</link></u> for full details.</color></b>",
+        "field_use": [
+          "Loc.enUS"
+        ],
+        "identity": {
+          "client_key": "Events/Event_Desc_ArenaOpen_Day2"
+        }
+      }
+    }
+  ],
+  "C": [
+    {
+      "layer": "card",
+      "key": "1155571",
+      "status": "candidate",
+      "english": "When Josu Vess enters, if he was kicked, create eight 2/2 black Zombie Knight creature tokens with menace.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "When Josu Vess enters, if he was kicked, create eight 2/2 black Zombie Knight creature tokens with menace.",
+          "chinese": "When Josu Vess enters, if he was kicked, create eight 2/2 black Zombie Knight creature tokens with menace.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "When Josu Vess enters, if he was kicked, create eight 2/2 black Zombie Knight creature tokens with menace.",
+          "chinese": "当霍苏维斯进场时，若它已增幅，则派出八个2/2黑色，具威慑异能的灵俑／骑士衍生生物。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "When Josu Vess enters, if he was kicked, create eight 2/2 black Zombie Knight creature tokens with menace.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 67294,
+              "TitleId": 227211,
+              "ExpansionCode": "DAR",
+              "CollectorNumber": "95",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1156432",
+      "status": "candidate",
+      "english": "Whenever Drakuseth attacks, Drakuseth deals 4 damage to any target and 3 damage to each of up to two other targets.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Whenever Drakuseth attacks, Drakuseth deals 4 damage to any target and 3 damage to each of up to two other targets.",
+          "chinese": "Whenever Drakuseth attacks, Drakuseth deals 4 damage to any target and 3 damage to each of up to two other targets.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Whenever Drakuseth attacks, Drakuseth deals 4 damage to any target and 3 damage to each of up to two other targets.",
+          "chinese": "每当卓库瑟攻击时，卓库瑟对任意一个目标造成4点伤害，且对至多两个其他目标各造成3点伤害。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Whenever Drakuseth attacks, Drakuseth deals 4 damage to any target and 3 damage to each of up to two other targets.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 69921,
+              "TitleId": 351960,
+              "ExpansionCode": "M20",
+              "CollectorNumber": "136",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            },
+            {
+              "GrpId": 93906,
+              "TitleId": 351960,
+              "ExpansionCode": "FDN",
+              "CollectorNumber": "193",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1156907",
+      "status": "candidate",
+      "english": "Whenever this creature attacks, you may have the base power and toughness of target Human you control become equal to this creature's power and toughness until end of turn.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Whenever this creature attacks, you may have the base power and toughness of target Human you control become equal to this creature's power and toughness until end of turn.",
+          "chinese": "Whenever this creature attacks, you may have the base power and toughness of target Human you control become equal to this creature's power and toughness until end of turn.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Whenever this creature attacks, you may have the base power and toughness of target Human you control become equal to this creature's power and toughness until end of turn.",
+          "chinese": "每当此生物攻击时，你可以将目标由你操控之人类生物的基础力量与防御力更改为此生物的力量与防御力直到回合结束。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Whenever this creature attacks, you may have the base power and toughness of target Human you control become equal to this creature's power and toughness until end of turn.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 71218,
+              "TitleId": 428339,
+              "ExpansionCode": "IKO",
+              "CollectorNumber": "151",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            },
+            {
+              "GrpId": 82023,
+              "TitleId": 428339,
+              "ExpansionCode": "Y22",
+              "CollectorNumber": "79",
+              "IsToken": 0,
+              "IsPrimaryCard": 0,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1157651",
+      "status": "candidate",
+      "english": "{o2oB}, Sacrifice this creature: Return target creature card from your graveyard to your hand.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "{o2oB}, Sacrifice this creature: Return target creature card from your graveyard to your hand.",
+          "chinese": "{o2oB}, Sacrifice this creature: Return target creature card from your graveyard to your hand.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "{o2oB}, Sacrifice this creature: Return target creature card from your graveyard to your hand.",
+          "chinese": "{o2oB}，牺牲此生物：将目标生物牌从你的坟墓场移回你手上。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "{o2oB}, Sacrifice this creature: Return target creature card from your graveyard to your hand.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 72281,
+              "TitleId": 42857,
+              "ExpansionCode": "JMP",
+              "CollectorNumber": "219",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            },
+            {
+              "GrpId": 82001,
+              "TitleId": 42857,
+              "ExpansionCode": "Y22",
+              "CollectorNumber": "57",
+              "IsToken": 0,
+              "IsPrimaryCard": 0,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1158048",
+      "status": "candidate",
+      "english": "Boast<nobr> —</nobr> {o1}: You may have Arni's base power become 1 plus the greatest power among other creatures you control until end of turn.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Boast<nobr> —</nobr> {o1}: You may have Arni's base power become 1 plus the greatest power among other creatures you control until end of turn.",
+          "chinese": "Boast<nobr> —</nobr> {o1}: You may have Arni's base power become 1 plus the greatest power among other creatures you control until end of turn.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Boast<nobr> —</nobr> {o1}: You may have Arni's base power become 1 plus the greatest power among other creatures you control until end of turn.",
+          "chinese": "炫威～{o1}：你可以将亚尼的基础力量更改为「由你操控之其他生物中的最大力量加1」直到回合结束。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Boast<nobr> —</nobr> {o1}: You may have Arni's base power become 1 plus the greatest power among other creatures you control until end of turn.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 75162,
+              "TitleId": 477390,
+              "ExpansionCode": "KHM",
+              "CollectorNumber": "120",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            },
+            {
+              "GrpId": 75414,
+              "TitleId": 477390,
+              "ExpansionCode": "KHM",
+              "CollectorNumber": "310",
+              "IsToken": 0,
+              "IsPrimaryCard": 0,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1159094",
+      "status": "candidate",
+      "english": "Whenever this creature or another Zombie you control dies, you draw a card and lose 1 life.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Whenever this creature or another Zombie you control dies, you draw a card and lose 1 life.",
+          "chinese": "Whenever this creature or another Zombie you control dies, you draw a card and lose 1 life.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Whenever this creature or another Zombie you control dies, you draw a card and lose 1 life.",
+          "chinese": "每当此生物或另一个由你操控的灵俑死去时，你抓一张牌且失去1点生命。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Whenever this creature or another Zombie you control dies, you draw a card and lose 1 life.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 71453,
+              "TitleId": 430214,
+              "ExpansionCode": "MH1",
+              "CollectorNumber": "112",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1160350",
+      "status": "candidate",
+      "english": "Dragon's Approach deals 3 damage to each opponent. You may exile this spell and four cards named Dragon's Approach from your graveyard. If you do, search your library for a Dragon creature card, put it onto the battlefield, then shuffle.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Dragon's Approach deals 3 damage to each opponent. You may exile this spell and four cards named Dragon's Approach from your graveyard. If you do, search your library for a Dragon creature card, put it onto the battlefield, then shuffle.",
+          "chinese": "Dragon's Approach deals 3 damage to each opponent. You may exile this spell and four cards named Dragon's Approach from your graveyard. If you do, search your library for a Dragon creature card, put it onto the battlefield, then shuffle.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Dragon's Approach deals 3 damage to each opponent. You may exile this spell and four cards named Dragon's Approach from your graveyard. If you do, search your library for a Dragon creature card, put it onto the battlefield, then shuffle.",
+          "chinese": "巨龙来袭向每位对手各造成3点伤害。你可以放逐此咒语，并从你坟墓场放逐四张名称为巨龙来袭的牌。若你如此作，则从你牌库中搜寻一张龙生物牌，将之放进战场，然后洗牌。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Dragon's Approach deals 3 damage to each opponent. You may exile this spell and four cards named Dragon's Approach from your graveyard. If you do, search your library for a Dragon creature card, put it onto the battlefield, then shuffle.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 76490,
+              "TitleId": 488466,
+              "ExpansionCode": "STX",
+              "CollectorNumber": "97",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1161400",
+      "status": "candidate",
+      "english": "Whenever a Dragon you control enters, put a <nobr>+1/+1</nobr> counter on Sarkhan. Until end of turn, Sarkhan becomes a Dragon in addition to his other types and gains flying.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "Whenever a Dragon you control enters, put a <nobr>+1/+1</nobr> counter on Sarkhan. Until end of turn, Sarkhan becomes a Dragon in addition to his other types and gains flying.",
+          "chinese": "Whenever a Dragon you control enters, put a <nobr>+1/+1</nobr> counter on Sarkhan. Until end of turn, Sarkhan becomes a Dragon in addition to his other types and gains flying.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "Whenever a Dragon you control enters, put a <nobr>+1/+1</nobr> counter on Sarkhan. Until end of turn, Sarkhan becomes a Dragon in addition to his other types and gains flying.",
+          "chinese": "每当一个由你操控的龙进场时，在萨坎上放置一个+1/+1指示物。直到回合结束，萨坎额外具有龙此类别，且获得飞行异能。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "Whenever a Dragon you control enters, put a <nobr>+1/+1</nobr> counter on Sarkhan. Until end of turn, Sarkhan becomes a Dragon in addition to his other types and gains flying.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 95638,
+              "TitleId": 927018,
+              "ExpansionCode": "TDM",
+              "CollectorNumber": "118",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            },
+            {
+              "GrpId": 96533,
+              "TitleId": 927018,
+              "ExpansionCode": "TDM",
+              "CollectorNumber": "302",
+              "IsToken": 0,
+              "IsPrimaryCard": 0,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1161626",
+      "status": "candidate",
+      "english": "When <nobr>God-Eternal</nobr> Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "When <nobr>God-Eternal</nobr> Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+          "chinese": "When <nobr>God-Eternal</nobr> Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "When <nobr>God-Eternal</nobr> Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+          "chinese": "当永生煞神欧柯塔死去或从战场进入放逐区时，你可以将她置于其拥有者牌库顶数来第三张的位置。",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "When <nobr>God-Eternal</nobr> Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 69543,
+              "TitleId": 336471,
+              "ExpansionCode": "WAR",
+              "CollectorNumber": "92",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "layer": "card",
+      "key": "1162468",
+      "status": "candidate",
+      "english": "<i>Celebration</i><nobr> —</nobr> As long as two or more nonland permanents entered the battlefield under your control this turn, Goddric is a Dragon with base power and toughness 4/4, flying, and \"{oR}: Dragons you control get <nobr>+1/+0</nobr> until end of turn.\"",
+      "field_use": [
+        "Cards.AbilityTextId"
+      ],
+      "reason": "donor-awaiting-review",
+      "sources": [
+        {
+          "source_id": "historical-final-card",
+          "english": "<i>Celebration</i><nobr> —</nobr> As long as two or more nonland permanents entered the battlefield under your control this turn, Goddric is a Dragon with base power and toughness 4/4, flying, and \"{oR}: Dragons you control get <nobr>+1/+0</nobr> until end of turn.\"",
+          "chinese": "<i>Celebration</i><nobr> —</nobr> As long as two or more nonland permanents entered the battlefield under your control this turn, Goddric is a Dragon with base power and toughness 4/4, flying, and \"{oR}: Dragons you control get <nobr>+1/+0</nobr> until end of turn.\"",
+          "status": "keep-english",
+          "priority": 200,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        },
+        {
+          "source_id": "MTGA Mod(MacOS) 26.9.30-card",
+          "english": "<i>Celebration</i><nobr> —</nobr> As long as two or more nonland permanents entered the battlefield under your control this turn, Goddric is a Dragon with base power and toughness 4/4, flying, and \"{oR}: Dragons you control get <nobr>+1/+0</nobr> until end of turn.\"",
+          "chinese": "欢庆～只要本回合中有两个或更多非地永久物在你的操控下进战场，戈垂克便是基础力量与防御力为4/4的龙，且具有飞行与「{oR}：由你操控的龙得+1/+0直到回合结束。」",
+          "status": "candidate",
+          "priority": 100,
+          "field_use": "[\"Cards.AbilityTextId\"]"
+        }
+      ],
+      "context": {
+        "english": "<i>Celebration</i><nobr> —</nobr> As long as two or more nonland permanents entered the battlefield under your control this turn, Goddric is a Dragon with base power and toughness 4/4, flying, and \"{oR}: Dragons you control get <nobr>+1/+0</nobr> until end of turn.\"",
+        "field_use": [
+          "Cards.AbilityTextId"
+        ],
+        "identity": {
+          "cards": [
+            {
+              "GrpId": 86830,
+              "TitleId": 731595,
+              "ExpansionCode": "WOE",
+              "CollectorNumber": "132",
+              "IsToken": 0,
+              "IsPrimaryCard": 1,
+              "IsDigitalOnly": 0,
+              "IsRebalanced": 0,
+              "LinkedFaceType": 0,
+              "LinkedFaceGrpIds": ""
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

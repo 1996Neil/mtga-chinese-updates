@@ -1,0 +1,24 @@
+{
+  "schema": "MTGA_PUBLIC_WATCH_STATE_V1",
+  "repository": "1996Neil/mtga-chinese-updates",
+  "seen_keys": [
+    "notice-completed-mpf0mdwprf5w",
+    "notice-mpf0mdwprf5w",
+    "notice-xs36vmsxrvxb",
+    "notification-test-39821391579",
+    "resources-cad96093a1eb2bd2",
+    "steam-build-25919252"
+  ],
+  "migration": {
+    "from_repository": "1996Neil/mtga-resource-acquisition-probe",
+    "migrated_at": "2026-10-24T07:32:27.139204+00:00",
+    "legacy_watch_issues_examined": 8,
+    "scope": "Stable event keys only; no private issue bodies, numbers, users, or credentials copied",
+    "input_sha256": "59d020eb90066b7f2f326759243d232e9525d43c013034e97cfb7178e8399fcc"
+  },
+  "status": "MIGRATED_NOT_YET_CHECKED",
+  "human_notifications_sent": false,
+  "localization_published": false,
+  "findings": [],
+  "errors": []
+}

@@ -1,0 +1,280 @@
+{
+  "schema": "MTGA_CN_BASE_CAPTURE_REVIEW_V1",
+  "status": "PASS",
+  "reviewer": "independent agent base-reviewer (verdict) / assembled by producer (receipt binding only)",
+  "at": "2026-10-20T20:25:35.536248+00:00",
+  "baseline_commit": "ec42695c137ee0d79e0064f0acecc293603129bd",
+  "subject": {
+    "client_version": "2026.64.50",
+    "steam_build": "25919252",
+    "resources_sha256": "ebae74ce1f77bc90b30b0049a6c027c23e4cbd71323e0a307d1f1a28843bbd93",
+    "bootstrap_fonts_sha256": "ebcf43000e7ec123de3ff0e9b3382322e4807de5c36d0136e1951376acabdf2d"
+  },
+  "scope": "PASS 仅限：判断游戏目录中 resources.assets 与 sharedassets0.assets 是否为 2026.64.50 官方原件。未进行 update/install/rollback、未写游戏文件、未做客户端验收。",
+  "assembly_note": "结论由独立 agent 写入 /Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/base-captures/20261020T201156.9171/independent-review.json；本文件只追加 receipt 绑定。",
+  "oracle_note": "审查后游戏内更新器替换了 Raw_ClientLocalization（oracle）；被判定的两个文件指纹未变，本轮自动化判据在新 oracle 下重新验证仍为 1219/1219 全等。",
+  "verdict_basis": [
+    {
+      "claim": "UI en-US text equals the manifest-verified official client text",
+      "method": "compare every LocLibraryData en-US slot against Raw_ClientLocalization.Loc.enUS",
+      "result": {
+        "ui_keys": 1219,
+        "oracle_keys": 21794,
+        "missing": [],
+        "missing_count": 0,
+        "differing": [],
+        "differing_count": 0
+      },
+      "pass": true
+    },
+    {
+      "claim": "UI asset belongs to the new release, not to the pinned old capture",
+      "method": "key-set difference against the pinned official capture; an uncovered old file would be byte-identical instead",
+      "result": {
+        "old_keys": 1218,
+        "new_keys": 1219,
+        "added": [
+          "Events/Event_Desc_MWM_JumpIn_SOS"
+        ],
+        "removed": []
+      },
+      "pass": true
+    },
+    {
+      "claim": "UI asset carries no TMP fallback-font pointer from the Chinese patch",
+      "method": "the reviewed patch appends two pointers into sharedassets0; official has none",
+      "result": {
+        "current": [],
+        "official": [],
+        "patched": [
+          {
+            "m_FileID": 3,
+            "m_PathID": 299
+          },
+          {
+            "m_FileID": 3,
+            "m_PathID": 305
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "claim": "No UI object deviates from official in the shape of the Chinese patch",
+      "method": "of the objects that differ from the pinned official capture, none may match the patched capture (untouched objects match both by definition)",
+      "result": {
+        "current_objects": 3891,
+        "deviating_from_official": 1172,
+        "deviating_and_like_patch": [],
+        "deviating_and_like_patch_count": 0
+      },
+      "pass": true
+    },
+    {
+      "claim": "Both bootstrap font slots are the official payload, not Heiti SC",
+      "method": "compare m_FontNames and m_FontData sha256, not the name alone",
+      "result": {
+        "current": {
+          "DFMARUGOTHICSTD-W3": {
+            "m_FontNames": [
+              "DFMaruGothic Std W3"
+            ],
+            "bytes": 4310020,
+            "sha256": "2011d66682487675f5a1da62547304ec5189bef7cb661afdb3c5c4ee967d81a2"
+          },
+          "MOTOYAAPOROSTD-W6": {
+            "m_FontNames": [
+              "Motoya Aporo Std"
+            ],
+            "bytes": 2693304,
+            "sha256": "185cd9a6e7992d8523c679e471d300ade4dd3b7cfe8ca836a4860cd4079024d5"
+          }
+        },
+        "official": {
+          "DFMARUGOTHICSTD-W3": {
+            "m_FontNames": [
+              "DFMaruGothic Std W3"
+            ],
+            "bytes": 4310020,
+            "sha256": "2011d66682487675f5a1da62547304ec5189bef7cb661afdb3c5c4ee967d81a2"
+          },
+          "MOTOYAAPOROSTD-W6": {
+            "m_FontNames": [
+              "Motoya Aporo Std"
+            ],
+            "bytes": 2693304,
+            "sha256": "185cd9a6e7992d8523c679e471d300ade4dd3b7cfe8ca836a4860cd4079024d5"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "claim": "Bootstrap asset belongs to the new release",
+      "method": "an uncovered old file would be identical object-for-object to the pinned capture",
+      "result": {
+        "current_objects": 418,
+        "identical_to_old_capture": 293,
+        "total_old_objects": 418
+      },
+      "pass": true
+    },
+    {
+      "claim": "No bootstrap object deviates from official in the shape of the Chinese patch",
+      "method": "deviating objects that match the patched capture would carry patch residue",
+      "result": {
+        "deviating_and_like_patch": 0
+      },
+      "pass": true
+    },
+    {
+      "claim": "Steam reports a completed install of the same build",
+      "method": "parse appmanifest_2141910.acf",
+      "result": {
+        "StateFlags": "4",
+        "UpdateResult": "0",
+        "buildid": "25919252",
+        "TargetBuildID": "25919252",
+        "expected_build": "25919252"
+      },
+      "pass": true
+    },
+    {
+      "claim": "Both opaque files were written inside the Steam update window",
+      "method": "mtime falls within one hour before appmanifest LastUpdated",
+      "result": [
+        {
+          "layer": "resources",
+          "mtime_utc": "2026-10-20T17:12:37.265759+00:00",
+          "steam_last_updated_utc": "2026-10-20T17:15:00+00:00",
+          "inside_update_window": true
+        },
+        {
+          "layer": "bootstrap_fonts",
+          "mtime_utc": "2026-10-20T17:12:37.818714+00:00",
+          "steam_last_updated_utc": "2026-10-20T17:15:00+00:00",
+          "inside_update_window": true
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "independent_agent": {
+    "verdict": "PASS",
+    "checks_passed": 12,
+    "checks_failed": 6,
+    "findings": [
+      {
+        "priority": "P1",
+        "issue": "probe 的 PASS 判据无法区分「64.50 官方」与「Steam 未覆盖而残留的 63.20 官方」——三条判据里没有任何版本一致性判据（实测：把 63.20 官方两份文件喂进 capture_base.verdict()，仍 3/3 PASS）",
+        "impact": "若 Steam 只更新了部分文件，capture 会把旧版本官方当成新版本底稿登记，之后所有文本 diff 都会缺新 key / 用旧串，且与“干净官方”外观完全一致，极难发现。修复：改用 manifest 已认证的 Raw_ClientLocalization 逐键全等作为 en-US 判据（它天然带版本），并补一条“新 key/新引用必须在同版本其它层中可解析”的一致性判据"
+      },
+      {
+        "priority": "P1",
+        "issue": "verdict() 的官方/汉化对照基线未受信任链保护：reference_pair() 只检查文件存在，未校验 PIN_REVIEW/PIN_RECEIPT/PIN_SNAPSHOT，构成“用未校验的官方副本证明另一个文件是官方”的循环论证",
+        "impact": "run 目录一旦被覆盖、迁移或人工修改，判据会拿错误基线得出结论且无告警。本次实测基线恰好正确（与 PIN_RECEIPT 一致），但脚本无法自证。修复：verdict 内调用 opaque_baseline() 或显式比对 receipt 哈希"
+      },
+      {
+        "priority": "P1",
+        "issue": "2% 容差 = 约 22–24 个 key，会放过部分汉化（实测 20 键、比例 0.0181 时三条判据全 PASS）；阈值来源无任何说明",
+        "impact": "局部汉化（例如只翻了公告/活动文案）会被登记为官方底稿，后续 diff 永久把这段中文当成官方原文。修复：en-US 必须与 64.50 客户端库逐键全等（允许的差异应为空集），不要用比例"
+      },
+      {
+        "priority": "P1",
+        "issue": "本审查产物（用户指定 schema）与 official_base 期望的 review 结构不兼容：缺少 validation_run_evidence.evidence_files 绑定，且 receipt 路径、PIN_RUN/PIN_REVIEW/PIN_RECEIPT/PIN_SNAPSHOT 均硬编码为 63.20 世代",
+        "impact": "把 64.50 底稿 pin 上线时，opaque_baseline 会直接 KeyError 或报“Pinned historical receipt changed”。登记 64.50 必须同时产出新 receipt 并改常量；仅重指 PIN_RUN 不够。建议在 capture_base --stage 中同时生成 receipt，并让 PIN_* 从一个 release 描述文件读取"
+      },
+      {
+        "priority": "P2",
+        "issue": "字体判据只比较 m_FontNames，不比较 m_FontData（证据里采集了 m_FontData_bytes 却不参与 pass 判定）",
+        "impact": "名称未变而数据被替换的半写入形态会通过（合成测试已验证）。修复：直接比 m_FontData 的 sha256，而不是字节数或名字"
+      },
+      {
+        "priority": "P2",
+        "issue": "bootstrap_fonts 的 chant_marker 扫描恒为 0（汉化版该文件不含 UTF-8 中文），是死判据；且 verdict 只消费 resources 的 markers，bootstrap 的 markers 从未使用",
+        "impact": "制造“已检查”的假象，增加噪声。修复：删除该文件的 marker 扫描，或改为在解码后的文本对象上扫描"
+      },
+      {
+        "priority": "P2",
+        "issue": "Steam 证据只记录不判定：StateFlags/UpdateResult/BytesDownloaded/mtime 是否落在 LastUpdated 窗口，均未进入 verdict",
+        "impact": "更新中断、半下载、或被跳过的情况下仍可能 PASS。修复：把这些做成硬前置条件（StateFlags==4、UpdateResult==0、下载字节相等、mtime 在提交窗口内）"
+      },
+      {
+        "priority": "P2",
+        "issue": "mtime 以本地裸时间（无时区）写入 probe.json，而 at 是 UTC；本机 CST+0800 会让人把 01:12 误读成 UTC",
+        "impact": "跨时区复核时时间证据会错位 8 小时，可能误判“更新窗口外”。修复：统一写 UTC ISO8601 带 Z"
+      },
+      {
+        "priority": "P2",
+        "issue": "has_chinese 的语义是“CJK”，会把日文汉字计为中文（ja-JP 849 条）；probe 未说明这一点",
+        "impact": "en-US 判据上属保守（fail-closed），无实际危害；但若将来把该函数用于 jap 相关层次会误导。建议注释写明语义"
+      }
+    ],
+    "adversarial_cases": [
+      {
+        "case": "官方版本本身就在 en-US 槽位放中文（多语言游戏）",
+        "outcome": "真实存在：MainNav/Settings/LanguageNative_ja=日本語、LanguageNative_zh-CN=简体中文，官方 63.20 与 64.50 都有。因此“en-US 无中文”绝不能作为判据；probe 用比例对比规避了这一点，当前 2 条与 64.50 库逐字一致。附带发现：has_chinese 会把日文汉字算成中文（ja-JP 有 849 条），语义应记为 CJK"
+      },
+      {
+        "case": "字体层本来就用 Heiti，官方被误判为汉化",
+        "outcome": "不成立：官方两槽位是 DFMaruGothic Std W3 / Motoya Aporo Std，汉化才改成 Heiti SC。即使未来官方改用 Heiti，判据会 fail-closed（拒绝），方向安全"
+      },
+      {
+        "case": "Steam 只覆盖了部分文件 / 完全没覆盖这两个文件",
+        "outcome": "已排除：两文件都与 63.20 官方在对象级不同（1172 / 125 个对象），且 mtime 落在 Steam 提交窗口。注意：probe 的判据对这一情形会误判为 PASS（实测），排除它靠的是本审查另加的新增 key、MonoScript 重映射与对象差异"
+      },
+      {
+        "case": "用户手动从备份恢复了某份文件，污染当前状态",
+        "outcome": "已排除：当前哈希不等于本地任何一份备份（63.20/64.0 的官方与汉化版本都不匹配），游戏目录也没有 .bak/.orig 之类残留"
+      },
+      {
+        "case": "部分汉化：UI 改了字体没改，或反之",
+        "outcome": "双向均已排除。UI：1219/1219 与 64.50 客户端库全等，且“当前==汉化且!=官方”的 key 为 0；字体：两个槽位的名称与完整 payload sha256 都等于官方，补丁在该文件的足迹只有这 2 个对象"
+      },
+      {
+        "case": "半写入（字体数据已换成 Heiti，但 m_FontNames 仍是官方名）",
+        "outcome": "现实中不存在（payload sha256 与官方逐字节相同，且无 Heiti 字节）；但 probe 的字体判据会被这种形态骗过（合成测试 PASS），属判据缺陷而非本次事实"
+      },
+      {
+        "case": "补丁残留藏在非 UI/非字体对象里（例如只改了 TMP 回退指针）",
+        "outcome": "已排除：官方→汉化的完整足迹就是 resources 2 个对象（LocLibraryData + TMP Settings）、bootstrap 2 个 Font；当前 TMP Settings 的 m_fallbackFontAssets 为空，与官方相同"
+      },
+      {
+        "case": "参考基线（run/official 或补丁对照件）被替换，导致判据失效",
+        "outcome": "脚本层面无防护（P1-2）；本次实测未被污染：官方参考 = PIN_RECEIPT 的 fdfb17c9/c2c45365，补丁参考 = PIN_RECEIPT 的 8669e01b/61df1d93，且与 installation.json 的 before/candidate 一致"
+      },
+      {
+        "case": "陈旧但干净的官方文件被当作新版本底稿登记",
+        "outcome": "这是最危险的一条，且 probe 无法识别（实测 PASS）。本审查用三项独立证据排除：① 新增 key 只存在于 64.50 客户端库；② bootstrap 的 m_Script 3906 在当前 globalgamemanagers 中才解析为 TMP_FontAsset；③ 对象级差异 1172/125"
+      }
+    ],
+    "not_verified": [
+      "无法取得发行方对 resources.assets / sharedassets0.assets 的任何签名或哈希（Steam acf 不含逐文件摘要，MTGA manifest 不含这两个文件），因此“64.50 官方”是强推定而非密码学证明",
+      "未启动游戏，未验证运行时文本渲染、字体回退是否正常工作",
+      "未验证 Steam 本次是整文件重写还是差分合并（只从结果、mtime 与字节差异推断）",
+      "未验证 64.50 官方字体 payload 是否本应变化（无发行方字体基准）；只证明它等于已审查的 63.20 官方字节",
+      "未验证 resources.assets 与未更新的 resources.assets.resS（mtime 2026-09-23）之间的流式资源偏移是否仍完全匹配（未逐条解析外部资源偏移）",
+      "按要求未运行 update / install / tests.py，未修改游戏目录与 official_base 常量"
+    ]
+  },
+  "validation_run_evidence": {
+    "evidence_files": {
+      "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/base-handoff-20261021/protected-before-next.json": {
+        "sha256": "065a3fbed9e76c7837a15974fb6572fb0660194e52b51ef57d40c0237a03af75",
+        "bytes": 1863
+      }
+    },
+    "base_run": "/Users/neil/Documents/ChatGPT/mtga/tools/chinese-maintainer/state/runs/2026.64.50_20261020T202537160084Z",
+    "snapshot": {
+      "sha256": "ae01697addf1920e7b22ee5ce8b2cf7d10f595f2c7caffd6170ff549ffc3db88",
+      "bytes": 4200
+    },
+    "automated_checks_passed": true
+  },
+  "limitations": [
+    "没有发行方签名：Steam acf 不含逐文件摘要，\"官方原件\"是强推定而非密码学证明。",
+    "字体 payload 的官方性继承 63.20 捕获：只能证明未被替换，不能证明 64.50 官方本应给不同字节。",
+    "未启动游戏验证运行时渲染。",
+    "审查者指出的判据缺陷已修复并做正反例回归（当前 PASS / 63.20 官方残留 REJECT / 63.20 汉化残留 REJECT），修复后的判据尚未经第三方复核。"
+  ]
+}

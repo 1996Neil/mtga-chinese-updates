@@ -1,0 +1,8 @@
+#!/bin/sh
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+MAINTAINER_ROOT="$SCRIPT_DIR/../tools/chinese-maintainer"
+if [ ! -x "$MAINTAINER_ROOT/.venv/bin/python" ]; then
+  echo "请先按 docs/DEVELOPMENT.md 创建维护器 Python 环境。" >&2
+  exit 1
+fi
+exec "$MAINTAINER_ROOT/.venv/bin/python" "$MAINTAINER_ROOT/cli.py" "$@"

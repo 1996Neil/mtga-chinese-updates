@@ -67,4 +67,6 @@ export MTGA_HISTORY_ROOT="/你的已核验历史导入资料目录"
 
 `mtga-watch/` 是当前公开维护监控。查看 Actions 的 MTGA update watch，失败有报告；官方公告或已知清单变化不代表汉化可安装。独立 Localization 全局最新指针仍未核实，限制保留在报告中。
 
+监控在 Ubuntu 24.04 + OpenSSL 运行，CI 在同一平台测试其 Ed25519 签名夹具。macOS 自带 LibreSSL 不支持这里使用的 `pkeyutl -rawin`；若本机测试监控，须先准备支持 Ed25519 的 OpenSSL 并放在 PATH，不得关闭验签来适配系统工具。
+
 `tools/subscriber/private_*`、`install_private_receiver.py` 与 `PRIVATE-DELIVERY-20261017.md` 保留了旧私有云端固定 r3 原型的源码和证据范围。它们不在普通用户入口使用，不改为读取公开仓库以绕过私有守卫，也不承诺旧制品在到期后可用。相关旧仓库归档后不再生成私有制品；新维护工作使用公开监控、当前本地构建与签名 feed 发布。旧接收器的本地恢复边界不因归档被改写。

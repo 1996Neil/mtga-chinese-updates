@@ -4,7 +4,7 @@
 
 **[下载安装包 v2.1](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.0-25763111-r1/MTGA-Chinese-Subscriber-v2.1.zip) · [查看发布](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)**
 
-觉得有用，欢迎点右上角 **Star** 支持维护。想收到可用更新的邮件，请 **Watch → Custom → Releases**，并在 GitHub 通知设置为 Watching 开启 Email。Star 与邮件订阅是两个动作；不订阅、不 Star 也可以下载和使用。
+觉得有用，欢迎点右上角 **Star** 支持。想收到可用更新的邮件，请 **Watch → Custom → Releases**，并在 GitHub 通知设置为 Watching 开启 Email。
 
 ## 第一次安装
 

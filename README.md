@@ -1,6 +1,7 @@
 # MTGA 中文维护与双语导入
 
 面向 **macOS + Steam 的《万智牌：竞技场》**：安装一次更新工具，以后主动检查、预演并应用维护者发布的适配汉化。维护源码、订阅客户端、更新监控和使用说明集中在这个仓库。
+windows用户可以去这个网站下载汉化工具https://shiqidi.lenitatis.com/mod
 
 **[下载安装包 v2.1](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.0-25763111-r1/MTGA-Chinese-Subscriber-v2.1.zip) · [查看发布](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)**
 

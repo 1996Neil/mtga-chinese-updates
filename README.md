@@ -11,10 +11,11 @@ Windows 用户可查看[其他维护者提供的工具](https://shiqidi.lenitati
 ## 安装与更新
 
 1. 下载、解压，双击「安装 MTGA 中文维护.command」。旧版用户也先安装 v3.2，保留相同更新源。
+会出现如下提示，点击完成，然后在设置里的隐私与安全中，找到安全性，选择允许以下来源的应用程序，选择app store与已知开发者，选择仍要打开。
   <img width="488" height="506" alt="Screenshot-8CEAF004-E2AF-43D3-ACDF-B018626AC0F9" src="https://github.com/user-attachments/assets/29906956-1ea3-4141-ab85-dca382dd20f9" />
 <img width="494" height="452" alt="Screenshot-4DE87B4F-EDBA-45ED-8EF9-F30084CA8C75" src="https://github.com/user-attachments/assets/9e973bdc-45d2-4054-b8fb-1a55671b1534" />
 <img width="1450" height="1150" alt="Screenshot-E3525FC6-9ED7-4A51-9C7C-01582457BBF9" src="https://github.com/user-attachments/assets/00f7eefb-2c19-45bb-b4c6-ff754e55db70" />
-再次同意，之后再运行一次，MTGA 中文维护.command就出现在桌面了。
+之后再运行一次安装 MTGA 中文维护.command，MTGA 订阅更新就出现在桌面了。
 3. 完成 Steam 和游戏内下载，退出 MTGA。
 4. 打开桌面「MTGA 订阅更新」：**检查更新 → 预演 → 应用更新**。游戏语言保持 **English**。
 

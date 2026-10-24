@@ -4,7 +4,7 @@
 
 ## 获取源码与编译客户端
 
-在 macOS 安装 Xcode Command Line Tools（`xcode-select --install`），并准备 Python 3.11+。客户端是 Swift 原生程序，发布流程所需的 GitHub CLI 由维护者自行安装与登录。
+在 macOS 安装 Xcode Command Line Tools（`xcode-select --install`），并准备 Python 3.11。维护器当前锁定的 UnityPy 1.23.0 在 Python 3.14 上不能构建；CI 显式使用 3.11，不能跟随系统 Python 自动升级。客户端是 Swift 原生程序，发布流程所需的 GitHub CLI 由维护者自行安装与登录。
 
 ```sh
 git clone https://github.com/1996Neil/mtga-chinese-updates.git
@@ -21,7 +21,7 @@ MTGA_SUBSCRIBER_TEST_BINARY=/tmp/mtga-client-tests python3 -m unittest discover 
 ## 维护器环境
 
 ```sh
-python3 -m venv tools/chinese-maintainer/.venv
+python3.11 -m venv tools/chinese-maintainer/.venv
 tools/chinese-maintainer/.venv/bin/python -m pip install -r tools/chinese-maintainer/requirements.lock
 cd tools/chinese-maintainer
 .venv/bin/python -m unittest discover -v

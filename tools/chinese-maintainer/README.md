@@ -124,7 +124,7 @@ Arena GrpId + 同版本官方 Cards 元数据是可用身份依据；没有伪�
 
 - 命令入口：项目 `bin/mtga-cn`，本机 `~/.local/bin/mtga-cn`。
 - 最近运行：`state/latest.json`；每轮 `state/runs/<版本_时间>/` 含官方备份、候选、计划、diff、报告、fixtures、验收与审查证据。
-- 安装事务：`state/installation.json`；实际 before 备份位于 `/Users/neil/Documents/Codex/MTGA-backups/<时间>-maintainer-v1/`。
+- 安装事务：`state/installation.json`；实际 before 备份位于当前配置的 `MTGA_BACKUP_ROOT`，默认是当前用户的 `Library/Application Support/MTGAChineseMaintainer/backups`。旧事务保留自己记录的原备份路径。
 - 来源：`REUSE.json`、`DEPENDENCIES.json`、`requirements.lock`；历史脚本只作来源，未直接执行旧 install/restore。
 - 新增环境独立在 `.venv`，不改系统 Python。已锁定 [UnityPy 1.23.0](https://pypi.org/project/UnityPy/1.23.0/) 等依赖与实际许可证路径。未来解析器版本改变会使代码审查/候选证据过期。
 - 游戏二进制、账号、原始日志和完整卡库不会上传；运行数据和环境已 Git 忽略。

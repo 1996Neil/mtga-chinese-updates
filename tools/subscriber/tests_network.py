@@ -93,7 +93,7 @@ class PublicationTests(SubscriberTests):
         self.assertEqual(json.loads(base64.b64decode(envelope['payload']))['minimum_client'],3)
         self.assertEqual(release['acceptance']['status'],'testing')
         self.assertIn('真实游戏内验收尚未完成',release['acceptance']['scope'])
-        for value in (True,0,1,4,'3'):
+        for value in (True,0,1,5,'3'):
             with self.subTest(value=value),self.assertRaisesRegex(ValueError,'最低客户端'):
                 build_package(run,self.root/('bad-minimum-'+str(value)),BINARY,self.private,self.pub,1,minimum_client=value)
         default=build_package(run,self.root/'default-protocol',BINARY,self.private,self.pub,1)

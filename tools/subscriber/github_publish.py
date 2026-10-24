@@ -95,6 +95,17 @@ def publication_plan(package, repo, tag, client, public_file):
         if path.is_symlink() or path.resolve().parent!=package:raise ValueError('资源不在发布目录中。')
         check(path,patch['fingerprint']);assets[name]={'path':str(path),**patch['fingerprint']}
     if len(assets)!=5:raise ValueError('必须有五份差分。')
+    for resource in release['resources']:
+        if 'full' not in resource:continue
+        full=resource['full'];name=full['name']
+        if release['minimum_client']<4 or full['fingerprint']!=resource['output']:
+            raise ValueError('完整资源须匹配签名输出且要求协议4。')
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,140}\.full',name) or name in assets:
+            raise ValueError('完整资源名无效或重复。')
+        if full.get('url')!=f'https://github.com/{repo}/releases/download/{tag}/{name}':raise ValueError('完整资源地址不属于目标 Release。')
+        path=package/name
+        if path.is_symlink() or path.resolve().parent!=package:raise ValueError('完整资源不在发布目录中。')
+        check(path,full['fingerprint']);assets[name]={'path':str(path),**full['fingerprint']}
     return {'repo':repo,'tag':tag,'feed':feed,'channel':channel,'index':index,'manifest':str(manifest),'release':release,'assets':assets}
 
 

@@ -4,6 +4,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import struct
 import subprocess
@@ -136,7 +137,7 @@ def sign(client, key, value, out, scratch):
     payload.unlink()
 
 
-def package(run, destination, client, key, public_key, revision, channel='testing', acceptance=None, sequence=None, feed=None, asset_base=None, local_acceptance=None, minimum_client=None):
+def package(run, destination, client, key, public_key, revision, channel='testing', acceptance=None, sequence=None, feed=None, asset_base=None, local_acceptance=None, minimum_client=None, include_full=False):
     run, destination = Path(run).resolve(), Path(destination).resolve()
     snapshot = json.loads((run / 'snapshot.json').read_text())
     report = json.loads((run / 'report.json').read_text())
@@ -146,8 +147,10 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         raise ValueError('静态检查未通过。')
     if channel not in {'stable', 'testing'} or revision < 1 or (sequence is not None and sequence < 1):
         raise ValueError('渠道或序号无效。')
-    if minimum_client is not None and (type(minimum_client) is not int or minimum_client not in (2,3)):
-        raise ValueError('显式最低客户端版本只能为2或3。')
+    if minimum_client is not None and (type(minimum_client) is not int or minimum_client not in (2,3,4)):
+        raise ValueError('显式最低客户端版本只能为2、3或4。')
+    if include_full and minimum_client != 4:
+        raise ValueError('完整资源覆盖需要最低客户端协议4。')
     base_meta = json.loads((run / 'official-base.json').read_text())
     if len(base_meta['layers']) != 5 or {r['layer'] for r in base_meta['layers']} != set(LAYERS):
         raise ValueError('官方底稿层集合不完整。')
@@ -213,6 +216,12 @@ def package(run, destination, client, key, public_key, revision, channel='testin
                           'input': {k: subject['input_files'][layer][k] for k in ('sha256', 'bytes')},
                           'output': {k: subject['output_files'][layer][k] for k in ('sha256', 'bytes')},
                           'patch': {'name': patch.name, 'fingerprint': fp, **({'url': asset_base + '/' + patch.name} if asset_base else {})}})
+        if include_full:
+            full = destination / (layer + '-' + subject['output_files'][layer]['sha256'] + '.full')
+            shutil.copyfile(output, full)
+            full_fp = {k: subject['output_files'][layer][k] for k in ('sha256', 'bytes')}
+            check(full, full_fp)
+            resources[-1]['full'] = {'name': full.name, 'fingerprint': full_fp, **({'url': asset_base + '/' + full.name} if asset_base else {})}
     protected = [{'relative': row['relative'], 'fingerprint': {k: row[k] for k in ('sha256', 'bytes')}}
                  for layer, row in snapshot['files'].items() if layer not in LAYERS]
     protected += [{'relative': rel, 'fingerprint': fp} for rel, fp in snapshot['manifests'].items()]
@@ -250,10 +259,11 @@ def main():
     p.add_argument('--sequence', type=int); p.add_argument('--channel', choices=('stable','testing'), default='testing')
     p.add_argument('--acceptance', type=Path); p.add_argument('--feed')
     p.add_argument('--asset-base'); p.add_argument('--local-acceptance', type=Path)
-    p.add_argument('--minimum-client', type=int, choices=(2,3),
+    p.add_argument('--minimum-client', type=int, choices=(2,3,4),
                    help='Require a client protocol version; version 3 enables authenticated-output adoption')
+    p.add_argument('--include-full', action='store_true', help='Add signed complete resources for replacing unknown patches')
     args = p.parse_args()
-    result = package(args.run,args.output,args.client,args.key,args.public_key,args.revision,args.channel,args.acceptance,args.sequence,args.feed,args.asset_base,args.local_acceptance,args.minimum_client)
+    result = package(args.run,args.output,args.client,args.key,args.public_key,args.revision,args.channel,args.acceptance,args.sequence,args.feed,args.asset_base,args.local_acceptance,args.minimum_client,args.include_full)
     print('本地发布包：',args.output,'；验收状态：',result['acceptance']['status'])
 
 

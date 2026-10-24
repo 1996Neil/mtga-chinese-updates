@@ -27,3 +27,7 @@ Journal `MTGA_CN_SUBSCRIBER_TX_V1` binds UUID transaction, game path and exact b
 索引与 manifest 在 Git 中随同一提交切换；五个差分和安装 ZIP 先上传到独立草稿 Release，并通过认证 API 指纹（缺失指纹时认证完整下载）验证。索引成功切换并读回后才公开 Release 和通知订阅者，再检查匿名 HEAD（缺失指纹时匿名完整下载）。每个新修订独立 tag；已签名历史 tag 只按原引用续签，不新增附件。发布器冻结允许上传的文件，同名异内容拒绝覆盖，不使用 force push。此设计没有设置或确认 GitHub 服务端 immutable release。
 
 联网包仅含 `mtga-cn`、`profile.json`、固定安装脚本、固定说明及 `SHA256.json`。ZIP 根目录必须是安全 basename，禁止额外成员、目录项、注释/extra metadata 和链接。每次发布均比对当前已审客户端、固定模板、订阅身份及完整文件清单。
+
+## 协议 4：完整资源覆盖
+
+资源行可含 `full: {name, fingerprint, url?}`。文件为未压缩的完整输出，名称以 `.full` 结束，fingerprint 必须等于该层 output；HTTPS 地址与差分使用相同仓库限制。发布包含 full 时 minimum_client 为4。客户端优先使用官方或已验证底稿的差分；无底稿时以完整输出覆盖未知补丁。before 记录实际当前文件，original_available=false，不伪造官方底稿；回滚仍恢复 before。受保护文件和活动路径校验保持有效。

@@ -88,7 +88,7 @@ def package(client, profile_path, out, local_feed=None):
     if local_feed:
         (out/'feed').mkdir()
         for path in Path(local_feed).iterdir():
-            if path.is_file() and not path.is_symlink() and (path.suffix == '.delta' or path.name.startswith('index-') or path.name.startswith('2026.')):
+            if path.is_file() and not path.is_symlink() and (path.suffix in ('.delta', '.full') or path.name.startswith('index-') or path.name.startswith('2026.')):
                 shutil.copy2(path, out/'feed'/path.name)
     dump(out/'profile.json', profile)
     for name, data in fixed_text(bool(local_feed)).items():

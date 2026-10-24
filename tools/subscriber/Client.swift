@@ -3,7 +3,7 @@ import CryptoKit
 import Darwin
 import zlib
 
-let clientVersion = 3
+let clientVersion = 4
 struct Problem: Error, CustomStringConvertible { let description: String }
 func need(_ condition: Bool, _ message: String) throws { if !condition { throw Problem(description: message) } }
 let fm = FileManager.default
@@ -14,7 +14,7 @@ struct Envelope: Codable { let payload: String; let signature: String }
 struct Artifact: Codable { let name: String; let fingerprint: Fingerprint; let url: String? }
 struct ReleaseRef: Codable { let id: String; let revision: Int64; let client_version: String; let steam_build: String; let manifest: Artifact }
 struct Index: Codable { let schema: String; let sequence: Int64; let expires_at: String; let channel: String; let releases: [ReleaseRef] }
-struct Resource: Codable { let layer: String; let relative: String; let input: Fingerprint; let output: Fingerprint; let patch: Artifact }
+struct Resource: Codable { let layer: String; let relative: String; let input: Fingerprint; let output: Fingerprint; let patch: Artifact; let full: Artifact? }
 struct Protected: Codable { let relative: String; let fingerprint: Fingerprint }
 struct Acceptance: Codable { let status: String; let evidence_sha256: String?; let scope: String }
 struct Release: Codable {
@@ -193,6 +193,12 @@ func validateRelease(_ release: Release, _ ref: ReleaseRef, _ game: Game, _ chan
     if channel == "stable" { try need(release.acceptance.status == "accepted" && matching(release.acceptance.evidence_sha256 ?? "", "^[0-9a-f]{64}$") && !release.acceptance.scope.isEmpty, "此包尚未完成发布者验收，不能通过稳定渠道安装。") }
     try need(release.resources.count == 5 && Set(release.resources.map(\.layer)) == Set(["card", "client", "resources", "bootstrap_fonts", "font_bundle"]), "资源层集合无效。")
     for row in release.resources { try need(validResource(row.layer, row.relative), "发布包尝试写入禁止的文件。") ; try validFP(row.input); try validFP(row.output); try validFP(row.patch.fingerprint); try basename(row.patch.name) }
+    for row in release.resources {
+        if let full = row.full {
+            try basename(full.name); try validFP(full.fingerprint)
+            try need(full.name.hasSuffix(".full") && full.fingerprint == row.output, "完整资源必须与签名输出一致。")
+        }
+    }
     let paths = release.protected_files.map(\.relative)
     try need(Set(paths).count == paths.count && Set(["MTGA.app/Contents/Info.plist", "MTGA.app/Contents/MacOS/MTGA", "MTGA.app/Contents/Frameworks/GameAssembly.dylib"]).isSubset(of: Set(paths)) && paths.contains(where: { $0.hasPrefix("MTGA_Data/Downloads/Manifest_") }), "发布包缺少受保护文件校验。")
     for row in release.protected_files { try need(protectedPath(row.relative), "受保护路径无效。") ; try validFP(row.fingerprint) }
@@ -426,7 +432,7 @@ final class Client {
         if profile.feed.hasPrefix("https://") {
             guard let base = URL(string: profile.feed), base.user == nil, base.password == nil, base.query == nil, base.fragment == nil else { throw Problem(description: "更新源地址必须是不含凭据或查询参数的 HTTPS 目录。") }
             let url = try remote.map { try releaseURL($0, feed: profile.feed, name: name) } ?? base.appendingPathComponent(name)
-            let isPatch = name.hasSuffix(".delta")
+            let isPatch = name.hasSuffix(".delta") || name.hasSuffix(".full")
             if isPatch, let fp = expected { return try deltaDownload(name, url: url, fp: fp, limit: limit) }
             if isPatch { print("正在下载资源：\(name)（\((expected?.bytes ?? 0) / 1024 / 1024) MiB）。慢速网络可能需要较长时间。完成校验前不会修改游戏。"); fflush(stdout) }
             var curl = "/usr/bin/curl"
@@ -505,7 +511,7 @@ final class Client {
         let old = try journal()
         try need(old == nil || ["installed", "rolled-back"].contains(old!.state), "上次操作未完成，请先执行 recover 恢复。")
         try verifyProtected(game.root, release.protected_files)
-        if let old = old, old.state == "installed" && old.release_id == release.id { try guardGame(old, partial: false); print("当前已安装此版本，无需重复更新。"); return }
+        if let old = old, old.state == "installed" && old.release_id == release.id, try release.resources.allSatisfy({ try fingerprint(target(game.root, $0.relative)) == $0.output }) { try guardGame(old, partial: false); print("当前已安装此版本，无需重复更新。"); return }
         let required = release.resources.reduce(Int64(0)) { $0 + $1.input.bytes * 2 + $1.output.bytes * 2 + $1.patch.fingerprint.bytes } + 64 * 1024 * 1024
         let free = (try fm.attributesOfFileSystem(forPath: state.path)[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
         let gameFree = (try fm.attributesOfFileSystem(forPath: game.root.path)[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
@@ -535,17 +541,24 @@ final class Client {
                 rows.append(Row(layer: row.layer, relative: row.relative, before: actual, after: row.output, original: row.input, original_available: available))
                 continue
             }
-            var source = current
-            if actual != row.input {
-                guard let previous = old, previous.client_version == game.version, previous.steam_build == game.build, let r = previous.rows.first(where: { $0.layer == row.layer && $0.relative == row.relative && (previous.state == "installed" ? $0.after == actual : (previous.state == "rolled-back" && $0.before == actual)) && $0.original == row.input }) else { throw Problem(description: "本机资源不是匹配的官方文件或本工具已知版本：\(row.layer)。请先检查其他补丁或 Steam 文件完整性。") }
-                try need(r.original_available != false, "已有中文资源与签名版本匹配，但缺少这一层的官方重建底稿：\(row.layer)。已停止升级；不会把中文资源冒充官方底稿。")
-                source = original(previous, r); try verify(source, row.input)
+            var source: URL? = actual == row.input ? current : nil
+            if source == nil, let previous = old, previous.client_version == game.version, previous.steam_build == game.build,
+               let r = previous.rows.first(where: { $0.layer == row.layer && $0.relative == row.relative && $0.original == row.input && $0.original_available != false }) {
+                // A verified official base can rebuild this output even if another patch changed current bytes.
+                source = original(previous, r); try verify(source!, row.input)
             }
-            try copyVerified(source, work.appendingPathComponent("original-" + row.layer), row.input)
             try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
-            let patch = try fetch(row.patch.name, expected: row.patch.fingerprint, limit: 512*1024*1024, remote: row.patch.url)
-            try applyDelta(work.appendingPathComponent("original-" + row.layer), patch, work.appendingPathComponent("after-" + row.layer), row.output)
-            rows.append(Row(layer: row.layer, relative: row.relative, before: actual, after: row.output, original: row.input, original_available: true))
+            if let source = source {
+                try copyVerified(source, work.appendingPathComponent("original-" + row.layer), row.input)
+                let patch = try fetch(row.patch.name, expected: row.patch.fingerprint, limit: 512*1024*1024, remote: row.patch.url)
+                try applyDelta(work.appendingPathComponent("original-" + row.layer), patch, work.appendingPathComponent("after-" + row.layer), row.output)
+            } else {
+                guard let full = row.full else { throw Problem(description: "本机资源不是匹配的官方文件或本工具已知版本：\(row.layer)。缺少这一层的官方重建底稿，且此发布尚无完整资源，请等待维护者发布支持覆盖的版本。") }
+                print("\(row.layer)：使用完整资源覆盖；已保存当前文件供恢复。")
+                let downloaded = try fetch(full.name, expected: row.output, limit: 1024*1024*1024, remote: full.url)
+                try copyVerified(downloaded, work.appendingPathComponent("after-" + row.layer), row.output)
+            }
+            rows.append(Row(layer: row.layer, relative: row.relative, before: actual, after: row.output, original: row.input, original_available: source != nil))
         }
         var j = Journal(schema: "MTGA_CN_SUBSCRIBER_TX_V1", id: id, release_id: release.id, revision: release.revision, game: game.root.path, client_version: game.version, steam_build: game.build, rows: rows, protected_files: release.protected_files, state: "prepared")
         try guardGame(j, partial: true)
@@ -580,7 +593,7 @@ func options(_ args: [String]) throws -> (String, [String: String]) {
     return (command, values)
 }
 let help = """
-MTGA 中文维护订阅客户端 v2.2 候选（macOS + Steam）
+MTGA 中文维护订阅客户端 v3.1（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
 preview    下载并在本地重建，核对全部文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏

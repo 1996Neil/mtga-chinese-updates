@@ -32,15 +32,16 @@ jobs:
               return b''.join(chunks)
           # No token is supplied: download paths must work for ordinary users.
           index=verified_envelope(get(feed+'/index-testing.json'),key)
-          assert index['channel']=='testing' and len(index['releases'])==1
-          assert index['releases'][0]['id']=='2026.64.50-25919252-r2'
+          assert index['channel']=='testing' and 0<len(index['releases'])<=10000
+          assert len({r['id'] for r in index['releases']})==len(index['releases'])
           records=[]
           for ref in index['releases']:
               raw=get(feed+'/'+ref['manifest']['name'])
               assert {'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}==ref['manifest']['fingerprint']
               release=verified_envelope(raw,key)
               assert release['id']==ref['id'] and release['minimum_client']==4
-              assert release['client_version']=='2026.64.50' and release['steam_build']=='25919252'
+              assert release['client_version']==ref['client_version'] and release['steam_build']==ref['steam_build']
+              assert release['revision']==ref['revision']
               assert len(release['resources'])==5 and {r['layer'] for r in release['resources']}=={'card','client','resources','bootstrap_fonts','font_bundle'}
               for resource in release['resources']:
                   verify(resource['patch']['url'],resource['patch']['fingerprint'])

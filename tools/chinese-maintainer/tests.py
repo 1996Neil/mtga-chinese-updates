@@ -145,7 +145,7 @@ class RegistryTests(unittest.TestCase):
             'verified', 150, ['Loc.enUS'], 'old')
         value, result = decide(self.c, 'new_run', 'client', key, 'Quick Draft', ['Loc.enUS'])
         self.assertEqual(value, 'Quick Draft')
-        self.assertEqual(result['reason'], 'explicit-reviewed-English-name-policy')
+        self.assertIn('configured-English-event-name-policy', result['reason'])
 
     def test_description_classifier_does_not_match_a_similar_title_word(self):
         from registry import is_mode_description
@@ -154,8 +154,110 @@ class RegistryTests(unittest.TestCase):
         self.assertFalse(is_mode_description('Events/Event_Title_Descend_Into_Adventure'))
         self.assertFalse(is_mode_description('Events/Event_Title_FRA_Quick_Draft'))
 
+    def test_new_event_names_stay_english_even_without_historical_policy(self):
+        for key in ('Events/Event_Title_FRA_Premier_Draft', 'Events/Event_Cat_Future_Draft',
+                    'Events/Events/Event_Title_Future_Draft', 'Formats/Format_Title_Future'):
+            with self.subTest(key=key):
+                add(self.c, 'client', key, 'Future Draft', '未来轮抽', 'new-review',
+                    'verified', 500, ['Loc.enUS'], 'new')
+                text, result = decide(self.c, 'new_run', 'client', key, 'Future Draft', ['Loc.enUS'])
+                self.assertEqual(text, 'Future Draft')
+                self.assertEqual(result['status'], 'keep-english')
+                self.assertIn('configured-English-event-name-policy', result['reason'])
+                self.assertTrue(result['conflicts'])
+
+    def test_event_description_and_navigation_titles_are_not_event_names(self):
+        from registry import is_english_event_name
+        for key in ('Events/Event_Title_MWM_Cascade_Alchemy_Desc',
+                    'Events/Event_Desc_FRA_Premier_Draft', 'PlayBlade/Tabs/Event_Title',
+                    'AbilityHanger/Keyword/Flying_Title'):
+            with self.subTest(key=key):
+                self.assertFalse(is_english_event_name(key))
+                add(self.c, 'client', key, 'Read this text', '阅读说明', 'normal-review',
+                    'verified', 500, ['Loc.enUS'], 'new')
+                value, result = decide(self.c, 'new_run', 'client', key, 'Read this text', ['Loc.enUS'])
+                self.assertEqual(value, '阅读说明')
+                self.assertEqual(result['status'], 'verified')
+
+    def test_new_event_names_without_sources_still_use_current_official_english(self):
+        text, result = decide(self.c, 'new_run', 'client', 'Events/Event_Title_Upcoming',
+                              'Upcoming Event', ['Loc.enUS'])
+        self.assertEqual(text, 'Upcoming Event')
+        self.assertEqual(result['status'], 'keep-english')
+        self.assertFalse(result['migration_eligible'])
+
+    def test_event_names_expand_official_references_without_changing_chinese_targets(self):
+        from registry import bind_contexts, english_event_text
+        bind_contexts(self.c, {
+            ('client', 'General/Sets/HOB'): {'english': 'The Hobbit', 'field_use': ['Loc.enUS'],
+                                           'identity': {'client_key': 'General/Sets/HOB'}},
+            ('client', 'Events/Promo/Aang'): {'english': '<sprite name="xW"> Aang', 'field_use': ['Loc.enUS'],
+                                            'identity': {'client_key': 'Events/Promo/Aang'}},
+        })
+        add(self.c, 'client', 'General/Sets/HOB', 'The Hobbit', '霍比特人', 'review',
+            'verified', 500, ['Loc.enUS'], 'new')
+        text, _ = decide(self.c, 'new', 'client', 'Events/Event_Title_HOB_Quick_Draft',
+                         'Quick Draft $/General/Sets/HOB$', ['Loc.enUS'])
+        self.assertEqual(text, 'Quick Draft The Hobbit')
+        text, _ = decide(self.c, 'new', 'client', 'Events/Event_Title_Sealed_Aang',
+                         'Sealed - $/Events/Promo/Aang$', ['Loc.enUS'])
+        self.assertEqual(text, 'Sealed - <sprite name="xW"> Aang')
+        value, _ = decide(self.c, 'new', 'client', 'General/Sets/HOB', 'The Hobbit', ['Loc.enUS'])
+        self.assertEqual(value, '霍比特人')
+        for mapping in ({'a': '$/a$'}, {}):
+            with self.assertRaises(RuntimeError):
+                english_event_text('$/a$', mapping.get)
+
 
 class DatabaseTests(unittest.TestCase):
+    def test_event_name_candidate_keeps_description_and_other_languages(self):
+        from event_names import build
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            official, previous = root / 'official.sqlite', root / 'previous.sqlite'
+            with sqlite3.connect(official) as db:
+                db.executescript('CREATE TABLE Loc(Key TEXT PRIMARY KEY,enUS TEXT,jaJP TEXT);')
+                db.executemany('INSERT INTO Loc VALUES (?,?,?)', [
+                    ('Events/Event_Title_New', 'New Draft', 'name-other-language'),
+                    ('Events/Event_Desc_New', 'Build a deck.', 'description-other-language'),
+                    ('Events/Event_Title_MWM_Cascade_Alchemy_Desc', 'Welcome!', 'body-other-language'),
+                    ('PlayBlade/Tabs/Event_Title', 'Events', 'navigation-other-language'),
+                ])
+                db.commit()
+                with sqlite3.connect(previous) as dst:
+                    db.backup(dst)
+                    dst.execute("UPDATE Loc SET enUS='新轮抽' WHERE Key='Events/Event_Title_New'")
+                    dst.execute("UPDATE Loc SET enUS='构筑套牌。' WHERE Key='Events/Event_Desc_New'")
+                    dst.execute("UPDATE Loc SET enUS='欢迎！' WHERE Key='Events/Event_Title_MWM_Cascade_Alchemy_Desc'")
+                    dst.execute("UPDATE Loc SET enUS='赛事' WHERE Key='PlayBlade/Tabs/Event_Title'")
+            result = build(official, previous, root / 'candidate')
+            self.assertEqual(result['restored_name_count'], 1)
+            with sqlite3.connect(root / 'candidate/client-localized.mtga') as db:
+                rows = {r[0]: r[1:] for r in db.execute('SELECT * FROM Loc')}
+                self.assertEqual(rows['Events/Event_Title_New'][0], 'New Draft')
+                self.assertEqual(rows['Events/Event_Desc_New'], ('构筑套牌。', 'description-other-language'))
+                self.assertEqual(rows['Events/Event_Title_MWM_Cascade_Alchemy_Desc'][0], '欢迎！')
+                self.assertEqual(rows['PlayBlade/Tabs/Event_Title'][0], '赛事')
+
+    def test_client_validator_requires_exact_official_name_reference_expansion(self):
+        from raw import validate_db
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            source, target = root / 'source.sqlite', root / 'target.sqlite'
+            key = 'Events/Event_Title_Fixture'
+            with sqlite3.connect(source) as db:
+                db.executescript('CREATE TABLE Loc(Key TEXT PRIMARY KEY,enUS TEXT);')
+                db.executemany('INSERT INTO Loc VALUES (?,?)',
+                               [(key, 'Draft $/Sets/Fixture$'), ('Sets/Fixture', '<sprite name="a"> Fiction')])
+                db.commit()
+                with sqlite3.connect(target) as dst:
+                    db.backup(dst)
+                    dst.execute('UPDATE Loc SET enUS=? WHERE Key=?', ('Draft <sprite name="a"> Fiction', key))
+            self.assertEqual(validate_db(source, target, 'client',
+                                        {key: 'Draft <sprite name="a"> Fiction'})['status'], 'PASS')
+            with self.assertRaises(RuntimeError):
+                validate_db(source, target, 'client', {key: 'Draft <sprite name="a"> Invented'})
+
     def test_wrong_card_binding_and_token_only_variant_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()

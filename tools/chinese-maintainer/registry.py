@@ -98,6 +98,24 @@ def is_mode_description(key):
                           str(key), re.IGNORECASE))
 
 
+def is_english_event_name(key):
+    """Preserve every event/category/format name, including future releases."""
+    return (not is_mode_description(key) and bool(re.match(
+        r'^(?:Events/(?:Events/)?Event_(?:Title|Cat)_|Formats/Format_Title_)', str(key))))
+
+
+def english_event_text(english, lookup, seen=()):
+    """Resolve names against official English without changing shared targets."""
+    def replace(match):
+        key = match[1]
+        candidates = (key, key.lstrip('/'))
+        found = next((lookup(k) for k in candidates if lookup(k) is not None), None)
+        require(found is not None, 'Official event-name reference missing: ' + key)
+        require(key not in seen and len(seen) < 32, 'Cyclic event-name reference: ' + key)
+        return english_event_text(found, lookup, (*seen, key))
+    return re.sub(r'\$([^$]+)\$', replace, english or '')
+
+
 def bootstrap(c):
     """Import immutable, hash-guarded historical artifacts; never run old installers."""
     manifest = read_json(OLD / 'manifest.json')
@@ -251,7 +269,17 @@ def decide(c, run, layer, key, english, use, *, persist=True):
     intentional = [r for r in matches if r[2] == 'keep-english' and r[3] >= 250
                    and not (layer == 'client' and r[1] == 'historical-mode-name-policy'
                             and is_mode_description(key))]
-    if intentional and (not verified or intentional[0][3] >= verified[0][3]):
+    if layer == 'client' and use == ['Loc.enUS'] and is_english_event_name(key):
+        def official_reference(reference):
+            exists = c.execute("SELECT 1 FROM sqlite_temp_master WHERE name='admission_context'").fetchone()
+            current = c.execute("SELECT payload FROM admission_context WHERE layer='client' AND key=?",
+                                (reference,)).fetchone() if exists else None
+            return json.loads(current[0])['english'] if current else None
+        value = english_event_text(english, official_reference)
+        status, origin, reason = 'keep-english', None, 'configured-English-event-name-policy'
+        conflicts = [{'source': r[1], 'translation': r[0], 'status': r[2]}
+                     for r in matches if r[0] != english and has_chinese(r[0])]
+    elif intentional and (not verified or intentional[0][3] >= verified[0][3]):
         status, origin, value, reason = 'keep-english', intentional[0][1], english, 'explicit-reviewed-English-name-policy'
     elif not use and not any(r[1].startswith('independent-resolution-') for r in verified):
         reason = 'unknown-field-use'

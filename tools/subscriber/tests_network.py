@@ -55,7 +55,7 @@ class URLAndProtocolTests(SubscriberTests):
 
 
 class PublicationTests(SubscriberTests):
-    def test_local_acceptance_preserves_exact_test_scope(self):
+    def publisher_run_fixture(self):
         run=self.root/'publisher-run';run.mkdir()
         snapshot={'client_version':'2026.64.0','steam_build':'25763111','data_versions':{},'files':{},'manifests':{}}
         report={'schema':'MTGA_CN_MAINTAINER_V1','run_id':'scope-fixture','candidate_files':{},'code_fingerprints':{},
@@ -69,6 +69,10 @@ class PublicationTests(SubscriberTests):
             meta['layers'].append({'layer':layer,'relative':rel,'fingerprint':fingerprint(base)})
         for name,value in [('snapshot.json',snapshot),('report.json',report),('official-base.json',meta)]:
             (run/name).write_bytes(canonical(value))
+        return run,snapshot,report
+
+    def test_local_acceptance_preserves_exact_test_scope(self):
+        run,snapshot,report=self.publisher_run_fixture()
         expected={k:{x:v[x] for x in ('relative','sha256','bytes')} for k,v in report['candidate_files'].items()}
         local={'status':'PASS_USER_REPORTED_LOCAL_USE','user_quote':'two checks passed','scope':'Split Second tooltip and mixed 60-card import only',
                'client_version':snapshot['client_version'],'steam_build':snapshot['steam_build'],'run_id':report['run_id'],'installed_candidate_files':expected}
@@ -80,6 +84,45 @@ class PublicationTests(SubscriberTests):
         with self.assertRaisesRegex(ValueError,'实际测试范围'):
             build_package(run,self.root/'empty-scope',BINARY,self.private,self.pub,2,local_acceptance=evidence)
         self.assertFalse((self.root/'empty-scope').exists())
+
+    def test_protocol_three_is_bound_in_signed_package_and_invalid_override_rejected(self):
+        run,_,_=self.publisher_run_fixture()
+        release=build_package(run,self.root/'v3-package',BINARY,self.private,self.pub,1,minimum_client=3)
+        self.assertEqual(release['minimum_client'],3)
+        envelope=json.loads((self.root/'v3-package'/(release['id']+'.json')).read_text())
+        self.assertEqual(json.loads(base64.b64decode(envelope['payload']))['minimum_client'],3)
+        self.assertEqual(release['acceptance']['status'],'testing')
+        self.assertIn('真实游戏内验收尚未完成',release['acceptance']['scope'])
+        for value in (True,0,1,4,'3'):
+            with self.subTest(value=value),self.assertRaisesRegex(ValueError,'最低客户端'):
+                build_package(run,self.root/('bad-minimum-'+str(value)),BINARY,self.private,self.pub,1,minimum_client=value)
+        default=build_package(run,self.root/'default-protocol',BINARY,self.private,self.pub,1)
+        self.assertEqual(default['minimum_client'],1)
+
+    def test_draft_lookup_falls_back_to_all_authenticated_pages(self):
+        missing=subprocess.CompletedProcess([],1,stdout='',stderr='gh: Not Found (HTTP 404)')
+        draft={'id':12,'tag_name':'new-tag','draft':True,'assets':[]}
+        pages=subprocess.CompletedProcess([],0,stdout=json.dumps([[{'id':1,'tag_name':'other'}],[draft]]),stderr='')
+        with patch.object(gp.subprocess,'run',side_effect=[missing,pages]) as call:
+            self.assertEqual(gp.release_state('example/repo','new-tag'),draft)
+            self.assertEqual(call.call_args.args[0],
+                             ['gh','api','--paginate','--slurp','repos/example/repo/releases?per_page=100'])
+
+    def test_draft_lookup_permissions_bad_pagination_and_ambiguity_fail_closed(self):
+        forbidden=subprocess.CompletedProcess([],1,stdout='',stderr='gh: Forbidden (HTTP 403)')
+        missing=subprocess.CompletedProcess([],1,stdout='',stderr='gh: Not Found (HTTP 404)')
+        with patch.object(gp.subprocess,'run',return_value=forbidden) as call:
+            with self.assertRaises(RuntimeError):gp.release_state('example/repo','tag')
+            self.assertEqual(call.call_count,1)
+        with patch.object(gp.subprocess,'run',side_effect=[missing,forbidden]):
+            with self.assertRaisesRegex(RuntimeError,'停止'):gp.release_state('example/repo','tag')
+        for value in ({'tag_name':'tag'},[[{'tag_name':'tag'}],[{'tag_name':'tag'}]]):
+            response=subprocess.CompletedProcess([],0,stdout=json.dumps(value),stderr='')
+            with self.subTest(value=value),patch.object(gp.subprocess,'run',side_effect=[missing,response]):
+                with self.assertRaises(ValueError):gp.release_state('example/repo','tag')
+        response=subprocess.CompletedProcess([],0,stdout=json.dumps([[]]),stderr='')
+        with patch.object(gp.subprocess,'run',side_effect=[missing,response]):
+            self.assertIsNone(gp.release_state('example/repo','tag'))
 
     def network_package(self):
         self.repo='example/update-files';self.tag='mtga-'+self.release['id']
@@ -284,13 +327,13 @@ class PublicationTests(SubscriberTests):
 
     def test_draft_digest_check_does_not_claim_anonymous_access(self):
         name,item,scratch,asset,mock=self.asset_verifier_fixture()
-        with patch.object(gp,'run',side_effect=mock('')) as run:
+        with patch.object(gp,'release_state',return_value={'assets':[asset]}) as state,patch.object(gp,'run') as run:
             result=gp.verify_remote_asset(self.repo,self.tag,name,item,scratch,draft=True)
             self.assertEqual(result['method'],'DRAFT_SERVER_DIGEST')
             self.assertFalse(result['anonymous_available'])
-            self.assertEqual(run.call_count,1)
+            state.assert_called_once_with(self.repo,self.tag);run.assert_not_called()
         asset['digest']='sha256:'+'0'*64
-        with patch.object(gp,'run',side_effect=mock('')):
+        with patch.object(gp,'release_state',return_value={'assets':[asset]}):
             with self.assertRaises(ValueError):gp.verify_remote_asset(self.repo,self.tag,name,item,scratch,draft=True)
 
     def test_draft_missing_digest_requires_authenticated_complete_body(self):
@@ -301,13 +344,13 @@ class PublicationTests(SubscriberTests):
                                    f'repos/{self.repo}/releases/assets/12345'])
             stdout.write(Path(item['path']).read_bytes())
             return subprocess.CompletedProcess(argv,0,stderr=b'')
-        with patch.object(gp,'run',side_effect=mock('')),patch.object(gp.subprocess,'run',side_effect=body):
+        with patch.object(gp,'release_state',return_value={'assets':[asset]}),patch.object(gp.subprocess,'run',side_effect=body):
             result=gp.verify_remote_asset(self.repo,self.tag,name,item,scratch,draft=True)
             self.assertTrue(result['authenticated_body_verified'])
             self.assertFalse(result['anonymous_body_verified'])
         def corrupt(argv,stdout,stderr):
             stdout.write(b'corrupt');return subprocess.CompletedProcess(argv,0,stderr=b'')
-        with patch.object(gp,'run',side_effect=mock('')),patch.object(gp.subprocess,'run',side_effect=corrupt):
+        with patch.object(gp,'release_state',return_value={'assets':[asset]}),patch.object(gp.subprocess,'run',side_effect=corrupt):
             with self.assertRaises(ValueError):gp.verify_remote_asset(self.repo,self.tag,name,item,scratch,draft=True)
 
     def test_notification_finalization_only_after_pushed_verified_index(self):

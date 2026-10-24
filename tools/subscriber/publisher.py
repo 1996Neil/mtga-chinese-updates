@@ -136,7 +136,7 @@ def sign(client, key, value, out, scratch):
     payload.unlink()
 
 
-def package(run, destination, client, key, public_key, revision, channel='testing', acceptance=None, sequence=None, feed=None, asset_base=None, local_acceptance=None):
+def package(run, destination, client, key, public_key, revision, channel='testing', acceptance=None, sequence=None, feed=None, asset_base=None, local_acceptance=None, minimum_client=None):
     run, destination = Path(run).resolve(), Path(destination).resolve()
     snapshot = json.loads((run / 'snapshot.json').read_text())
     report = json.loads((run / 'report.json').read_text())
@@ -146,6 +146,8 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         raise ValueError('静态检查未通过。')
     if channel not in {'stable', 'testing'} or revision < 1 or (sequence is not None and sequence < 1):
         raise ValueError('渠道或序号无效。')
+    if minimum_client is not None and (type(minimum_client) is not int or minimum_client not in (2,3)):
+        raise ValueError('显式最低客户端版本只能为2或3。')
     base_meta = json.loads((run / 'official-base.json').read_text())
     if len(base_meta['layers']) != 5 or {r['layer'] for r in base_meta['layers']} != set(LAYERS):
         raise ValueError('官方底稿层集合不完整。')
@@ -217,7 +219,8 @@ def package(run, destination, client, key, public_key, revision, channel='testin
     release_id = snapshot['client_version'] + '-' + snapshot['steam_build'] + '-r' + str(revision)
     release = {'schema': 'MTGA_CN_RELEASE_V1', 'id': release_id, 'revision': revision,
                'client_version': snapshot['client_version'], 'steam_build': snapshot['steam_build'],
-               'minimum_client': 2 if asset_base else 1, 'platform': 'macOS-Steam', 'architectures': arches,
+               'minimum_client': minimum_client if minimum_client is not None else (2 if asset_base else 1),
+               'platform': 'macOS-Steam', 'architectures': arches,
                'acceptance': {'status': status, 'evidence_sha256': evidence_hash, 'scope': scope},
                'resources': resources, 'protected_files': protected}
     for layer, (base, output) in sources.items():
@@ -247,8 +250,10 @@ def main():
     p.add_argument('--sequence', type=int); p.add_argument('--channel', choices=('stable','testing'), default='testing')
     p.add_argument('--acceptance', type=Path); p.add_argument('--feed')
     p.add_argument('--asset-base'); p.add_argument('--local-acceptance', type=Path)
+    p.add_argument('--minimum-client', type=int, choices=(2,3),
+                   help='Require a client protocol version; version 3 enables authenticated-output adoption')
     args = p.parse_args()
-    result = package(args.run,args.output,args.client,args.key,args.public_key,args.revision,args.channel,args.acceptance,args.sequence,args.feed,args.asset_base,args.local_acceptance)
+    result = package(args.run,args.output,args.client,args.key,args.public_key,args.revision,args.channel,args.acceptance,args.sequence,args.feed,args.asset_base,args.local_acceptance,args.minimum_client)
     print('本地发布包：',args.output,'；验收状态：',result['acceptance']['status'])
 
 

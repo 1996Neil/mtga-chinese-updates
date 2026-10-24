@@ -161,7 +161,10 @@ def verify_remote_asset(repo, tag, name, item, scratch, *, draft=False):
     # Fresh server digest binds uploaded bytes; anonymous HEAD separately proves
     # link availability. Only the subsequent full client download proves the
     # end-to-end anonymous body transfer and reconstruction.
-    release=json.loads(run(['gh','api',f'repos/{repo}/releases/tags/{tag}']))
+    release=(release_state(repo,tag) if draft else
+             json.loads(run(['gh','api',f'repos/{repo}/releases/tags/{tag}'])))
+    if release is None:
+        raise ValueError('远端 Release 缺失，无法核对资产。')
     matches=[a for a in release['assets'] if a['name']==name]
     if len(matches)!=1:raise ValueError('远端资产名称不唯一或缺失：'+name)
     asset=matches[0]
@@ -216,8 +219,23 @@ def verify_remote_asset(repo, tag, name, item, scratch, *, draft=False):
 def release_state(repo, tag):
     query=subprocess.run(['gh','api',f'repos/{repo}/releases/tags/{tag}'],text=True,capture_output=True)
     if query.returncode:
-        if '404' in query.stderr:return None
-        raise RuntimeError('无法读取 Release 状态。'+query.stderr[-1000:])
+        if not re.search(r'(?:HTTP\s+404|\(404\))',query.stderr):
+            raise RuntimeError('无法读取 Release 状态。'+query.stderr[-1000:])
+        # The tag endpoint documents published releases. Authenticated list
+        # includes drafts, including a draft whose tag has not yet been created.
+        listed=subprocess.run(['gh','api','--paginate','--slurp',
+                               f'repos/{repo}/releases?per_page=100'],
+                              text=True,capture_output=True)
+        if listed.returncode:
+            raise RuntimeError('无法列出草稿 Release；停止而非误判为不存在。'+listed.stderr[-1000:])
+        pages=json.loads(listed.stdout)
+        if not isinstance(pages,list) or not all(isinstance(page,list) for page in pages):
+            raise ValueError('Release 分页响应格式无效。')
+        matches=[row for page in pages for row in page
+                 if isinstance(row,dict) and row.get('tag_name')==tag]
+        if len(matches)>1:
+            raise ValueError('同一 tag 的 Release 不唯一。')
+        return matches[0] if matches else None
     return json.loads(query.stdout)
 
 

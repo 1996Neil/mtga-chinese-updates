@@ -1,0 +1,58 @@
+name: Verify public release downloads
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  anonymous-downloads:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify signed index and full anonymous installer and patch bytes
+        run: |
+          python3 - <<'PY'
+          import sys,json,urllib.request,hashlib,base64,zipfile,io
+          from pathlib import Path
+          sys.path.insert(0,'mtga-watch')
+          from watch_mtga import verified_envelope
+          config=json.loads(Path('mtga-watch/config.json').read_text())
+          feed=config['feed'];key=config['public_key']
+          def get(url):
+              with urllib.request.urlopen(url,timeout=180) as response:return response.read()
+          def verify(url,fp,retain=False):
+              digest=hashlib.sha256();size=0;chunks=[]
+              with urllib.request.urlopen(url,timeout=180) as response:
+                  while chunk:=response.read(1048576):
+                      digest.update(chunk);size+=len(chunk)
+                      if retain:chunks.append(chunk)
+              assert {'sha256':digest.hexdigest(),'bytes':size}==fp,(url,size)
+              return b''.join(chunks)
+          # No token is supplied: download paths must work for ordinary users.
+          index=verified_envelope(get(feed+'/index-testing.json'),key)
+          assert index['channel']=='testing' and len(index['releases'])==1
+          assert index['releases'][0]['id']=='2026.64.50-25919252-r1'
+          records=[]
+          for ref in index['releases']:
+              raw=get(feed+'/'+ref['manifest']['name'])
+              assert {'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}==ref['manifest']['fingerprint']
+              release=verified_envelope(raw,key)
+              assert release['id']==ref['id'] and release['minimum_client']==3
+              assert release['client_version']=='2026.64.50' and release['steam_build']=='25919252'
+              assert len(release['resources'])==5 and {r['layer'] for r in release['resources']}=={'card','client','resources','bootstrap_fonts','font_bundle'}
+              for resource in release['resources']:
+                  verify(resource['patch']['url'],resource['patch']['fingerprint'])
+                  records.append({'release':ref['id'],'layer':resource['layer'],'anonymous_body_sha256':'PASS'})
+          download=json.loads(get('https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/download.json'))
+          assert download['feed']==feed and download['channel']=='testing'
+          archive=verify(download['installer_url'],download['fingerprint'],retain=True)
+          with zipfile.ZipFile(io.BytesIO(archive)) as z:
+              assert z.testzip() is None
+              names=z.namelist();profile=json.loads(z.read(next(n for n in names if n.endswith('/profile.json'))))
+              assert profile['feed']==feed and profile['public_key']==key and profile['channel']=='testing'
+          result={'status':'PASS','anonymous_patch_bodies':records,'installer_download_hash':'PASS','installer_feed_and_key':'PASS','game_execution':'NOT_RUN'}
+          with open(__import__('os').environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('```json\n'+json.dumps(result,indent=2)+'\n```\n')
+          print(json.dumps(result))
+          PY

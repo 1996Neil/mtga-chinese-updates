@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """mtga-cn: one version migration, two independent capability gates."""
 import argparse
+import copy
 import datetime
 import fcntl
 import json
 import os
-import shutil
 from pathlib import Path
 import sqlite3
 import subprocess
 import sys
 from collections import Counter
 from common import (ROOT, STATE, GAME, require, fingerprint, read_json, save_json,
-                    database, game_stopped, has_chinese, managed_path)
+                    database, game_stopped, has_chinese, managed_path, copy_checked)
 from detect import detect, snapshot_official, comparison_official, stable_signature, verify_current
 from registry import open_registry, bootstrap, import_donor_review, import_corrections
 from raw import build_localization, build_names, regressions, validate_db, validate_names, deck_lines
@@ -30,8 +30,23 @@ def latest():
     return p, read_json(p / 'report.json')
 
 
-def reusable_visuals(previous_dir, previous, snapshot, build_code, baseline_inputs,
-                     card_candidate, client_candidate):
+def visual_input_fingerprints(official, snapshot):
+    return {
+        'official': {layer: fingerprint(official[layer])
+                     for layer in ('resources', 'bootstrap_fonts', 'font_bundle')},
+        'font_bundle_entry': snapshot['official_entries'][official['font_bundle'].name],
+    }
+
+
+def visual_proof(previous_dir, previous, name):
+    path = previous_dir / name
+    require(fingerprint(path) == previous['proof_files'][name],
+            'Previous visual proof changed: ' + name)
+    return read_json(path)
+
+
+def reusable_visuals(previous_dir, previous, visual_inputs, build_code, baseline_inputs,
+                     card_candidate, client_candidate, official_ui=None, registry=None, run=None):
     """Return previous visual artifacts only when every affecting input matches."""
     if not previous_dir or not previous or previous.get('schema') != 'MTGA_CN_MAINTAINER_V1':
         return False
@@ -41,35 +56,69 @@ def reusable_visuals(previous_dir, previous, snapshot, build_code, baseline_inpu
         return False
     if previous.get('baseline_inputs', {}) != baseline_inputs:
         return False
-    previous_snapshot = read_json(previous_dir / 'snapshot.json')
-    for layer in ('resources', 'bootstrap_fonts', 'font_bundle'):
-        before = previous_snapshot.get('files', {}).get(layer, {})
-        after = snapshot.get('files', {}).get(layer, {})
-        if {k: before.get(k) for k in ('sha256', 'bytes')} != {k: after.get(k) for k in ('sha256', 'bytes')}:
-            return False
+    if previous.get('visual_inputs') != visual_inputs:
+        return False
+    if (previous.get('localization', {}).get('static_status') != 'PASS' or
+            previous.get('localization', {}).get('fonts', {}).get('status') != 'PASS'):
+        return False
     for layer, candidate in (('card', card_candidate), ('client', client_candidate)):
         previous_candidate = previous.get('candidate_files', {}).get(layer, {})
         if fingerprint(candidate) != {k: previous_candidate.get(k) for k in ('sha256', 'bytes')}:
             return False
-    return all((previous_dir / name).is_file()
-               for name in ('resources.assets', 'sharedassets0.assets',
-                            'fonts-validation.json', 'migration-plan.json'))
+    try:
+        fonts = visual_proof(previous_dir, previous, 'fonts-validation.json')
+        plan = visual_proof(previous_dir, previous, 'migration-plan.json')
+        for layer, name in (('resources', 'resources.assets'),
+                            ('bootstrap_fonts', 'sharedassets0.assets'),
+                            ('font_bundle', Path(fonts['bundle_path']).name)):
+            row = previous['candidate_files'][layer]
+            require(fingerprint(previous_dir / name) == {k: row[k] for k in ('sha256', 'bytes')},
+                    'Previous visual candidate changed: ' + layer)
+        require(set(fonts['source_fonts']) == {'Light', 'Medium'}, 'Missing font sources')
+        for face in fonts['source_fonts'].values():
+            require(fingerprint(Path(face['source'])) == face['source_fingerprint'], 'System font changed')
+    except (OSError, KeyError, TypeError, ValueError, RuntimeError):
+        # Missing/old cache metadata or unavailable outputs fall back to the
+        # normal builder; they never count as successful reuse.
+        return False
+    if official_ui is None or registry is None or run is None:
+        return True
+    # Registry changes may affect UI while card/client output remains identical.
+    # Re-run only UI selection (no font generation or asset serialization).
+    import UnityPy
+    from unity_layers import objects, localization, select_ui_translations
+    rows = json.loads(localization(objects(UnityPy.load(str(official_ui)))).read().m_Script)
+    translated, decisions = select_ui_translations(rows, registry, run)
+    if translated != plan['ui']:
+        return False
+    return {'ui': translated, 'decisions': decisions}
 
 
-def reuse_visual_artifacts(previous_dir, previous, destination, migration, loc):
+def reuse_visual_artifacts(previous_dir, previous, destination, migration, loc, selection=None):
     """Copy already-validated visual outputs into a fresh run directory."""
-    for name in ('resources.assets', 'sharedassets0.assets'):
-        shutil.copy2(previous_dir / name, destination / name)
-    previous_migration = read_json(previous_dir / 'migration-plan.json')
-    migration['ui'] = previous_migration['ui']
-    previous_fonts = read_json(previous_dir / 'fonts-validation.json')
-    shutil.copy2(previous_dir / 'fonts-validation.json', destination / 'fonts-validation.json')
-    previous_bundle = Path(previous_fonts['bundle_path'])
-    bundle = destination / previous_bundle.name
-    shutil.copy2(previous_bundle, bundle)
-    fonts = {**previous_fonts, 'bundle_path': str(bundle)}
-    loc['resources'] = previous['localization']['resources']
-    loc['fonts'] = previous['localization']['fonts']
+    previous_fonts = visual_proof(previous_dir, previous, 'fonts-validation.json')
+    selection = selection or {'ui': read_json(previous_dir / 'migration-plan.json')['ui'], 'decisions': []}
+    migration['ui'] = dict(selection['ui'])
+    bundle = destination / Path(previous_fonts['bundle_path']).name
+    for layer, name in (('resources', 'resources.assets'),
+                        ('bootstrap_fonts', 'sharedassets0.assets'),
+                        ('font_bundle', bundle.name)):
+        row = previous['candidate_files'][layer]
+        copy_checked(previous_dir / name, destination / name,
+                     {k: row[k] for k in ('sha256', 'bytes')})
+    for face in previous_fonts.get('source_fonts', {}).values():
+        source = Path(face['source'])
+        if source.exists():
+            require(fingerprint(source) == face['source_fingerprint'], 'System font changed')
+    fonts = {**previous_fonts, 'bundle_path': str(bundle),
+             'bootstrap_path': str(destination / 'sharedassets0.assets'), 'runtime_rendering': '未验证'}
+    save_json(destination / 'fonts-validation.json', fonts)
+    if selection['decisions']:
+        save_json(destination / 'ui-decisions.json', selection['decisions'])
+    loc['resources'] = copy.deepcopy(previous['localization']['resources'])
+    loc['resources']['counts'] = dict(Counter(r['status'] for r in selection['decisions']))
+    loc['fonts'] = copy.deepcopy(previous['localization']['fonts'])
+    loc['fonts']['runtime_rendering'] = '未验证'
     return fonts
 
 
@@ -173,6 +222,7 @@ def update():
     try:
         print('正在核验官方底稿、版本与文件完整性；通过后保存构建用副本……', flush=True)
         official = snapshot_official(s, p)
+        visual_inputs = visual_input_fingerprints(official, s)
         registry = open_registry()
         try:
             old = bootstrap(registry)
@@ -200,10 +250,13 @@ def update():
             print('正在生成中文显示、英文导入兼容名称及测试牌表……', flush=True)
             names = build_names(official['card'], p / 'card-localized.mtga', p / 'card-final.mtga', registry, run, old['card'])
             fixtures = regressions(official['card'], p / 'card-final.mtga', p / 'fixtures', names)
-            if reusable_visuals(previous_dir, previous, s, build_code, baseline_inputs,
-                                p / 'card-final.mtga', p / 'client-localized.mtga'):
+            visual_selection = reusable_visuals(
+                previous_dir, previous, visual_inputs, build_code, baseline_inputs,
+                p / 'card-final.mtga', p / 'client-localized.mtga',
+                official['resources'], registry, run)
+            if visual_selection:
                 print('中文候选未变化；复用上一版 UI 与字体资源……', flush=True)
-                fonts = reuse_visual_artifacts(previous_dir, previous, p, migration, loc)
+                fonts = reuse_visual_artifacts(previous_dir, previous, p, migration, loc, visual_selection)
             else:
                 print('正在基于官方资源构建中文界面和字体……', flush=True)
                 resources = build_resources(official['resources'], official['bootstrap_fonts'], p / 'resources.assets', registry, run)
@@ -252,6 +305,8 @@ def update():
                   'registry_fingerprint': fingerprint(STATE / 'registry.sqlite'),
                   'review_inputs': review_input_fingerprints(), 'source_audit': source_audit,
                   'baseline_inputs': baseline_inputs,
+                  'visual_inputs': visual_inputs,
+                  'visual_artifact_reuse': bool(visual_selection),
                   'high_risk_unknown': ([{'changed_card_identities': names['changed_card_identities']}] if names['changed_card_identities'] else []) +
                                        ([{'changed_canonical_names': names['changed_canonical_names']}] if names['changed_canonical_names'] else []),
                   'blockers': [], 'safe_to_install': False}

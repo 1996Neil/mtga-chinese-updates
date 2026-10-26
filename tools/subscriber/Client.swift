@@ -620,7 +620,7 @@ MTGA 中文维护 · 使用说明
 收到朋友转发的安装包也可从这里找到后续更新；提示需要升级工具时再重新下载安装。
 """
 let help = """
-MTGA 中文维护订阅客户端 v3.2（macOS + Steam）
+MTGA 中文维护订阅客户端 v3.3（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
 preview    下载并检查更新文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏
@@ -716,7 +716,7 @@ func main() throws {
     let profile = try json(Profile.self, small(URL(fileURLWithPath: opt["--profile"] ?? state.appendingPathComponent("profile.json").path)))
     let (library, game) = try discover(opt["--steam-library"])
     let client = try Client(state: state, profile: profile, library: library, game: game)
-    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.2")
+    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.3")
     if command == "status" { if let j = try client.journal() { let labels = ["prepared": "文件已准备，安装未完成", "installing": "上次安装中断，请选择 5 撤销上次更新", "installed": "已安装", "rolling-back": "上次恢复中断，请选择 5 继续恢复", "rolled-back": "已撤销上次更新"]; print("上次更新：\(j.release_id)；状态：\(labels[j.state] ?? j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
     if command == "rollback" || command == "recover" { guard let j = try client.journal() else { print("没有需要恢复的安装记录。"); return }; if j.state == "rolled-back" { print("此前已完成恢复。"); return }; try client.restore(j); return }
     guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。请等待适配当前游戏的汉化发布后，再选择 2「检查更新」。"); return }

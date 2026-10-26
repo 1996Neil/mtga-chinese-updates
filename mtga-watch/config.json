@@ -1,7 +1,7 @@
 {
   "schema": "MTGA_UPDATE_WATCH_CONFIG_V2",
   "feed": "https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/feed",
-  "channel": "testing",
+  "channel": "stable",
   "public_key": "zVVTlRWjtlb3/VbVqb+hkzVxp09gjzRfbA3l+Y0Upps=",
   "resource_probe": {
     "client_version": "2026.64.50",
@@ -11,7 +11,7 @@
     "localization_manifest": "Manifest_Localization_e4e2fbf1ebc1d9470049efa63192ea67.mtga",
     "observed_at": "2026-10-23",
     "provenance": "Local official manifest names and observed official macOS External URL; live CDN bodies are independently checked on every run. No game payload, log, account or credential is uploaded.",
-    "published_release_id": "2026.64.0-25763111-r2"
+    "published_release_id": "2026.64.50-25919252-r4"
   },
   "maintainer_notifications": "issues"
 }

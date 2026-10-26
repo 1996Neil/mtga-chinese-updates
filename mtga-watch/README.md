@@ -52,7 +52,7 @@ python3 mtga-watch/migrate_watch_state.py \
 
 - Steam匿名app_info：public build和macOS depot2141913的manifest GID。
 - 官方状态页近期更新公告、维护窗口及近期完成状态；普通登录故障不会冒充新版。
-- `main/feed/index-testing.json`：使用与客户端相同的公钥，验签索引和清单，核对大小与SHA256；数字版本/build/revision最新项才是已交付基准。
+- `main/feed/index-<channel>.json`：使用与客户端相同的公钥，验签索引和清单，核对大小与SHA256；当前 channel 由 `config.json` 指定，数字版本/build/revision 最新项才是已交付基准。
 - 已观察macOS External指针、主manifest和独立Localization manifest：云端每次重新读取、验证内容地址并比较资源名／长度／SHA256。
 
 尚不能保证发现Doorbell在build和External都不变时下发的全新独立Localization指针。匿名Doorbell曾返回401，未有经验证的匿名全局latest；报告永久保留 `independent_localization_latest=UNVERIFIED_REQUIRES_NEW_OFFICIAL_POINTER`。不要用玩家登录或已存令牌绕过。新发布后旧观测与发布不匹配仅提醒刷新，不把旧语言包误报为热更新。

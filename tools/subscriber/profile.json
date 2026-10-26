@@ -2,5 +2,5 @@
   "schema": "MTGA_CN_PROFILE_V1",
   "feed": "https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/feed",
   "public_key": "zVVTlRWjtlb3/VbVqb+hkzVxp09gjzRfbA3l+Y0Upps=",
-  "channel": "testing"
+  "channel": "stable"
 }

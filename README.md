@@ -2,7 +2,7 @@
 
 macOS + Steam 版《万智牌：竞技场》汉化，支持中英文牌表导入，免费使用。
 
-**[下载更新工具](https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.2-usage/MTGA-Chinese-Subscriber-v3.2.zip)** · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)
+**[下载更新工具](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.50-25919252-r4/MTGA-Chinese-Subscriber-v3.3.zip)** · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)
 
 适用于 **M 系列 Mac、macOS 13 及以上**。Windows 用户可查看[其他维护者的工具](https://shiqidi.lenitatis.com/mod)。
 
@@ -82,7 +82,7 @@ flowchart LR
 
 ## 参与维护
 
-[构建与贡献](docs/DEVELOPMENT.md) · [汉化来源规范](tools/chinese-maintainer/SOURCE_LOOKUP.md) · [精简维护数据](maintenance-data/README.md) · [Agent 入口](AGENTS.md)
+[构建与贡献](docs/DEVELOPMENT.md) · [维护规则与证据](docs/MAINTENANCE.md) · [汉化来源规范](tools/chinese-maintainer/SOURCE_LOOKUP.md) · [精简维护数据](maintenance-data/README.md) · [Agent 入口](AGENTS.md)
 
 源码、更新工具和监控都在本仓库；译文来源和维护记录可复查。普通使用不用下载源码或维护数据。
 

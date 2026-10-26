@@ -2,6 +2,8 @@
 
 普通用户从 Releases 下载客户端，见根 README。本页面向愿意 Fork、自行构建或维护适配的开发者。
 
+维护政策、文本修正与仓库来源统一见 [维护规则与证据](MAINTENANCE.md)，日常操作不再按日期文档选择入口。监控和下载验证跟随当前发布渠道；完整社区基线只在独立私有库保存。
+
 ## 获取源码与编译客户端
 
 在 macOS 安装 Xcode Command Line Tools（`xcode-select --install`），并准备 Python 3.11。维护器当前锁定的 UnityPy 1.23.0 在 Python 3.14 上不能构建；CI 显式使用 3.11，不能跟随系统 Python 自动升级。客户端是 Swift 原生程序，发布流程所需的 GitHub CLI 由维护者自行安装与登录。

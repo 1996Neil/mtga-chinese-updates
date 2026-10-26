@@ -343,6 +343,16 @@ def decide(c, run, layer, key, english, use, *, persist=True):
             reason += ';nonadmitted-source-evidence-retained'
     if any(scope_failures.values()):
         reason += ';' + ';'.join(sorted(set(filter(None, scope_failures.values()))))
+    # Only ordinary, unreviewed donor candidates may yield to a context-bound
+    # baseline. Reviewed records, changed trusted inputs, explicit English,
+    # conflicts and registered source evidence retain the existing decision.
+    from baseline import select as select_baseline
+    fallback = select_baseline(c, layer, key, english, use)
+    protected = any(r[3] >= 200 or r[2] in {'verified', 'keep-english'} for r in rows)
+    if (fallback and not protected and provenance is None and not scope_failures
+            and not conflicts and status in {'candidate', 'needs-review'}):
+        value, origin, reason = fallback
+        status = 'baseline-adopted'
     if conflicts:
         reason += ';lower-priority-source-conflict-recorded'
     if persist:

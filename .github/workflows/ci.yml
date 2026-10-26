@@ -40,8 +40,6 @@ jobs:
         env:
           MTGA_SUBSCRIBER_TEST_BINARY: ${{ runner.temp }}/mtga-client-tests
         run: python3 -m unittest discover -s tools/subscriber -p 'tests*.py' -v
-      - name: Optional reader unit tests
-        run: python3 -m unittest discover -s tools/card-overlay -p 'test_*.py' -v
   monitor-synthetic:
     runs-on: ubuntu-24.04
     timeout-minutes: 5

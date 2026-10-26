@@ -117,6 +117,8 @@ GUIDE = '''MTGA 汉化与双语导入：操作指南
   mtga-cn diagnose-base --human      中文底稿诊断（只读）
   mtga-cn update                     构建候选，不安装
   mtga-cn guide                      显示本指南
+  mtga-cn report --help              只读工作量报告（使用已捕获底稿）
+  mtga-cn release --help             构建、校验与签名发布编排（仍需验收）
   mtga-cn install                    验收后正式安装
   mtga-cn rollback                   恢复最近安装／临时测试前状态
 技术诊断：diagnose-base 默认保留 JSON；其他命令加 --details 可显示原始错误。

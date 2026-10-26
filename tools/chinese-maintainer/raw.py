@@ -84,8 +84,8 @@ def build_localization(source, output, layer, registry, run):
     save_json(output.parent / (layer + '-decisions.json'), decisions)
     stats = dict(Counter(r['status'] for r in decisions))
     stats.update({'applied': len(updates), 'conflicts': sum(bool(r['conflicts']) for r in decisions),
-                  'by_source': dict(Counter(r['source'] for r in decisions if r['status'] == 'verified')),
-                  'reasons': dict(Counter(r['reason'] for r in decisions if r['status'] != 'verified'))})
+                  'by_source': dict(Counter(r['source'] for r in decisions if r['status'] in {'verified', 'baseline-adopted'})),
+                  'reasons': dict(Counter(r['reason'] for r in decisions if r['status'] not in {'verified', 'baseline-adopted'}))})
     return {'validation': validation, 'counts': stats, 'updates': updates}
 
 

@@ -8,7 +8,7 @@ from registry import decide, import_corrections, bind_contexts
 from provenance import audit, contexts, evidence_index, evidence_fingerprint, load_rows
 
 
-def replay(c, official, baseline_run, version, corrections):
+def replay(c, official, baseline_run, version, corrections, baseline=None):
     """Caller supplies a disposable Registry. Historical decisions are immutable."""
     historical = {(layer,key): {'status':status,'english':en,'field_use':json.loads(use),
                                 'translation':zh,'reason':reason,'source':source}
@@ -26,7 +26,10 @@ def replay(c, official, baseline_run, version, corrections):
             require('en-US' in langs, 'UI English slot missing')
             current['ui',key] = {'english':langs['en-US'], 'field_use':['LocLibraryData.en-US'], 'identity':{'ui_key':key}}
     bind_contexts(c, current)
+    from baseline import activate
+    activate(c, baseline, current)
     pending = {k for k,v in historical.items() if v['status'] in {'candidate','needs-review'}}
+    baseline_keys = {k for k,v in historical.items() if v['status'] == 'baseline-adopted'}
     added = current.keys() - historical.keys()
     removed = historical.keys() - current.keys()
     changed = {k for k in current.keys() & historical.keys()
@@ -39,7 +42,7 @@ def replay(c, official, baseline_run, version, corrections):
         admission_keys.update((r['layer'],str(r['key'])) for r in read_json(path)['records'])
     research = evidence_index(c, current)
     results = []
-    for layer,key in sorted(pending | added | removed | changed | admission_keys):
+    for layer,key in sorted(pending | baseline_keys | added | removed | changed | admission_keys):
         ctx = current.get((layer,key))
         if ctx is None:
             results.append({'layer':layer,'key':key,'status':'unavailable','reason':'key-removed-from-snapshot',
@@ -50,10 +53,14 @@ def replay(c, official, baseline_run, version, corrections):
                         'research_evidence':research.get((layer,key),[])})
     counts = Counter(r['status'] for r in results)
     eligible = [r for r in results if r['migration_eligible']]
+    if baseline:
+        baseline.guard()
     return {'schema':'MTGA_READ_ONLY_PREFLIGHT_V1','baseline_run':baseline_run,'snapshot_version':version,
             'scope':'Frozen pending plus added/removed/English-or-use-changed and human/AI/provenance-bound keys in the specified official snapshot; not live game state.',
             'historical_pending':len(pending),'evaluated':len(results),'current_pending':counts['candidate']+counts['needs-review'],
             'migration_eligible':len(eligible),'unavailable':counts['unavailable'],
+            'baseline_adopted':counts['baseline-adopted'],
+            'baseline_inputs':baseline.inputs if baseline else {},
             'new_keys':[list(k) for k in sorted(added)],'removed_keys':[list(k) for k in sorted(removed)],
             'changed_keys':[list(k) for k in sorted(changed)],
             'source_discovered':sum(bool(r.get('research_evidence')) for r in results),
@@ -72,6 +79,8 @@ def run(run_dir, destination):
     # Do not allow reports inside an existing candidate, approval, or source tree.
     require(destination.parent == STATE / 'preflights', 'Use state/preflights/<new-name>')
     report, snapshot = read_json(run_dir/'report.json'), read_json(run_dir/'snapshot.json')
+    from baseline import configured
+    baseline = configured(report['client_version'])
     from official_base import cached_run
     bases = cached_run(run_dir, snapshot, STATE)
     official = {layer:Path(bases[layer]['official_base_path']) for layer in ('card','client','resources')}
@@ -83,6 +92,7 @@ def run(run_dir, destination):
                 'official_snapshot':{k:fingerprint(v) for k,v in official.items()},
                 'baseline_snapshot':fingerprint(run_dir/'snapshot.json'),
                 'baseline_report':fingerprint(run_dir/'report.json'),
+                'community_baseline':baseline.inputs if baseline else {},
                 'approvals':{p.name:fingerprint(p) for p in sorted((ROOT/'reviewed-corrections').glob('*.json'))},
                 'reviewed_resolutions':{str(p.relative_to(ROOT)):fingerprint(p) for p in sorted((ROOT/'reviewed-resolutions').glob('*/*.json'))},
                 'source_format_pairs':(fingerprint(ROOT/'source-format-reviewed-pairs.json')
@@ -93,7 +103,7 @@ def run(run_dir, destination):
         with database(registry_path) as original: original.backup(scratch)
         from cli import source_guard
         source_guard(scratch)
-        result = replay(scratch, official, report['run_id'], report['client_version'], ROOT/'reviewed-corrections')
+        result = replay(scratch, official, report['run_id'], report['client_version'], ROOT/'reviewed-corrections', baseline)
         source_guard(scratch)
         from provenance import guard
         from registry import correction_scope
@@ -105,12 +115,15 @@ def run(run_dir, destination):
     require(cached_run(run_dir, snapshot, STATE) == bases, 'Official base trust changed during preflight')
     require(fingerprint(registry_path) == before, 'Real Registry changed during preflight')
     require(input_fingerprints() == inputs_before, 'Preflight inputs changed during replay')
+    if baseline:
+        baseline.guard()
     result['inputs'] = inputs_before
     save_json(destination/'report.json',result)
     lines = ['# MTGA 只读预演', '', f"基线：{result['baseline_run']}；不是实时游戏状态。", '',
              '| 口径 | 数量 |','|---|---:|',
              *[f'| {label} | {result[key]} |' for label,key in [('历史待审','historical_pending'),('本次评估','evaluated'),
-               ('当前可迁移','migration_eligible'),('仍待审','current_pending'),('无法评估／已移除','unavailable'),
+               ('当前可迁移的已审译文','migration_eligible'),('社区基线采用','baseline_adopted'),
+               ('仍待审','current_pending'),('无法评估／已移除','unavailable'),
                ('找到已有研究证据','source_discovered'),('用户批准可复用','approval_reusable'),('格式阻塞解除','format_adapted')]],
              '', '来源发现、批准复用和格式适配为重叠维度，不相加。逐项结果见 report.json。',
              '', '联网 0；真实候选构建 0；游戏应用 0；新增客户端验收 0。历史 Registry、验收与安装状态未改。',

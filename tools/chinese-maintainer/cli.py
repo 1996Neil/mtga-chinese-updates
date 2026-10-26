@@ -4,6 +4,7 @@ import argparse
 import datetime
 import fcntl
 import json
+import os
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -95,15 +96,20 @@ def refresh_gates(report, run_dir):
 
 
 def update():
+    from baseline import configured, activate
+    from provenance import contexts
     build_code = code_fingerprints()
     transaction = load_transaction()
     require(not transaction or transaction['state'] not in {'trial', 'installing', 'rolling-back'},
             'A test/recovery transaction is active; record results or rollback before update')
     s = detect()
+    baseline = configured(s['client_version'])
+    baseline_inputs = baseline.inputs if baseline else {}
     if (STATE / 'latest.json').exists():
         previous_dir, previous = latest()
         if (previous.get('schema') == 'MTGA_CN_MAINTAINER_V1' and previous.get('code_fingerprints') == code_fingerprints()
-                and previous.get('review_inputs') == review_input_fingerprints()):
+                and previous.get('review_inputs') == review_input_fingerprints()
+                and previous.get('baseline_inputs', {}) == baseline_inputs):
             same_before = stable_signature(s) == stable_signature(read_json(previous_dir / 'snapshot.json'))
             same_installed = (transaction and transaction['state'] == 'installed' and
                               transaction['run_id'] == previous['run_id'] and stable_signature(s) == expected_signature(transaction, after=True))
@@ -136,6 +142,7 @@ def update():
             from provenance import audit, write_audit
             prior_run = prior_run_id or run
             source_audit = audit(registry, official, s['client_version'], prior_run, refresh=True, activate=True)
+            activate(registry, baseline, contexts(official) if baseline else {})
             write_audit(p / 'source-audit', source_audit)
             loc = {}
             migration = {}
@@ -170,6 +177,8 @@ def update():
             source_audit['queue_basis'] = 'actual-current-build-decisions'
             write_audit(p / 'source-audit', source_audit)
             source_guard(registry)
+            if baseline:
+                baseline.guard()
         finally:
             registry.close()
         candidate_paths = {'card': p / 'card-final.mtga', 'client': p / 'client-localized.mtga',
@@ -192,6 +201,7 @@ def update():
                   'official_asset_fingerprints': {layer: fingerprint(official[layer]) for layer in ('resources', 'bootstrap_fonts')},
                   'registry_fingerprint': fingerprint(STATE / 'registry.sqlite'),
                   'review_inputs': review_input_fingerprints(), 'source_audit': source_audit,
+                  'baseline_inputs': baseline_inputs,
                   'high_risk_unknown': ([{'changed_card_identities': names['changed_card_identities']}] if names['changed_card_identities'] else []) +
                                        ([{'changed_canonical_names': names['changed_canonical_names']}] if names['changed_canonical_names'] else []),
                   'blockers': [], 'safe_to_install': False}
@@ -237,6 +247,8 @@ def print_summary(p, report):
 
 def validate_run(p, report):
     require(report.get('schema') == 'MTGA_CN_MAINTAINER_V1', 'Incomplete/unknown candidate')
+    from baseline import guard_inputs
+    guard_inputs(report.get('baseline_inputs', {}))
     require(report['code_fingerprints'] == code_fingerprints(), 'Maintainer code changed; run update again')
     require(report['review_inputs'] == review_input_fingerprints(), 'Reviewed translation inputs changed; run update again')
     for name, fp in report['proof_files'].items():
@@ -444,13 +456,24 @@ class ChineseParser(argparse.ArgumentParser):
 
 
 def main():
+    # These commands have their own options and return before creating state or
+    # taking the installation lock. Reports remain strictly read-only.
+    if len(sys.argv) > 1 and sys.argv[1] in {'report', 'release'}:
+        if sys.argv[1] == 'report':
+            from workload import main as command_main
+        else:
+            from release_workflow import main as command_main
+        result = command_main(sys.argv[2:])
+        if result:
+            raise SystemExit(result)
+        return
     parser = ChineseParser(description='MTGA 中文汉化与双语导入维护。首次使用请执行：mtga-cn guide',
                            prog='mtga-cn', formatter_class=ChineseHelp,
                            add_help=False, usage='%(prog)s 命令 [选项]')
     parser._positionals.title = '命令'
     parser._optionals.title = '选项'
     parser.add_argument('-h', '--help', action='help', help='显示命令帮助并退出')
-    parser.add_argument('command', choices=('status', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide'),
+    parser.add_argument('command', choices=('status', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide', 'report', 'release'),
                         help='status 查看状态；diagnose-base 检查底稿；update 构建；validate 验证；install 安装；rollback 回滚；guide 操作指南。临时测试与来源维护详见 README。')
     parser.add_argument('--human', action='store_true', help='底稿诊断使用中文摘要；省略时保持原有 JSON 输出')
     parser.add_argument('--details', action='store_true', help='失败时补充原始技术错误，供维护者排查')
@@ -461,7 +484,13 @@ def main():
     parser.add_argument('--review', type=Path, help='独立来源审查记录路径')
     parser.add_argument('--limit', type=int, default=20, help='来源审计最多展示的工作项数量，默认 20')
     parser.add_argument('--refresh', action='store_true', help='刷新已登记的官方规则来源，最多读取两个地址，不批量抓取卡牌')
+    parser.add_argument('--baseline-root', type=Path, help='私有基线库绝对路径；不设置则保持旧流程')
+    parser.add_argument('--baseline-version', help='显式复用的基线版本；仍逐项核对当前英文、身份和用途')
     args = parser.parse_args()
+    if args.baseline_root:
+        os.environ['MTGA_BASELINE_ROOT'] = str(args.baseline_root.expanduser().resolve())
+    if args.baseline_version:
+        os.environ['MTGA_BASELINE_VERSION'] = args.baseline_version
     if args.command == 'guide':
         print(GUIDE)
         print(f'完整验收清单与维护文档：{ROOT / "README.md"}')

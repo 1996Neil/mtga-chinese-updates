@@ -13,6 +13,8 @@ def write_report(run_dir, report):
     lines = [f'# MTGA {report["client_version"]} — 中文汉化与双语导入维护报告', '',
              '阅读顺序：先看汉化与导入的独立结果，再看改动数字、安装门槛及验收步骤。', '',
              f'状态：{label(report["state"])}。候选生成不等于客户端验收，也不等于已安装。', '',
+             ('社区基线：已启用；输入文件已绑定哈希，采用不代表官方、人工或游戏验收。'
+              if report.get('baseline_inputs') else '社区基线：未启用，沿用原有译文准入。'), '',
              '| 能力 | 静态检查 | 当前候选游戏内验收 |', '| --- | --- | --- |',
              f'| 中文汉化 | {label(loc["static_status"])} | {label(loc["client_status"])} |',
              f'| 双语牌组导入 | {label(imp["static_status"])} | {label(imp["client_status"])} |', '',

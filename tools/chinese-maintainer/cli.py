@@ -5,6 +5,7 @@ import datetime
 import fcntl
 import json
 import os
+import shutil
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -27,6 +28,49 @@ def latest():
     p = managed_path(read_json(STATE / 'latest.json')['run_dir'])
     require(p.parent == STATE / 'runs' and p.resolve() == p, 'Invalid run pointer')
     return p, read_json(p / 'report.json')
+
+
+def reusable_visuals(previous_dir, previous, snapshot, build_code, baseline_inputs,
+                     card_candidate, client_candidate):
+    """Return previous visual artifacts only when every affecting input matches."""
+    if not previous_dir or not previous or previous.get('schema') != 'MTGA_CN_MAINTAINER_V1':
+        return False
+    if previous.get('code_fingerprints') != build_code:
+        return False
+    if previous.get('review_inputs') != review_input_fingerprints():
+        return False
+    if previous.get('baseline_inputs', {}) != baseline_inputs:
+        return False
+    previous_snapshot = read_json(previous_dir / 'snapshot.json')
+    for layer in ('resources', 'bootstrap_fonts', 'font_bundle'):
+        before = previous_snapshot.get('files', {}).get(layer, {})
+        after = snapshot.get('files', {}).get(layer, {})
+        if {k: before.get(k) for k in ('sha256', 'bytes')} != {k: after.get(k) for k in ('sha256', 'bytes')}:
+            return False
+    for layer, candidate in (('card', card_candidate), ('client', client_candidate)):
+        previous_candidate = previous.get('candidate_files', {}).get(layer, {})
+        if fingerprint(candidate) != {k: previous_candidate.get(k) for k in ('sha256', 'bytes')}:
+            return False
+    return all((previous_dir / name).is_file()
+               for name in ('resources.assets', 'sharedassets0.assets',
+                            'fonts-validation.json', 'migration-plan.json'))
+
+
+def reuse_visual_artifacts(previous_dir, previous, destination, migration, loc):
+    """Copy already-validated visual outputs into a fresh run directory."""
+    for name in ('resources.assets', 'sharedassets0.assets'):
+        shutil.copy2(previous_dir / name, destination / name)
+    previous_migration = read_json(previous_dir / 'migration-plan.json')
+    migration['ui'] = previous_migration['ui']
+    previous_fonts = read_json(previous_dir / 'fonts-validation.json')
+    shutil.copy2(previous_dir / 'fonts-validation.json', destination / 'fonts-validation.json')
+    previous_bundle = Path(previous_fonts['bundle_path'])
+    bundle = destination / previous_bundle.name
+    shutil.copy2(previous_bundle, bundle)
+    fonts = {**previous_fonts, 'bundle_path': str(bundle)}
+    loc['resources'] = previous['localization']['resources']
+    loc['fonts'] = previous['localization']['fonts']
+    return fonts
 
 
 def source_guard(registry):
@@ -105,6 +149,7 @@ def update():
     s = detect()
     baseline = configured(s['client_version'])
     baseline_inputs = baseline.inputs if baseline else {}
+    previous_dir = previous = None
     if (STATE / 'latest.json').exists():
         previous_dir, previous = latest()
         if (previous.get('schema') == 'MTGA_CN_MAINTAINER_V1' and previous.get('code_fingerprints') == code_fingerprints()
@@ -119,7 +164,7 @@ def update():
                 print('未发现新的官方更新；已重新验证现有候选／安装。', flush=True)
                 print_summary(previous_dir, previous)
                 return
-    prior_run_id = latest()[1]['run_id'] if (STATE / 'latest.json').exists() else None
+    prior_run_id = previous['run_id'] if previous else None
     run = s['client_version'] + '_' + datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     p = STATE / 'runs' / run
     p.mkdir(parents=True)
@@ -155,22 +200,27 @@ def update():
             print('正在生成中文显示、英文导入兼容名称及测试牌表……', flush=True)
             names = build_names(official['card'], p / 'card-localized.mtga', p / 'card-final.mtga', registry, run, old['card'])
             fixtures = regressions(official['card'], p / 'card-final.mtga', p / 'fixtures', names)
-            print('正在基于官方资源构建中文界面和字体……', flush=True)
-            resources = build_resources(official['resources'], official['bootstrap_fonts'], p / 'resources.assets', registry, run)
-            migration['ui'] = resources.pop('translations')
-            loc['resources'] = resources
+            if reusable_visuals(previous_dir, previous, s, build_code, baseline_inputs,
+                                p / 'card-final.mtga', p / 'client-localized.mtga'):
+                print('中文候选未变化；复用上一版 UI 与字体资源……', flush=True)
+                fonts = reuse_visual_artifacts(previous_dir, previous, p, migration, loc)
+            else:
+                print('正在基于官方资源构建中文界面和字体……', flush=True)
+                resources = build_resources(official['resources'], official['bootstrap_fonts'], p / 'resources.assets', registry, run)
+                migration['ui'] = resources.pop('translations')
+                loc['resources'] = resources
+                chars = ''.join(migration['ui'].values())
+                for file, query in [('card-final.mtga', 'SELECT Loc FROM Localizations_enUS WHERE Formatted=1'),
+                                    ('client-localized.mtga', 'SELECT enUS FROM Loc')]:
+                    with database(p / file) as db:
+                        chars += ''.join(text or '' for text, in db.execute(query))
+                fonts = build_fonts(official['bootstrap_fonts'], official['font_bundle'], p, s, chars)
+                save_json(p / 'fonts-validation.json', fonts)
+                loc['fonts'] = {'status': 'PASS', 'glyphs_checked': fonts['glyphs_checked'],
+                                'missing_glyphs': fonts['missing_glyphs'], 'runtime_rendering': '未验证',
+                                'bootstrap_validation': fonts['bootstrap_validation'], 'bundle_validation': fonts['bundle_validation'],
+                                'official_manifest_modified': False}
             save_json(p / 'migration-plan.json', migration)
-            chars = ''.join(migration['ui'].values())
-            for file, query in [('card-final.mtga', 'SELECT Loc FROM Localizations_enUS WHERE Formatted=1'),
-                                ('client-localized.mtga', 'SELECT enUS FROM Loc')]:
-                with database(p / file) as db:
-                    chars += ''.join(text or '' for text, in db.execute(query))
-            fonts = build_fonts(official['bootstrap_fonts'], official['font_bundle'], p, s, chars)
-            save_json(p / 'fonts-validation.json', fonts)
-            loc['fonts'] = {'status': 'PASS', 'glyphs_checked': fonts['glyphs_checked'],
-                            'missing_glyphs': fonts['missing_glyphs'], 'runtime_rendering': '未验证',
-                            'bootstrap_validation': fonts['bootstrap_validation'], 'bundle_validation': fonts['bundle_validation'],
-                            'official_manifest_modified': False}
             registry.commit()
             # Report the actual completed decisions, not the prior run's queue.
             source_audit = audit(registry, official, s['client_version'], run, refresh=False, activate=False)

@@ -78,11 +78,8 @@ def validate_resources(source, candidate, translations, fallback_refs):
             'UI_keys_order_other_languages_preserved': True, 'other_TMP_fields_preserved': True}
 
 
-def build_resources(source, bootstrap_source, output, registry, run):
-    env = UnityPy.load(str(source))
-    objs = objects(env)
-    target = localization(objs)
-    rows = json.loads(target.read().m_Script)
+def select_ui_translations(rows, registry, run):
+    """Select current UI text without serializing assets or rebuilding fonts."""
     maps = row_map(rows)
     # The card/client source audit rebinds its own contexts. Rebind exact UI
     # identity here so independently reviewed UI rows cannot inherit stale data.
@@ -101,6 +98,15 @@ def build_resources(source, bootstrap_source, output, registry, run):
         if zh != english:
             next(t for t in row['Translations'] if t['Language'] == 'en-US')['Translation'] = zh
             translated[key] = zh
+    return translated, decisions
+
+
+def build_resources(source, bootstrap_source, output, registry, run):
+    env = UnityPy.load(str(source))
+    objs = objects(env)
+    target = localization(objs)
+    rows = json.loads(target.read().m_Script)
+    translated, decisions = select_ui_translations(rows, registry, run)
     edited = target.read()
     edited.m_Script = json.dumps(rows, ensure_ascii=False, indent=2)
     edited.save()

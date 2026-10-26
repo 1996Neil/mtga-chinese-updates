@@ -69,4 +69,47 @@ export MTGA_HISTORY_ROOT="/你的已核验历史导入资料目录"
 
 监控在 Ubuntu 24.04 + OpenSSL 运行，CI 在同一平台测试其 Ed25519 签名夹具。macOS 自带 LibreSSL 不支持这里使用的 `pkeyutl -rawin`；若本机测试监控，须先准备支持 Ed25519 的 OpenSSL 并放在 PATH，不得关闭验签来适配系统工具。
 
-`tools/subscriber/private_*`、`install_private_receiver.py` 与 `PRIVATE-DELIVERY-20261017.md` 保留了旧私有云端固定 r3 原型的源码和证据范围。它们不在普通用户入口使用，不改为读取公开仓库以绕过私有守卫，也不承诺旧制品在到期后可用。相关旧仓库归档后不再生成私有制品；新维护工作使用公开监控、当前本地构建与签名 feed 发布。旧接收器的本地恢复边界不因归档被改写。
+旧私有云端固定 r3 原型及其过程产物已移除，可从 Git 历史恢复。新维护工作使用公开监控、当前本地构建与签名 feed 发布。
+
+`mtga-watch/export_local_resource_watch.py` 仍用于游戏更新后生成公开资源监控种子；`migrate_watch_state.py` 保留旧通知去重状态的迁移工具及回归测试。定时任务不直接调用它们，不表示维护者不再需要它们。`compatibility/` 保留历史导入样本及原有路径映射。
+
+## 私有社区基线与工作量报告
+
+完整基线存放在独立私有库 `1996Neil/mtga-chinese-baseline`。公开源码不包含整库文本，也不依赖审查任务仓库。未配置基线时沿用原有流程；显式配置后文件缺失或哈希变化会报错。
+
+```sh
+export MTGA_BASELINE_ROOT="/你的检出位置/mtga-chinese-baseline"
+# 默认取当前候选版本；显式复用旧基线仍需逐项匹配当前输入：
+# export MTGA_BASELINE_VERSION="2026.64.50"
+./bin/mtga-cn update
+./bin/mtga-cn report --run /当前候选目录 --since-run /上一版候选目录 \
+  --registry tools/chinese-maintainer/state/registry.sqlite
+```
+
+`report` 仅在内存中复演已有准入，不联网、不修改 registry、不生成候选。未提供 `--registry` 时只评估基线；未提供 `--since-run` 时新增和英文变化显示为未知，不能把“基线未覆盖”称为“本版新增”。需处理项大于零时退出码为 1。
+
+基线 manifest 绑定原始 JSONL、官方 Raw 输入指纹及逐槽位英文/身份/用途哈希。基线只对符合绑定、包含中文且格式安全的条目补位；已审记录、明确保留英文、来源冲突及不适用的已审译文继续沿用原有检查。已有来源及译文不删除、不改标。卡牌和客户端分开判断，客户端基线不借给 resources UI 槽位。
+
+生成基线需要社区中文输入和同版已捕获官方底稿；仅有英文游戏不能生成社区中文。使用新输出目录，避免覆盖现有版本：
+
+```sh
+tools/chinese-maintainer/.venv/bin/python tools/chinese-maintainer/build_baseline.py \
+  --version 2026.64.50 --official-run /已捕获官方底稿目录 \
+  --community-client /社区中文客户端数据库.mtga \
+  --community-card /社区中文卡牌数据库.mtga \
+  --output /新的私有版本目录
+```
+
+历史 JSONL 可用 `--client-jsonl` 与 `--cards-jsonl` 原字节导入，替代两个 community 参数。生成器不改变中文，不能把社区译文标为官方或已完成人工/游戏验收。
+
+直接提取社区数据库时，生成器同时核对社区英文、牌张身份和字段用途与官方是否一致。历史 JSONL 不含原社区库的身份信息，导入只能绑定现有英文到当前官方上下文；manifest 的 `binding_basis` 会披露这个限制，不能据此声称重新核验过原社区身份或语义。
+
+## 发布编排
+
+```sh
+./bin/mtga-cn release --version 2026.64.50 --run /候选目录 --dry-run \
+  --revision 4 --client /已编译客户端 --key /本地私钥 \
+  --public-key-file /公钥文件
+```
+
+省略 `--run` 时先执行既有 `update` 构建；dry-run 随后重验候选并打印计划，不读取私钥、不签名、不发布。输出中的 `blockers` 必须清零才可继续。移除 `--dry-run` 会调用既有发布器构建并验证签名差分；只有显式添加 `--publish` 才调用远端发布器。`--channel stable` 还必须提供 `--acceptance`，并通过当前候选的工程审查和游戏验收。编排器不会填造这些证据。已有手工命令继续可用。

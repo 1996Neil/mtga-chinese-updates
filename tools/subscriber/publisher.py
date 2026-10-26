@@ -169,6 +169,10 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         sources[layer] = (base, output)
     # Any builder change requires a fresh build before either testing or stable packaging.
     builder_root = Path(__file__).resolve().parents[1] / 'chinese-maintainer'
+    # A signed package must bind the same private baseline used by its candidate.
+    # Do this here as well as in CLI validation, so direct packaging cannot skip it.
+    for item in report.get('baseline_inputs', {}).values():
+        check(Path(item['path']), {k: item[k] for k in ('sha256', 'bytes')})
     for name, fp in report['code_fingerprints'].items():
         path = Path(name) if Path(name).is_absolute() else builder_root / name
         check(path, fp)

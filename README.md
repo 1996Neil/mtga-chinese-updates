@@ -86,4 +86,6 @@ flowchart LR
 
 源码、更新工具和监控都在本仓库；译文来源和维护记录可复查。普通使用不用下载源码或维护数据。
 
+游戏内 OCR 卡牌浮层已停止维护，代码可从 `git log -- tools/card-overlay` 查看和恢复。
+
 社区项目，与 Wizards of the Coast 或 Steam 无关联。[源码许可与第三方内容说明](THIRD_PARTY_NOTICES.md)。

@@ -35,3 +35,6 @@ __pycache__/
 /compatibility/card-language-2026-10-07/
 watch-report.json
 /mtga-watch/.steamcmd/
+
+# Full community baselines are private inputs, never public source artifacts.
+/baseline/

@@ -15,6 +15,7 @@ TABLES = {
  'provenance_translations': 'id TEXT PRIMARY KEY, layer TEXT NOT NULL, key TEXT NOT NULL, payload TEXT NOT NULL',
  'provenance_reviews': 'id TEXT PRIMARY KEY, translation_id TEXT NOT NULL, payload TEXT NOT NULL',
  'provenance_observations': 'id TEXT PRIMARY KEY, payload TEXT NOT NULL',
+ 'provenance_selection_cache': 'id TEXT PRIMARY KEY, translation_id TEXT NOT NULL, context_hash TEXT NOT NULL, evidence_hash TEXT NOT NULL, payload TEXT NOT NULL',
  'provenance_migrations': 'id TEXT PRIMARY KEY, payload TEXT NOT NULL',
 }
 
@@ -197,6 +198,33 @@ def evidence_fingerprint(c):
     data['availability']={i:v for i,v in observation_states(c).items() if i in docs}
     return hash_text(canonical(data))
 
+def context_fingerprint(context):
+    return hash_text(canonical({
+        'english': context.get('english', ''),
+        'field_use': context.get('field_use', []),
+        'identity': context.get('identity', {}),
+    }))
+
+def cached_selection(c, translation_id, context, evidence_hash):
+    row = c.execute(
+        'SELECT payload FROM provenance_selection_cache '
+        'WHERE translation_id=? AND context_hash=? AND evidence_hash=?',
+        (translation_id, context_fingerprint(context), evidence_hash)).fetchone()
+    return json.loads(row[0]) if row else None
+
+def cache_selection(c, translation_id, context, evidence_hash, value):
+    ident = hash_text(canonical({
+        'translation_id': translation_id,
+        'context_hash': context_fingerprint(context),
+        'evidence_hash': evidence_hash,
+        'value': value,
+    }))
+    c.execute(
+        'INSERT OR IGNORE INTO provenance_selection_cache '
+        '(id,translation_id,context_hash,evidence_hash,payload) VALUES (?,?,?,?,?)',
+        (ident, translation_id, context_fingerprint(context), evidence_hash, canonical(value)))
+    return ident
+
 def changes(before, after):
     # Word-aware alignment with exact character offsets avoids fragments like "f any o".
     left=list(re.finditer(r'\S+|\s+',before)); right=list(re.finditer(r'\S+|\s+',after))
@@ -344,6 +372,7 @@ def audit(c, official, version, run_id, limit=20, refresh=False, activate=False)
     _,network=refresh_documents(c,ids) if refresh else (set(),[])
     # A partial refresh must never erase failures for other registered documents.
     bad={i for i,e in observation_states(c).items() if e['status']!='unchanged'}
+    selection_evidence_hash = evidence_fingerprint(c)
     c.execute('CREATE TEMP TABLE IF NOT EXISTS provenance_selection(layer TEXT,key TEXT,english TEXT,field_use TEXT,translation TEXT,source TEXT,status TEXT,reason TEXT,PRIMARY KEY(layer,key))')
     c.execute('DELETE FROM provenance_selection')
     evaluations=[]
@@ -358,6 +387,13 @@ def audit(c, official, version, run_id, limit=20, refresh=False, activate=False)
                           layout(x.get('oracle',{}).get('text',''))==layout(context['english'])))]
         od=docs.get(row.get('oracle',{}).get('document_id'))
         unavailable=row['document_id'] in bad or row.get('oracle',{}).get('document_id') in bad
+        cached = cached_selection(c, ident, context, selection_evidence_hash)
+        if cached:
+            result = cached['result']
+            evaluations.append({'id':cached['event_id'],'layer':key[0],'key':key[1],
+                                'reused_review':True,'reused_selection':True,**result})
+            choices.setdefault(key,[]).append((context,result,ident))
+            continue
         # Evaluate eligibility first. Nonadmitted candidates have no global veto.
         result=evaluate(row,context,docs[row['document_id']],od,False,unavailable)
         result['other_version_or_identity_evidence']=[i for i,x in related if i not in {a for a,_ in applicable}]
@@ -372,7 +408,10 @@ def audit(c, official, version, run_id, limit=20, refresh=False, activate=False)
         else:
             event['reviewed_at']=now()
             event_id=append(c,'provenance_reviews',event,translation_id=ident)
-        evaluations.append({'id':event_id,'layer':key[0],'key':key[1],'reused_review':bool(reused),**result})
+        cache_selection(c, ident, context, selection_evidence_hash,
+                        {'event_id':event_id,'result':result})
+        evaluations.append({'id':event_id,'layer':key[0],'key':key[1],
+                            'reused_review':bool(reused),'reused_selection':False,**result})
         choices.setdefault(key,[]).append((context,result,ident))
     if activate:
         for key,options in choices.items():

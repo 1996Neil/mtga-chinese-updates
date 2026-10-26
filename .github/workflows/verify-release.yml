@@ -31,8 +31,11 @@ jobs:
               assert {'sha256':digest.hexdigest(),'bytes':size}==fp,(url,size)
               return b''.join(chunks)
           # No token is supplied: download paths must work for ordinary users.
-          index=verified_envelope(get(feed+'/index-testing.json'),key)
-          assert index['channel']=='testing' and 0<len(index['releases'])<=10000
+          download=json.loads(get('https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/download.json'))
+          channel=download['channel']
+          assert channel in ('stable','testing') and config['channel']==channel
+          index=verified_envelope(get(feed+f'/index-{channel}.json'),key)
+          assert index['channel']==channel and 0<len(index['releases'])<=10000
           assert len({r['id'] for r in index['releases']})==len(index['releases'])
           records=[]
           for ref in index['releases']:
@@ -40,6 +43,7 @@ jobs:
               assert {'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}==ref['manifest']['fingerprint']
               release=verified_envelope(raw,key)
               assert release['id']==ref['id'] and release['minimum_client']==4
+              if channel=='stable':assert release['acceptance']['status']=='accepted'
               assert release['client_version']==ref['client_version'] and release['steam_build']==ref['steam_build']
               assert release['revision']==ref['revision']
               assert len(release['resources'])==5 and {r['layer'] for r in release['resources']}=={'card','client','resources','bootstrap_fonts','font_bundle'}
@@ -48,13 +52,12 @@ jobs:
                   assert resource['full']['fingerprint']==resource['output']
                   verify(resource['full']['url'],resource['output'])
                   records.append({'release':ref['id'],'layer':resource['layer'],'anonymous_body_sha256':'PASS'})
-          download=json.loads(get('https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/download.json'))
-          assert download['feed']==feed and download['channel']=='testing'
+          assert download['feed']==feed and download['channel']==channel
           archive=verify(download['installer_url'],download['fingerprint'],retain=True)
           with zipfile.ZipFile(io.BytesIO(archive)) as z:
               assert z.testzip() is None
               names=z.namelist();profile=json.loads(z.read(next(n for n in names if n.endswith('/profile.json'))))
-              assert profile['feed']==feed and profile['public_key']==key and profile['channel']=='testing'
+              assert profile['feed']==feed and profile['public_key']==key and profile['channel']==channel
           result={'status':'PASS','anonymous_patch_bodies':records,'installer_download_hash':'PASS','installer_feed_and_key':'PASS','game_execution':'NOT_RUN'}
           with open(__import__('os').environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('```json\n'+json.dumps(result,indent=2)+'\n```\n')
           print(json.dumps(result))

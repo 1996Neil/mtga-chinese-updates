@@ -3,6 +3,7 @@
   "repository": "1996Neil/mtga-chinese-updates",
   "seen_keys": [
     "notice-completed-mpf0mdwprf5w",
+    "notice-completed-xs36vmsxrvxb",
     "notice-mpf0mdwprf5w",
     "notice-xs36vmsxrvxb",
     "notification-test-39821391579",
@@ -17,17 +18,17 @@
     "input_sha256": "59d020eb90066b7f2f326759243d232e9525d43c013034e97cfb7178e8399fcc"
   },
   "status": "CHECKED_WITH_LOCALIZATION_DISCOVERY_LIMIT",
-  "human_notifications_sent": false,
+  "human_notifications_sent": true,
   "localization_published": false,
   "findings": [
     {
-      "key": "notice-xs36vmsxrvxb",
-      "title": "[MTGA] 维护预告：Game Update - Network Updates",
-      "details": "官方公告：Game Update - Network Updates\n公告发布时间：2026-10-22 03:22（北京时间）\n计划维护开始：2026-10-28 00:00（北京时间）\n计划维护结束：2026-10-28 03:00（北京时间）\n官方预计维护时长：3 小时（可能提前或延长）。\n官方维护正在进行或验证中；请等待完成公告或新资源确认。\n距预计结束约 2.1 小时；可在上述结束时间后检查官方更新，届时仍需确认实际维护状态。\n行动建议：先等待官方部署和下载；公告内容仅供预判，不能据此确定实际资源变化或汉化完成时间。\n官方最新说明（原文）：\nScheduled maintenance is currently in progress. We will provide updates as necessary.\n官方公告来源：https://magicthegatheringarena.statuspage.io/\n监控每 6 小时检查一次，GitHub 排队可能使检查延迟；相对小时数以本次检查时间为准。\n汉化需要多久，要在下载后对比新增文本、格式和验证结果，当前无法可靠估时。\n\n检查时间：2026-10-27T16:53:50.878331+00:00（UTC；相对时间以此为准）\n当前已发布订阅版本：2026.64.50-25919252-r4\n\n维护流程：\n1. 等 Steam 和游戏内资源下载完成，完全退出游戏。\n2. 本地检查新版官方底稿和备份，对比新增、修改、删除的英文与牌面身份。\n3. 复用已验证译文；大学院废墟等社区资料先核对原文、用途和格式，未知项保留英文。\n4. 构建五层候选，检查中英导入、非目标数据和字体缓存；完成审查及实际必要验收。\n5. 核对源码后，用发布器签名并发布更新包、原子推进订阅索引；索引可用后才发布用户 Release。\n6. 所有用户使用同一订阅工具检查、预演、备份和应用；你也使用这个入口。\n\n监控基准直接读取用户的签名订阅索引，未发布的本地候选不算新版可用。\n状态页公告是预警；build、macOS depot 和资源清单分别是不同信号。\n独立语言包最新指针尚无匿名发现能力：已知清单可验证，不承诺覆盖全部同 build 热更新。\n维护者在 Actions summary 和 mtga-watch/state.json 查看监控结果；启用维护者通知时，真实新事件建 issue 并 @维护者。普通用户只订阅真正可用的 Releases。\n\n运行报告：https://github.com/1996Neil/mtga-chinese-updates/actions/runs/40545349531"
+      "key": "notice-completed-xs36vmsxrvxb",
+      "title": "[MTGA] 维护进展：官方已宣布完成 · Game Update - Network Updates",
+      "details": "官方公告：Game Update - Network Updates\n公告发布时间：2026-10-22 03:22（北京时间）\n计划维护开始：2026-10-28 00:00（北京时间）\n计划维护结束：2026-10-28 03:00（北京时间）\n官方预计维护时长：3 小时（可能提前或延长）。\n官方已宣布维护完成。现在可以打开 Steam 和游戏检查官方更新，下载完成后退出游戏，再核对资源。\n这不证明汉化相关资源已变化，也不代表汉化包已可安装；资源变化另行通知。\n官方最新说明（原文）：\nThe scheduled maintenance has been completed.\n官方公告来源：https://magicthegatheringarena.statuspage.io/\n监控每 6 小时检查一次，GitHub 排队可能使检查延迟；相对小时数以本次检查时间为准。\n汉化需要多久，要在下载后对比新增文本、格式和验证结果，当前无法可靠估时。\n\n检查时间：2026-10-27T21:29:58.339401+00:00（UTC；相对时间以此为准）\n当前已发布订阅版本：2026.64.50-25919252-r4\n\n维护流程：\n1. 等 Steam 和游戏内资源下载完成，完全退出游戏。\n2. 本地检查新版官方底稿和备份，对比新增、修改、删除的英文与牌面身份。\n3. 复用已验证译文；大学院废墟等社区资料先核对原文、用途和格式，未知项保留英文。\n4. 构建五层候选，检查中英导入、非目标数据和字体缓存；完成审查及实际必要验收。\n5. 核对源码后，用发布器签名并发布更新包、原子推进订阅索引；索引可用后才发布用户 Release。\n6. 所有用户使用同一订阅工具检查、预演、备份和应用；你也使用这个入口。\n\n监控基准直接读取用户的签名订阅索引，未发布的本地候选不算新版可用。\n状态页公告是预警；build、macOS depot 和资源清单分别是不同信号。\n独立语言包最新指针尚无匿名发现能力：已知清单可验证，不承诺覆盖全部同 build 热更新。\n维护者在 Actions summary 和 mtga-watch/state.json 查看监控结果；启用维护者通知时，真实新事件建 issue 并 @维护者。普通用户只订阅真正可用的 Releases。\n\n运行报告：https://github.com/1996Neil/mtga-chinese-updates/actions/runs/40587255648"
     }
   ],
   "errors": [],
-  "checked_at": "2026-10-27T16:53:50.878331+00:00",
-  "run_url": "https://github.com/1996Neil/mtga-chinese-updates/actions/runs/40545349531",
-  "unnotified_events_before_run": 0
+  "checked_at": "2026-10-27T21:29:58.339401+00:00",
+  "run_url": "https://github.com/1996Neil/mtga-chinese-updates/actions/runs/40587255648",
+  "unnotified_events_before_run": 1
 }

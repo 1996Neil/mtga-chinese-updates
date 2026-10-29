@@ -77,6 +77,99 @@ func atomic(_ data: Data, _ url: URL, mode: mode_t = 0o600) throws {
     try syncDirectory(url.deletingLastPathComponent())
 }
 func save<T: Encodable>(_ value: T, _ url: URL) throws { try atomic(encoder.encode(value), url) }
+
+func setupProfile(_ profile: Profile, state: URL) throws {
+    let profilePath = state.appendingPathComponent("profile.json")
+    let trustPath = state.appendingPathComponent("trust.json")
+    let paths = [profilePath, trustPath].filter { fm.fileExists(atPath: $0.path) }
+    let existing = try paths.map { try json(Profile.self, small($0)) }
+    for old in existing {
+        try need(old.schema == profile.schema && old.public_key == profile.public_key && old.feed == profile.feed,
+                 "安装包的更新地址或公钥与现有安装不同，已保留原配置和备份。")
+        try need(old.channel == profile.channel || (old.channel == "testing" && profile.channel == "stable"),
+                 "不支持自动切换此订阅渠道；已保留原配置和备份。")
+    }
+    let promoting = existing.contains { $0.channel != profile.channel }
+    let receiptPath = state.appendingPathComponent("channel-promotion.json")
+    // A saved intent makes an interrupted trust/profile pair update retryable.
+    // Neither profile may change feed or key, even during recovery.
+    let recovering: Bool
+    if fm.fileExists(atPath: receiptPath.path) {
+        let saved = try json(Profile.self, small(receiptPath))
+        recovering = saved.schema == profile.schema && saved.feed == profile.feed &&
+            saved.public_key == profile.public_key && saved.channel == "stable" && profile.channel == "stable"
+    } else { recovering = false }
+    if promoting || recovering {
+        let journalPath = state.appendingPathComponent("installation.json")
+        if fm.fileExists(atPath: journalPath.path) {
+            let journal = try json(Journal.self, small(journalPath))
+            try need(["installed", "rolled-back"].contains(journal.state),
+                     "上次安装或恢复尚未完成，请先用原工具恢复，再切换正式渠道。")
+        }
+        let scratch = state.appendingPathComponent(".channel-check-" + UUID().uuidString)
+        try folder(scratch); defer { try? fm.removeItem(at: scratch) }
+        let indexPath = scratch.appendingPathComponent("index-stable.json")
+        if profile.feed.hasPrefix("https://") {
+            guard let url = URLComponents(string: profile.feed) else { throw Problem(description: "更新地址无效。") }
+            try need(url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil &&
+                     url.query == nil && url.fragment == nil, "更新地址必须为不含凭据的 HTTPS 目录。")
+            let result = try run("/usr/bin/curl", ["--disable", "--fail", "--silent", "--show-error",
+                "--location", "--max-redirs", "5", "--proto", "=https", "--proto-redir", "=https",
+                "--connect-timeout", "15", "--max-time", "60", "--max-filesize", "2097152",
+                "--output", indexPath.path, profile.feed + "/index-stable.json"])
+            try need(result.0 == 0, "正式渠道索引暂时无法下载，原配置和备份已保留；请稍后重试。")
+        } else {
+            #if TESTING
+            try need(profile.feed.hasPrefix("/"), "测试更新源路径无效。")
+            try fm.copyItem(at: URL(fileURLWithPath: profile.feed).appendingPathComponent("index-stable.json"), to: indexPath)
+            #else
+            throw Problem(description: "渠道迁移仅支持 HTTPS 更新源。")
+            #endif
+        }
+        let data = try small(indexPath, limit: 2 * 1024 * 1024)
+        let envelope = try json(Envelope.self, data)
+        guard let payload = Data(base64Encoded: envelope.payload),
+              let signature = Data(base64Encoded: envelope.signature),
+              let publicData = Data(base64Encoded: profile.public_key) else {
+            throw Problem(description: "正式渠道签名封装无效，未切换配置。")
+        }
+        let key = try Curve25519.Signing.PublicKey(rawRepresentation: publicData)
+        try need(key.isValidSignature(signature, for: payload), "正式渠道签名校验失败，未切换配置。")
+        let index = try json(Index.self, payload)
+        try need(index.schema == "MTGA_CN_INDEX_V1" && index.channel == "stable" &&
+                 index.sequence > 0 && !index.releases.isEmpty && index.releases.count <= 10000,
+                 "正式渠道索引无效，未切换配置。")
+        guard let expiry = ISO8601DateFormatter().date(from: index.expires_at) else {
+            throw Problem(description: "正式渠道有效期无效。")
+        }
+        try need(expiry > Date(), "正式渠道索引已过期，未切换配置。")
+        let seenPath = state.appendingPathComponent("seen-stable.json")
+        if fm.fileExists(atPath: seenPath.path) {
+            let seen = try json(Seen.self, small(seenPath))
+            let indexFP = try fingerprint(indexPath)
+            try need(index.sequence >= seen.sequence &&
+                     (index.sequence != seen.sequence || indexFP == seen.fingerprint),
+                     "正式渠道索引倒退或同序号内容不同，未切换配置。")
+            try need(Date().timeIntervalSince1970 >= seen.checked_at - 300, "本机时间倒退，未切换配置。")
+        }
+        for path in paths {
+            let backup = state.appendingPathComponent(path.lastPathComponent + ".before-stable")
+            if !fm.fileExists(atPath: backup.path) { try atomic(small(path), backup) }
+        }
+        try save(profile, receiptPath)
+        try save(profile, trustPath)
+        #if TESTING
+        if ProcessInfo.processInfo.environment["MTGA_TEST_INTERRUPT_CHANNEL_PROMOTION"] == "1" {
+            throw Problem(description: "模拟渠道切换中断。")
+        }
+        #endif
+    }
+    try save(profile, profilePath)
+    if promoting || recovering {
+        try fm.removeItem(at: receiptPath)
+        try syncDirectory(state)
+    }
+}
 func copyVerified(_ source: URL, _ target: URL, _ fp: Fingerprint, precommit: () throws -> Void = {}) throws {
     try verify(source, fp); try folder(target.deletingLastPathComponent())
     if fm.fileExists(atPath: target.path) { try checked(target) }
@@ -683,10 +776,14 @@ func main() throws {
             profile = Profile(schema: profile.schema, feed: localFeed.path, public_key: profile.public_key, channel: profile.channel)
         }
         try folder(state)
-        let profilePath = state.appendingPathComponent("profile.json")
-        if fm.fileExists(atPath: profilePath.path) { let old = try json(Profile.self, small(profilePath)); try need(old.public_key == profile.public_key && old.feed == profile.feed && old.channel == profile.channel, "此安装使用不同的订阅源或公钥。请选择独立 --state 目录，不自动替换信任设置。") }
+        let setupLockPath = state.appendingPathComponent("client.lock")
+        if fm.fileExists(atPath: setupLockPath.path) { try checked(setupLockPath) }
+        let setupLock = open(setupLockPath.path, O_RDWR | O_CREAT | O_NOFOLLOW, 0o600)
+        try need(setupLock >= 0, "无法打开安装锁。")
+        defer { flock(setupLock, LOCK_UN); close(setupLock) }
+        try need(flock(setupLock, LOCK_EX | LOCK_NB) == 0, "另一项维护操作正在运行，请稍后安装。")
+        try setupProfile(profile, state: state)
         try atomic(Data(contentsOf: exe), state.appendingPathComponent("mtga-cn"), mode: 0o755)
-        try save(profile, profilePath)
         let shell = """
         #!/bin/zsh
         ROOT="${0:A:h}"

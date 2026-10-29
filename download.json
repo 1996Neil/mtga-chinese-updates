@@ -2,8 +2,8 @@
   "channel": "stable",
   "feed": "https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/feed",
   "fingerprint": {
-    "bytes": 323274,
-    "sha256": "84c86c8b0ae7d21245c4e7d9301db3435940c76c8116bf38c17bdc36329e6104"
+    "bytes": 338762,
+    "sha256": "f7096195651ab6f1c7e98dc85f8cfb07431145d2b59138f7ae3c9e499e2b338d"
   },
-  "installer_url": "https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.50-25919252-r4/MTGA-Chinese-Subscriber-v3.3.zip"
+  "installer_url": "https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.3-channel-fix/MTGA-Chinese-Subscriber-v3.3.zip"
 }

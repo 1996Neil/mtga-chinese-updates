@@ -2,7 +2,7 @@
 
 macOS + Steam 版《万智牌：竞技场》汉化，支持中英文牌表导入，免费使用。
 
-**[下载更新工具](https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.64.50-25919252-r4/MTGA-Chinese-Subscriber-v3.3.zip)** · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)
+**[下载更新工具](https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.3-channel-fix/MTGA-Chinese-Subscriber-v3.3.zip)** · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)
 
 适用于 **M 系列 Mac、macOS 13 及以上**。Windows 用户可查看[其他维护者的工具](https://shiqidi.lenitatis.com/mod)。
 

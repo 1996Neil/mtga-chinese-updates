@@ -127,13 +127,49 @@ class PortableBaseline:
                             row['identity'] == {'ui_key': key}, 'Invalid portable UI identity')
                 rows[key] = row
             self.rows[layer] = rows
+        self.title_rows = {}
+        for row in getattr(self, 'titles', []):
+            self.title_rows.setdefault(int(row['title_id']), row)
+        self.text_index = {}
+        for row in self.rows.get('card', {}).values():
+            if row['disposition'] != 'translated' or not has_chinese(row['chinese']):
+                continue
+            signature = ('card', row['english'], json.dumps(row['field_use'], sort_keys=True))
+            self.text_index.setdefault(signature, set()).add(row['chinese'])
         self.source_id = 'portable-community:' + self.inputs['portable_manifest']['sha256']
         self.guard()
+
+    def fallback(self, layer, context):
+        """Recover a translation when only the LocId moved between builds.
+
+        Two narrow matches only: the same card title by identity, or the exact
+        same English text in the exact same field use with one agreed value.
+        Every other case keeps English rather than guessing where it renders.
+        """
+        english, use = context.get('english'), context.get('field_use') or []
+        if not use or not isinstance(english, str) or not english.strip():
+            return None, 'portable-unknown-field-use'
+        if layer == 'card':
+            cards = (context.get('identity') or {}).get('cards') or []
+            titles = {int(card['TitleId']) for card in cards if card.get('TitleId')}
+            printings = {int(card['GrpId']) for card in cards if card.get('GrpId')}
+            if len(titles) == 1:
+                row = self.title_rows.get(next(iter(titles)))
+                if (row is not None and row['english'] == english and
+                        int(row['grp_id']) in printings and has_chinese(row['chinese']) and
+                        not safe_format(english, row['chinese'])):
+                    return row['chinese'], 'portable-title-identity-match'
+        values = self.text_index.get((layer, english, json.dumps(use, sort_keys=True)))
+        if layer == 'card' and values and len(values) == 1:
+            chinese = next(iter(values))
+            if not safe_format(english, chinese):
+                return chinese, 'portable-text-context-match'
+        return None, 'portable-new-context'
 
     def check(self, layer, key, context):
         row = self.rows.get(layer, {}).get(str(key))
         if row is None:
-            return None, 'portable-new-context'
+            return self.fallback(layer, context)
         if row['english'] != context['english']:
             return None, 'portable-english-changed'
         if row['context_sha256'] != context_hash(context):

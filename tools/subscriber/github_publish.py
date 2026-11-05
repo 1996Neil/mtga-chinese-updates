@@ -109,7 +109,46 @@ def publication_plan(package, repo, tag, client, public_file):
     return {'repo':repo,'tag':tag,'feed':feed,'channel':channel,'index':index,'manifest':str(manifest),'release':release,'assets':assets}
 
 
+def derived_metadata_api(url, limit):
+    """Derive only the same repository/ref/path's anonymous Contents API URL."""
+    if type(limit) is not int or not 0 < limit <= 2 * 1024 * 1024 or not isinstance(url, str):
+        return None
+    match = re.fullmatch(
+        r'https://raw\.githubusercontent\.com/'
+        r'([A-Za-z0-9][A-Za-z0-9-]{0,38})/'
+        r'([A-Za-z0-9][A-Za-z0-9._-]{0,99})/'
+        r'([A-Za-z0-9][A-Za-z0-9._-]{0,150})/'
+        r'(feed/[A-Za-z0-9][A-Za-z0-9._-]{0,150}\.json|download\.json)', url)
+    if not match:
+        return None
+    owner, repo, ref, path = match.groups()
+    return f'https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={ref}'
+
+
+def download_metadata(url, destination, limit, api):
+    """Alternate anonymous HTTPS transport; callers still verify hashes/signatures."""
+    common = ['/usr/bin/curl', '--disable', '--fail', '--silent', '--show-error',
+              '--location', '--max-redirs', '3', '--proto', '=https', '--proto-redir', '=https',
+              '--max-filesize', str(limit), '--output', str(destination)]
+    primary = common + ['--connect-timeout', '5', '--max-time', '15', '--retry', '0', url]
+    result = subprocess.run(primary, text=True, capture_output=True)
+    transport_errors = {5, 6, 7, 18, 28, 35, 52, 55, 56, 60}
+    if result.returncode in transport_errors:
+        result = subprocess.run(common + ['--connect-timeout', '10', '--max-time', '30',
+                                '--retry', '1', '--retry-max-time', '30', '--header',
+                                'Accept: application/vnd.github.raw+json', api],
+                                text=True, capture_output=True)
+    if result.returncode:
+        raise RuntimeError('元数据下载失败；未跳过签名或哈希检查。\n' + result.stderr[-1000:])
+    path = Path(destination)
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+        raise ValueError('元数据下载文件无效或超过大小限制。')
+
+
 def download(url, destination, limit=512*1024*1024, timeout=1800):
+    api = derived_metadata_api(url, limit)
+    if api:
+        return download_metadata(url, destination, limit, api)
     run(['/usr/bin/curl','--disable','--fail','--silent','--show-error','--location','--max-redirs','5',
          '--proto','=https','--proto-redir','=https','--retry','2','--retry-max-time','120',
          '--speed-limit','1024','--speed-time','90','--connect-timeout','15','--max-time',str(timeout),'--max-filesize',str(limit),

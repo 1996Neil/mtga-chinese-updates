@@ -129,7 +129,7 @@ class RoutineTextReleaseTests(unittest.TestCase):
 
     def test_new_cards_identity_canonical_or_unknown_import_structure_are_not_text_only(self):
         names = self.report['import_compatibility']['names']
-        for field in ('new_card_groups', 'changed_card_identities', 'changed_canonical_names',
+        for field in ('changed_card_identities', 'changed_canonical_names',
                       'canonical_conflicts', 'uncovered'):
             before = names[field]
             names[field] = [1]
@@ -205,11 +205,18 @@ class RoutineTextReleaseTests(unittest.TestCase):
                 lambda r: r['localization']['resources']['validation'].pop('other_TMP_fields_preserved'),
                 lambda r: r['localization']['fonts']['missing_glyphs'].update(Light=[123]),
                 lambda r: r['import_compatibility']['names'].pop('validation'),
-                lambda r: r['import_compatibility']['fixtures'].update(new_importable_cards=1)):
+                lambda r: r['import_compatibility']['fixtures'].update(new_importable_cards=-1)):
             original = copy.deepcopy(self.report)
             mutator(self.report)
             self.assertTrue(self.blockers())
             self.report = original
+
+    def test_old_portable_dataset_new_card_counts_do_not_mean_new_against_signed_stable(self):
+        self.report['import_compatibility']['names']['new_card_groups'] = list(range(544))
+        self.report['import_compatibility']['fixtures']['new_importable_cards'] = 408
+        self.assertEqual(self.blockers(), [])
+        self.subject['input_files']['card']['sha256'] = 'f' * 64
+        self.assertIn('official-input-or-resource-path-changed:card', self.blockers())
 
     def test_direct_automatic_packaging_runs_actual_structural_guard_before_signing(self):
         run = self.root / 'candidate'

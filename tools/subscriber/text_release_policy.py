@@ -79,7 +79,12 @@ def evaluate(subject, report, review, baseline, policy):
             canonical_check.get('token_only_secondary_only_titles_not_added') is not True or
             canonical_check.get('canonical_exact_cross_title_collisions') != 0):
         blockers.append('name-structure-validation-incomplete')
-    for field in ('new_card_groups', 'changed_card_identities', 'changed_canonical_names',
+    # New-group counts refer to the portable text dataset, which can be older
+    # than the signed stable baseline. Actual baseline identity is established
+    # below by the exact official card input and full structural validator.
+    if not isinstance(names.get('new_card_groups'), list):
+        blockers.append('historical-new-card-count-unknown')
+    for field in ('changed_card_identities', 'changed_canonical_names',
                   'canonical_conflicts', 'uncovered'):
         if field not in names or names[field]:
             blockers.append('name-import-structure-changed-or-unknown:' + field)
@@ -128,7 +133,8 @@ def evaluate(subject, report, review, baseline, policy):
         blockers.append('font-validation-incomplete')
     fixtures = report.get('import_compatibility', {}).get('fixtures', {})
     expected_fixtures = {'english-60', 'chinese-60', 'mixed-60', 'qualified-60', 'special-english-60'}
-    if (fixtures.get('status') != 'PASS' or fixtures.get('new_importable_cards') != 0 or
+    historical_new = fixtures.get('new_importable_cards')
+    if (fixtures.get('status') != 'PASS' or type(historical_new) is not int or historical_new < 0 or
             set(fixtures.get('fixtures', {})) != expected_fixtures or any(
                 row.get('static_status') != 'PASS' or row.get('cards') != 60 or row.get('errors') != []
                 for row in fixtures.get('fixtures', {}).values())):
@@ -165,7 +171,7 @@ def create(subject, report, review, baseline_manifest, client, public_key_file, 
         'machine_checks': {
             'same_game_and_steam_build': True, 'official_inputs_and_paths_unchanged': True,
             'protected_files_and_manifests_unchanged': True, 'font_outputs_unchanged': True,
-            'no_new_card_identity_or_import_name_structure': True,
+            'official_card_identity_and_import_structure_unchanged_against_stable': True,
             'static_integrity_and_independent_engineering_review': True,
         },
     }

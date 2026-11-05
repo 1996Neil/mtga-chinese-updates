@@ -8,5 +8,17 @@
     "requires_same_steam_build": true,
     "requires_unchanged_fonts": true,
     "requires_independent_review": true
+  },
+  "owner_receipt_release": {
+    "enabled": true,
+    "verification_mode": "post_hoc",
+    "required_checks": [
+      "chinese_display",
+      "font_rendering",
+      "english_import",
+      "chinese_import"
+    ],
+    "independent_review": "best_effort",
+    "index_validity_days": 180
   }
 }

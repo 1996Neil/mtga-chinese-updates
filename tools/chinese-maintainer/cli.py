@@ -179,6 +179,10 @@ def refresh_gates(report, run_dir):
         report['blockers'].append('双语导入静态检查未通过')
     if report['high_risk_unknown']:
         report['blockers'].append('高风险未知项未处理')
+    # Static-only view, kept separate from the review gate below so the
+    # owner-receipt policy can release a candidate whose review went stale
+    # because the builder code changed after it was reviewed.
+    report['static_checks_passed'] = not report['blockers']
     review = run_dir / 'independent-review.json'
     review_pass = False
     if review.exists():

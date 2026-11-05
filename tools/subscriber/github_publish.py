@@ -17,7 +17,7 @@ import tempfile
 import time
 from pathlib import Path
 from package_installer import fixed_text
-from publisher import canonical, check, dump, fingerprint, sign
+from publisher import canonical, check, dump, fingerprint, sign, index_validity_days
 
 SOURCE_REPO = '1996Neil/mtga-chinese-bilingual-maintainer'
 RETIRED_REPOS = {SOURCE_REPO.lower(), '1996neil/mtga-resource-acquisition-probe'}
@@ -67,7 +67,7 @@ def merge_index(old, incoming, channel, now=None):
     if len(refs)>10000:raise ValueError('索引版本数量超过客户端限制。')
     return {'schema':'MTGA_CN_INDEX_V1','channel':channel,
             'sequence':max((old or {}).get('sequence',0)+1,incoming['sequence'],int(now.timestamp()*1000)),
-            'expires_at':(now+dt.timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'expires_at':(now+dt.timedelta(days=index_validity_days())).strftime('%Y-%m-%dT%H:%M:%SZ'),
             'releases':sorted(refs.values(),key=lambda r:(r['client_version'],r['steam_build'],r['revision']))}
 
 

@@ -15,6 +15,44 @@ LAYERS = ('card', 'client', 'resources', 'bootstrap_fonts', 'font_bundle')
 CHECKS = ('official_source_review', 'independent_engineering_review', 'chinese_display',
           'font_rendering', 'english_import', 'chinese_import', 'mixed_import',
           'qualified_import', 'special_structures', 'new_cards', 'restart_repeat')
+POLICY_PATH = Path(__file__).resolve().parents[2] / 'release-policy.json'
+REVIEW_MODES = ('best_effort', 'always')
+
+
+def owner_receipt_policy(path=None):
+    """Enabled owner-receipt release policy, or None when the strict path applies."""
+    path = Path(path or POLICY_PATH).resolve()
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text())
+    if value.get('schema') != 'MTGA_CN_RELEASE_POLICY_V1':
+        raise ValueError('发布政策格式无效。')
+    block = value.get('owner_receipt_release')
+    if not isinstance(block, dict) or block.get('enabled') is not True:
+        return None
+    if block.get('verification_mode') != 'post_hoc':
+        raise ValueError('发布政策的先发后验模式无效。')
+    required = block.get('required_checks')
+    if (not isinstance(required, list) or not required or
+            any(name not in CHECKS for name in required)):
+        raise ValueError('发布政策的要求检查项无效。')
+    if block.get('independent_review') not in REVIEW_MODES:
+        raise ValueError('发布政策的独立审查模式无效。')
+    days = block.get('index_validity_days')
+    if type(days) is not int or days < 1:
+        raise ValueError('发布政策的索引有效期无效。')
+    return block
+
+
+def index_validity_days(path=None):
+    block = owner_receipt_policy(path)
+    return block['index_validity_days'] if block else 30
+
+
+def is_post_hoc(evidence):
+    return (isinstance(evidence, dict) and
+            evidence.get('schema') == 'MTGA_CN_PUBLISHER_ACCEPTANCE_V1' and
+            evidence.get('verification_mode') == 'post_hoc')
 
 
 def canonical(value):
@@ -114,14 +152,32 @@ def subject_for(snapshot, report, base_meta):
     }
 
 
-def validate_acceptance(evidence, subject):
+def validate_acceptance(evidence, subject, policy_path=None):
+    """Strict in-game acceptance, or the policy-authorized post-hoc receipt."""
     if evidence.get('schema') != 'MTGA_CN_PUBLISHER_ACCEPTANCE_V1':
         raise ValueError('发布验收格式无效。')
     expected = hashlib.sha256(canonical(subject)).hexdigest()
     if evidence.get('subject_sha256') != expected:
         raise ValueError('发布验收不属于这一组原始资源、候选、构建程序和版本。')
-    if not all(evidence.get('checks', {}).get(k) is True for k in CHECKS):
-        raise ValueError('发布验收尚未全部通过。')
+    checks = evidence.get('checks', {})
+    if set(checks) != set(CHECKS) or any(type(value) is not bool for value in checks.values()):
+        raise ValueError('发布验收的检查项集合无效。')
+    mode = evidence.get('verification_mode', 'in_game')
+    if mode == 'post_hoc':
+        block = owner_receipt_policy(policy_path)
+        if not block:
+            raise ValueError('本机未启用先发后验的发布政策。')
+        missing = [name for name in block['required_checks'] if checks.get(name) is not True]
+        if missing:
+            raise ValueError('先发后验回执缺少必需检查：' + ', '.join(missing))
+        verified = evidence.get('owner_verified_at')
+        if verified is not None and not isinstance(verified, str):
+            raise ValueError('先发后验回执的时间字段无效。')
+    elif mode == 'in_game':
+        if not all(checks.get(name) is True for name in CHECKS):
+            raise ValueError('发布验收尚未全部通过。')
+    else:
+        raise ValueError('发布验收的模式无效。')
     if not evidence.get('tester_quote', '').strip() or not evidence.get('scope', '').strip():
         raise ValueError('缺少真实测试者确认和明确验收范围。')
     arches = evidence.get('architectures')
@@ -178,15 +234,24 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         check(path, fp)
     arches = ['arm64']
     status, evidence_hash, scope = 'testing', None, '离线构建及文件验证；真实游戏内验收尚未完成'
+    acceptance_meta = {}
     if channel == 'stable':
         if report.get('high_risk_unknown'):
             raise ValueError('候选仍有高风险未知项，不能发布稳定包。')
         if not acceptance:
             raise ValueError('稳定包必须提供匹配的真实验收记录。')
-        review = json.loads((run / 'independent-review.json').read_text())
-        if review.get('status') != 'PASS' or review.get('code_fingerprints') != report['code_fingerprints'] or review.get('candidate_files') != report['candidate_files']:
-            raise ValueError('独立工程审查不匹配。')
         evidence = json.loads(Path(acceptance).read_text())
+        post_hoc = is_post_hoc(evidence)
+        block = owner_receipt_policy() if post_hoc else None
+        if post_hoc and not block:
+            raise ValueError('本机未启用先发后验的发布政策。')
+        review_path = run / 'independent-review.json'
+        review = json.loads(review_path.read_text()) if review_path.is_file() else {}
+        review_ok = (review.get('status') == 'PASS' and
+                     review.get('code_fingerprints') == report['code_fingerprints'] and
+                     review.get('candidate_files') == report['candidate_files'])
+        if not review_ok and not (post_hoc and block['independent_review'] == 'best_effort'):
+            raise ValueError('独立工程审查不匹配。')
         if evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
             # This policy may omit new runtime tests, never actual structural
             # revalidation. Direct publisher invocations retain the same guard.
@@ -199,6 +264,11 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         else:
             arches = validate_acceptance(evidence, subject)
         status, evidence_hash, scope = 'accepted', fingerprint(acceptance)['sha256'], evidence['scope']
+        if post_hoc:
+            acceptance_meta = {'verification_mode': 'post_hoc',
+                               'owner_verified_at': evidence.get('owner_verified_at'),
+                               'independent_review': 'PASS' if review_ok else 'NOT_RERUN',
+                               'post_hoc_required_checks': list(block['required_checks'])}
     if local_acceptance is not None:
         if channel != 'testing': raise ValueError('简化本机验收仅适用于测试渠道。')
         local = json.loads(Path(local_acceptance).read_text())
@@ -250,12 +320,14 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         release['acceptance'].update(
             basis='owner-authorized-routine-text-policy',
             runtime_validation='NOT_RUN', human_validation='NOT_RUN')
+    if acceptance_meta:
+        release['acceptance'].update(acceptance_meta)
     for layer, (base, output) in sources.items():
         check(base, subject['input_files'][layer]); check(output, subject['output_files'][layer])
     manifest = destination / (release_id + '.json')
     sign(client, key, release, manifest, destination)
     index = {'schema': 'MTGA_CN_INDEX_V1', 'sequence': sequence if sequence is not None else time.time_ns() // 1000000,
-             'expires_at': (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%SZ'),
+             'expires_at': (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=index_validity_days())).strftime('%Y-%m-%dT%H:%M:%SZ'),
              'channel': channel, 'releases': [{'id': release_id, 'revision': revision,
                  'client_version': snapshot['client_version'], 'steam_build': snapshot['steam_build'],
                  'manifest': {'name': manifest.name, 'fingerprint': fingerprint(manifest)}}]}
@@ -263,6 +335,7 @@ def package(run, destination, client, key, public_key, revision, channel='testin
     dump(destination / 'profile.json', {'schema': 'MTGA_CN_PROFILE_V1', 'feed': feed or str(destination),
                                       'public_key': public_key, 'channel': channel})
     template = {'schema': 'MTGA_CN_PUBLISHER_ACCEPTANCE_V1', 'subject_sha256': hashlib.sha256(canonical(subject)).hexdigest(),
+                'verification_mode': 'in_game', 'owner_verified_at': None,
                 'checks': {k: False for k in CHECKS}, 'tester_quote': '', 'scope': '', 'architectures': []}
     dump(destination / 'acceptance-template.json', template)
     dump(destination / 'package-inventory.json', {p.name: fingerprint(p) for p in destination.iterdir() if p.is_file()})

@@ -95,6 +95,23 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertEqual(self.execute(), 1)
         self.assertEqual(self.calls, [])
 
+    def test_owner_receipt_releases_a_stale_review_without_claiming_runtime_pass(self):
+        self.report.update(static_safe_to_trial=False, static_checks_passed=True,
+                           safe_to_install=False)
+        (self.run / 'report.json').write_text(json.dumps(self.report))
+        self.args.channel = 'stable'
+        self.args.acceptance = self.root / 'receipt.json'
+        self.args.acceptance.write_text(json.dumps({
+            'schema': 'MTGA_CN_PUBLISHER_ACCEPTANCE_V1', 'verification_mode': 'post_hoc'}))
+        self.assertEqual(self.execute(), 0)
+        self.assertEqual(self.calls, [])
+        with patch('publisher.owner_receipt_policy', return_value=None):
+            self.assertEqual(self.execute(), 1)
+        self.report['static_checks_passed'] = False
+        (self.run / 'report.json').write_text(json.dumps(self.report))
+        self.assertEqual(self.execute(), 1)
+        self.assertEqual(self.calls, [])
+
     def test_validation_failure_cannot_reach_signer(self):
         with patch.object(cli, 'validate_run', side_effect=RuntimeError('changed baseline')):
             with self.assertRaisesRegex(RuntimeError, 'changed baseline'):

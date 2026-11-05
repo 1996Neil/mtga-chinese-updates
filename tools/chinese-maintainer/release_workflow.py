@@ -58,24 +58,28 @@ def finish(args, run, invoke):
                '--feed', f'https://raw.githubusercontent.com/{args.repo}/main/feed',
                '--asset-base', f'https://github.com/{args.repo}/releases/download/{tag}']
     missing = [name for name in ('client', 'key', 'public_key_file') if getattr(args, name) is None]
+    sys.path.insert(0, str(subscriber))
+    from publisher import is_post_hoc, owner_receipt_policy
+    receipt = read_json(args.acceptance) if (args.acceptance is not None and args.acceptance.is_file()) else {}
+    post_hoc = is_post_hoc(receipt) and owner_receipt_policy() is not None
     blockers = []
-    if not report.get('static_safe_to_trial'):
+    if post_hoc:
+        if not report.get('static_checks_passed'):
+            blockers.append('当前候选的静态检查未通过')
+    elif not report.get('static_safe_to_trial'):
         blockers.append('当前候选的静态门槛或独立工程审查未通过')
     if args.channel == 'stable':
         automatic = False
-        if args.acceptance is not None and args.acceptance.is_file():
-            evidence = read_json(args.acceptance)
-            if evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
-                require(all((args.client, args.public_key_file)),
-                        'Automatic text release needs verifier and public key')
-                sys.path.insert(0, str(subscriber))
-                from publisher import subject_for
-                from text_release_policy import validate as validate_automatic
-                subject = subject_for(snapshot, report, read_json(run / 'official-base.json'))
-                validate_automatic(evidence, subject, report, read_json(run / 'independent-review.json'),
-                                   args.client, args.public_key_file.read_text().strip())
-                automatic = True
-        if not report.get('safe_to_install') and not automatic:
+        if receipt.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
+            require(all((args.client, args.public_key_file)),
+                    'Automatic text release needs verifier and public key')
+            from publisher import subject_for
+            from text_release_policy import validate as validate_automatic
+            subject = subject_for(snapshot, report, read_json(run / 'official-base.json'))
+            validate_automatic(receipt, subject, report, read_json(run / 'independent-review.json'),
+                               args.client, args.public_key_file.read_text().strip())
+            automatic = True
+        if not report.get('safe_to_install') and not automatic and not post_hoc:
             blockers.append('当前候选的真实游戏验收未通过')
         if args.acceptance is None:
             blockers.append('稳定渠道缺少发布验收记录 --acceptance')

@@ -20,6 +20,14 @@
 
 字体、资源结构、导入身份或原版输入变化，以及首次适配没有同版本正式基准时，属于专项适配。版本/资源不匹配、签名或哈希错误、格式损坏及下载故障仍会停止。网络预检查、差分本地重建、上传核验、发布后匿名完整下载和原生客户端预演由程序完成，不能让用户以口头确认替代这些机器检查。
 
+### 先发后验（owner receipt）
+
+`release-policy.json` 的 `owner_receipt_release` 是单人维护的轻量通道，默认启用。适用场景是首次适配或结构变化、但维护者愿意先发布再由自己订阅安装验收：验收记录使用 `MTGA_CN_PUBLISHER_ACCEPTANCE_V1` 并写明 `verification_mode:"post_hoc"`，只需通过 `required_checks` 里的四项（中文显示、字体渲染、英文导入、中文导入），其余检查项保留在记录里但允许为 false。
+
+这不是把未测试说成通过：release 的 `acceptance` 会同时写入 `verification_mode`、`owner_verified_at`（未验收时为 null）、`independent_review`（`PASS` 或 `NOT_RERUN`）和本次要求的检查项，任何阅读发布记录的人都能看出这一步跳过的先后顺序。`tester_quote`、`scope` 和 `architectures` 仍然必填，仍然绑定当前原始资源、候选和构建代码。
+
+`independent_review:"always"` 时仍要求独立工程审查通过；`best_effort`（当前值）允许审查因构建代码变化而过期，但会把 `NOT_RERUN` 写进签名记录。没有启用该政策、或政策被改动时，`validate_acceptance` 退回原来的严格模式：全部 11 项必须为 true。索引有效期由 `index_validity_days` 决定（当前 180 天），缺省仍是 30 天。
+
 ### 日常轻量路径
 
 热缓存下的自动处理目标是五分钟以内，使用现成 `maintain`，不在每次维护时重新设计或修复整个系统。先确认输入是否变化，再选择最小工作：

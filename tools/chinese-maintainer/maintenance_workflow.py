@@ -449,13 +449,20 @@ def execute(config, prepare_only=False):
             'human_acceptance_created': False, 'runtime_acceptance_created': False,
         })
         sys.path.insert(0, str(ROOT.parent / 'subscriber'))
-        from publisher import subject_for, validate_acceptance
+        from publisher import subject_for, validate_acceptance, is_post_hoc, owner_receipt_policy
         subject = subject_for(candidate_snapshot, report,
                               json.loads((run / 'official-base.json').read_text()))
         acceptance = Path(config.get('acceptance', str(run / 'publisher-acceptance.json')))
         automatic = False
+        post_hoc = False
         current_remote = None
         blockers = list(report.get('blockers', []))
+        if acceptance.is_file():
+            try:
+                post_hoc = (is_post_hoc(json.loads(acceptance.read_text())) and
+                            owner_receipt_policy() is not None)
+            except (OSError, ValueError):
+                post_hoc = False
         if report.get('static_safe_to_trial') and not acceptance.is_file():
             record('automatic_text_policy', blockers=[])
             try:
@@ -468,7 +475,13 @@ def execute(config, prepare_only=False):
             except (RuntimeError, OSError, ValueError, KeyError) as error:
                 record('automatic_text_policy', automatic_text_reason=str(error))
                 blockers.append(str(error))
-        if not report.get('safe_to_install') and not automatic:
+        if post_hoc:
+            blockers = [name for name in blockers
+                        if name not in ('独立工程审查未通过或证据已过期',
+                                        '当前候选的中文显示与原生英/中/混合导入待验收')]
+            if not report.get('static_checks_passed'):
+                blockers = blockers or ['当前候选的静态检查未通过']
+        if not report.get('safe_to_install') and not automatic and not post_hoc:
             blockers = blockers or ['当前候选尚未完成独立工程审查和真实游戏验收']
         if not acceptance.is_file():
             blockers.append('缺少绑定当前候选的真实发布验收')
@@ -491,7 +504,10 @@ def execute(config, prepare_only=False):
         # reconstruction during packaging, and new anonymous/native outputs after
         # publication. It does not invent a pre-publication runtime test file.
         network = ({'basis': 'signed-stable-baseline-https-and-package-local-reconstruction',
-                    'runtime_acceptance': False} if automatic else network_gate(config, run, subject))
+                    'runtime_acceptance': False} if automatic else
+                   {'basis': 'owner-receipt-post-hoc', 'runtime_acceptance': False,
+                    'network_validation': 'DEFERRED'} if post_hoc else
+                   network_gate(config, run, subject))
         need(stable_signature(read_snapshot()) == stable_signature(before),
              '准备期间游戏资源发生变化；重跑维护以使用当前版本，未开始签名发布')
         if prepare_only:

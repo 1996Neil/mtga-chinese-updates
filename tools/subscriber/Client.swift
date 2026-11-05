@@ -113,11 +113,8 @@ func setupProfile(_ profile: Profile, state: URL) throws {
             guard let url = URLComponents(string: profile.feed) else { throw Problem(description: "更新地址无效。") }
             try need(url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil &&
                      url.query == nil && url.fragment == nil, "更新地址必须为不含凭据的 HTTPS 目录。")
-            let result = try run("/usr/bin/curl", ["--disable", "--fail", "--silent", "--show-error",
-                "--location", "--max-redirs", "5", "--proto", "=https", "--proto-redir", "=https",
-                "--connect-timeout", "15", "--max-time", "60", "--max-filesize", "2097152",
-                "--output", indexPath.path, profile.feed + "/index-stable.json"])
-            try need(result.0 == 0, "正式渠道索引暂时无法下载，原配置和备份已保留；请稍后重试。")
+            try downloadMetadata(feed: profile.feed, name: "index-stable.json", target: indexPath,
+                                 limit: 2 * 1024 * 1024)
         } else {
             #if TESTING
             try need(profile.feed.hasPrefix("/"), "测试更新源路径无效。")
@@ -195,6 +192,58 @@ func run(_ path: String, _ args: [String], input: FileHandle? = nil) throws -> (
     if let input = input { p.standardInput = input }
     try p.run(); let data = out.fileHandleForReading.readDataToEndOfFile(); p.waitUntilExit()
     return (p.terminationStatus, String(decoding: data, as: UTF8.self))
+}
+func metadataAPIURL(feed: String, name: String) -> URL? {
+    guard matching(name, "^[A-Za-z0-9][A-Za-z0-9._-]{0,145}\\.json$"),
+          let source = URLComponents(string: feed) else { return nil }
+    let parts = source.path.split(separator: "/").map(String.init)
+    guard source.scheme == "https", source.host == "raw.githubusercontent.com",
+          source.port == nil, source.user == nil, source.password == nil,
+          source.query == nil, source.fragment == nil, parts.count == 4,
+          parts[3] == "feed",
+          parts.prefix(3).allSatisfy({ matching($0, "^[A-Za-z0-9][A-Za-z0-9._-]{0,150}$") &&
+              $0 != "." && $0 != ".." }),
+          feed == "https://raw.githubusercontent.com/" + parts.joined(separator: "/")
+    else { return nil }
+    return URL(string: "https://api.github.com/repos/\(parts[0])/\(parts[1])/contents/feed/\(name)?ref=\(parts[2])")
+}
+func downloadMetadata(feed: String, name: String, target: URL, limit: Int) throws {
+    try basename(name)
+    try need(limit > 0, "元数据大小限制无效。")
+    guard let source = URL(string: feed) else { throw Problem(description: "更新源地址无效。") }
+    let primary = source.appendingPathComponent(name)
+    var curl = "/usr/bin/curl"
+    #if TESTING
+    curl = ProcessInfo.processInfo.environment["MTGA_TEST_CURL"] ?? curl
+    #endif
+    func transfer(_ url: URL, fallback: Bool) throws -> Int32 {
+        let incoming = target.deletingLastPathComponent().appendingPathComponent(
+            "." + UUID().uuidString + "-metadata")
+        defer { try? fm.removeItem(at: incoming) }
+        var args = ["--disable", "--fail", "--silent", "--show-error",
+                    "--retry", fallback ? "1" : "0", "--retry-max-time", fallback ? "35" : "15",
+                    "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https",
+                    "--connect-timeout", fallback ? "10" : "5", "--max-time", fallback ? "30" : "15",
+                    "--max-filesize", String(limit), "--output", incoming.path]
+        if fallback { args += ["--header", "Accept: application/vnd.github.raw+json"] }
+        args.append(url.absoluteString)
+        let result = try run(curl, args)
+        if result.0 == 0 {
+            _ = try small(incoming, limit: limit)
+            try need(!fm.fileExists(atPath: target.path), "拒绝覆盖已有元数据暂存。")
+            try fm.moveItem(at: incoming, to: target)
+        }
+        return result.0
+    }
+    let status = try transfer(primary, fallback: false)
+    if status == 0 { return }
+    // Invalid successful JSON/signatures and HTTP errors are never retried via a
+    // different transport. Only connection/TLS/timeout/interrupted-body errors.
+    let transportFailures: Set<Int32> = [5, 6, 7, 18, 28, 35, 52, 55, 56, 60]
+    if transportFailures.contains(status), let alternate = metadataAPIURL(feed: feed, name: name) {
+        if try transfer(alternate, fallback: true) == 0 { return }
+    }
+    throw Problem(description: "下载失败：\(name)。请检查网络或更新源权限后重试。原有游戏文件未因下载而改变。")
 }
 func stopped() throws {
     #if TESTING
@@ -528,12 +577,9 @@ final class Client {
             let isPatch = name.hasSuffix(".delta") || name.hasSuffix(".full")
             if isPatch, let fp = expected { return try deltaDownload(name, url: url, fp: fp, limit: limit) }
             if isPatch { print("正在下载资源：\(name)（\((expected?.bytes ?? 0) / 1024 / 1024) MiB）。慢速网络可能需要较长时间。完成校验前不会修改游戏。"); fflush(stdout) }
-            var curl = "/usr/bin/curl"
-            #if TESTING
-            curl = ProcessInfo.processInfo.environment["MTGA_TEST_CURL"] ?? curl
-            #endif
-            let r = try run(curl, ["--disable", "--fail", "--silent", "--show-error", "--retry", "2", "--retry-delay", "1", "--retry-max-time", "120", "--speed-limit", "1024", "--speed-time", "90", "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", "10", "--max-time", isPatch ? "1800" : "180", "--max-filesize", String(min(Int64(limit), expected?.bytes ?? Int64(limit))), "--output", target.path, url.absoluteString])
-            try need(r.0 == 0, "下载失败：\(name)。请检查网络或更新源权限后重试。原有游戏文件未因下载而改变。")
+            try need(!isPatch && remote == nil, "资源下载必须带签名给出的完整哈希和大小。")
+            try downloadMetadata(feed: profile.feed, name: name, target: target,
+                                 limit: min(limit, Int(expected?.bytes ?? Int64(limit))))
         } else {
             try need(remote == nil, "本地源不能指定外部差分地址。")
             try need(profile.feed.hasPrefix("/"), "更新源仅支持 HTTPS 或明确选择的本地发布目录。")
@@ -713,7 +759,7 @@ MTGA 中文维护 · 使用说明
 收到朋友转发的安装包也可从这里找到后续更新；提示需要升级工具时再重新下载安装。
 """
 let help = """
-MTGA 中文维护订阅客户端 v3.3（macOS + Steam）
+MTGA 中文维护订阅客户端 v3.4（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
 preview    下载并检查更新文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏
@@ -736,6 +782,12 @@ func main() throws {
     if command == "help" { print(help); return }
     if command == "guide" { print(userGuide); return }
     #if TESTING
+    if command == "metadata-fallback-url" {
+        guard let name = opt["--input"], let feed = opt["--profile"],
+              let url = metadataAPIURL(feed: feed, name: name)
+        else { throw Problem(description: "此来源或文件不允许元数据后备读取。") }
+        print(url.absoluteString); return
+    }
     if command == "validate-release-url" {
         guard let value = opt["--input"], let feed = opt["--profile"], let name = opt["--output"] else { throw Problem(description: "测试参数不完整。") }
         _ = try releaseURL(value, feed: feed, name: name); return
@@ -813,7 +865,7 @@ func main() throws {
     let profile = try json(Profile.self, small(URL(fileURLWithPath: opt["--profile"] ?? state.appendingPathComponent("profile.json").path)))
     let (library, game) = try discover(opt["--steam-library"])
     let client = try Client(state: state, profile: profile, library: library, game: game)
-    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.3")
+    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.4")
     if command == "status" { if let j = try client.journal() { let labels = ["prepared": "文件已准备，安装未完成", "installing": "上次安装中断，请选择 5 撤销上次更新", "installed": "已安装", "rolling-back": "上次恢复中断，请选择 5 继续恢复", "rolled-back": "已撤销上次更新"]; print("上次更新：\(j.release_id)；状态：\(labels[j.state] ?? j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
     if command == "rollback" || command == "recover" { guard let j = try client.journal() else { print("没有需要恢复的安装记录。"); return }; if j.state == "rolled-back" { print("此前已完成恢复。"); return }; try client.restore(j); return }
     guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。请等待适配当前游戏的汉化发布后，再选择 2「检查更新」。"); return }

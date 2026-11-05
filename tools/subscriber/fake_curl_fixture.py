@@ -2,14 +2,33 @@
 """Synthetic HTTP transport, injected only in TESTING native binaries."""
 import json, os, sys, time
 from pathlib import Path
+from urllib.parse import urlsplit
 args=sys.argv[1:]
 def arg(key):return args[args.index(key)+1]
-feed=Path(os.environ['MTGA_FIXTURE_FEED']); name=args[-1].rsplit('/',1)[-1]
+feed=Path(os.environ['MTGA_FIXTURE_FEED']); url=urlsplit(args[-1]); name=url.path.rsplit('/',1)[-1]
 body=(feed/name).read_bytes(); offset=int(arg('--range').rstrip('-')) if '--range' in args else 0
 log=Path(os.environ['MTGA_FIXTURE_LOG'])
-with log.open('a') as h:h.write(json.dumps({'name':name,'offset':offset,'pid':os.getpid()})+'\n')
+with log.open('a') as h:h.write(json.dumps({'name':name,'offset':offset,'pid':os.getpid(),
+                                         'host':url.hostname,'query':url.query,
+                                         'headers':[args[i+1] for i,x in enumerate(args[:-1]) if x=='--header']})+'\n')
 out=Path(arg('--output')); mode=os.environ.get('MTGA_FIXTURE_MODE','normal')
+if name.endswith('.json'):
+    api=url.hostname=='api.github.com'
+    if mode.startswith('metadata-'):
+        if not api:
+            if mode=='metadata-primary-malformed':out.write_bytes(b'invalid successful json');sys.exit(0)
+            if mode=='metadata-primary-http-error':sys.exit(22)
+            if mode=='metadata-primary-oversized':out.write_bytes(b'X'*(int(arg('--max-filesize'))+1));sys.exit(0)
+            out.write_bytes(b'partial metadata must not be consumed')
+            sys.exit(35)
+        if mode=='metadata-api-fails':sys.exit(7)
+        if mode=='metadata-api-tamper':out.write_bytes(b'{"payload":"e30=","signature":"bad"}');sys.exit(0)
+        if mode=='metadata-api-oversized':out.write_bytes(b'X'*(int(arg('--max-filesize'))+1));sys.exit(0)
+        if mode=='metadata-api-manifest-tamper' and not name.startswith('index-'):
+            out.write_bytes(body+b' ');sys.exit(0)
+    out.write_bytes(body);sys.exit(0)
 if not name.endswith('.delta'):out.write_bytes(body);sys.exit(0)
+if mode=='metadata-assets-down':sys.exit(7)
 status=206 if offset else 200; end=len(body)-1; total=len(body); suffix=body[offset:];code=0
 if mode=='disconnect':suffix=suffix[:len(suffix)//2];code=18
 if mode=='empty':sys.exit(7)

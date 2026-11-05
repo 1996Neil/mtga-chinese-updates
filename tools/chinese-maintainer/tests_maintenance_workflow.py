@@ -125,6 +125,45 @@ class MaintenanceWorkflowTests(unittest.TestCase):
         self.assertEqual(self.result()['stage'], 'ready_for_release')
         self.assertFalse(self.result()['completed'])
 
+    def test_routine_policy_does_not_claim_runtime_pass_or_require_manual_file(self):
+        run = self.ready()
+        Path(self.config['acceptance']).unlink()
+        self.report.update(safe_to_install=False, static_safe_to_trial=True,
+                           blockers=['当前候选的中文显示与原生英/中/混合导入待验收'])
+        (run / 'report.json').write_text(json.dumps(self.report))
+        (run / 'independent-review.json').write_text('{}')
+        evidence = self.root / 'automatic.json'
+        evidence.write_text('{"schema":"MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1"}')
+        with patch.object(workflow, 'automatic_text_acceptance',
+                          return_value=(evidence, {}, [])), \
+             patch('text_release_policy.validate', return_value=['arm64']), \
+             patch.object(workflow, 'network_gate', side_effect=AssertionError('manual evidence requested')), \
+             patch.object(workflow, 'invoke', side_effect=AssertionError('unexpected publication')):
+            self.assertEqual(self.execute(prepare=True), 0)
+        self.assertEqual(self.result()['stage'], 'ready_for_release')
+        self.assertFalse(self.result()['completed'])
+        self.assertFalse(json.loads((run / 'report.json').read_text())['safe_to_install'])
+
+    def test_routine_resume_retains_original_baseline_instead_of_remaking_approval(self):
+        run = self.ready()
+        work = self.root / 'routine'
+        work.mkdir()
+        original = '{"schema":"MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1","baseline_manifest":{"path":"/old"}}'
+        approval = work / 'automatic-text-acceptance.json'
+        approval.write_text(original)
+        (run / 'independent-review.json').write_text('{}')
+        index = {'schema': 'MTGA_CN_INDEX_V1', 'channel': 'stable', 'releases': [],
+                 'expires_at': (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=1)).isoformat()}
+        subject = {'client_version': '2026.65.0', 'steam_build': '26149138'}
+        with patch('text_release_policy.validate', return_value=['arm64']) as validate, \
+             patch('text_release_policy.create', side_effect=AssertionError('approval remade')), \
+             patch.object(workflow, 'remote_state', return_value=(index, [])):
+            path, _, _ = workflow.automatic_text_acceptance(
+                self.config, work, run, subject, self.report)
+        self.assertEqual(path, approval)
+        self.assertEqual(approval.read_text(), original)
+        validate.assert_called_once()
+
     def test_new_revision_counts_drafts_and_existing_signed_refs(self):
         future = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=1)).isoformat()
         index = {'schema': 'MTGA_CN_INDEX_V1', 'channel': 'stable', 'expires_at': future,

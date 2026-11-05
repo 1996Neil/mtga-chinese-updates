@@ -145,6 +145,44 @@ def remote_state(config, work):
     return index, [item for page in pages for item in page]
 
 
+def automatic_text_acceptance(config, work, run, subject, report):
+    """Owner-authorized text policy, with a fresh trusted stable baseline."""
+    from publisher import check, dump
+    from github_publish import download
+    from text_release_policy import create, validate
+    path = work / 'automatic-text-acceptance.json'
+    if path.exists():
+        # After index advancement, "latest" may be our own new revision.
+        # A retry must preserve the original signed baseline and frozen binding.
+        evidence = json.loads(path.read_text())
+        validate(evidence, subject, report,
+                 json.loads((run / 'independent-review.json').read_text()),
+                 config['client'], Path(config['public_key_file']).read_text().strip())
+        index, releases = remote_state(config, work)
+        next_revision(index, releases, subject['client_version'], subject['steam_build'])
+        return path, index, releases
+    index, releases = remote_state(config, work)
+    next_revision(index, releases, subject['client_version'], subject['steam_build'])
+    references = [ref for ref in index['releases'] if
+                  (ref['client_version'], ref['steam_build']) ==
+                  (subject['client_version'], subject['steam_build'])]
+    need(bool(references), '首次适配当前游戏版本，尚无同版本 stable 文本更新基准')
+    ref = max(references, key=lambda item: item['revision'])
+    name = ref['manifest']['name']
+    need(isinstance(name, str) and Path(name).name == name and name not in {'.', '..'},
+         'Stable 基准清单路径无效')
+    baseline = work / ('baseline-' + name)
+    repo = config.get('repo', '1996Neil/mtga-chinese-updates')
+    download(f'https://raw.githubusercontent.com/{repo}/main/feed/{name}',
+             baseline, 2 * 1024 * 1024, 180)
+    check(baseline, ref['manifest']['fingerprint'])
+    evidence = create(subject, report,
+                      json.loads((run / 'independent-review.json').read_text()),
+                      baseline, config['client'], config['public_key_file'])
+    dump(path, evidence)
+    return path, index, releases
+
+
 def stage_capture(snapshot, path):
     from common import fingerprint, read_json
     from detect import stable_signature
@@ -410,10 +448,28 @@ def execute(config, prepare_only=False):
                                                 run / 'ui-decisions.json') if p.is_file()],
             'human_acceptance_created': False, 'runtime_acceptance_created': False,
         })
-        blockers = list(report.get('blockers', []))
-        if not report.get('safe_to_install'):
-            blockers = blockers or ['当前候选尚未完成独立工程审查和真实游戏验收']
+        sys.path.insert(0, str(ROOT.parent / 'subscriber'))
+        from publisher import subject_for, validate_acceptance
+        subject = subject_for(candidate_snapshot, report,
+                              json.loads((run / 'official-base.json').read_text()))
         acceptance = Path(config.get('acceptance', str(run / 'publisher-acceptance.json')))
+        automatic = False
+        current_remote = None
+        blockers = list(report.get('blockers', []))
+        if report.get('static_safe_to_trial') and not acceptance.is_file():
+            record('automatic_text_policy', blockers=[])
+            try:
+                acceptance, index, releases = automatic_text_acceptance(config, work, run, subject, report)
+                automatic = True
+                current_remote = index, releases
+                # Keep the genuine runtime status unchanged. Only the separate
+                # owner-authorized publishing policy can accept routine text.
+                blockers = []
+            except (RuntimeError, OSError, ValueError, KeyError) as error:
+                record('automatic_text_policy', automatic_text_reason=str(error))
+                blockers.append(str(error))
+        if not report.get('safe_to_install') and not automatic:
+            blockers = blockers or ['当前候选尚未完成独立工程审查和真实游戏验收']
         if not acceptance.is_file():
             blockers.append('缺少绑定当前候选的真实发布验收')
         if blockers:
@@ -421,15 +477,21 @@ def execute(config, prepare_only=False):
                    next_action='仅处理新增/英文或身份用途变化/来源失效/冲突项；补齐实际审查验收后重跑。')
             return 2
         # The exact original publisher validator checks subject binding before any signing.
-        sys.path.insert(0, str(ROOT.parent / 'subscriber'))
-        from publisher import subject_for, validate_acceptance
-        subject = subject_for(candidate_snapshot, report,
-                              json.loads((run / 'official-base.json').read_text()))
-        validate_acceptance(json.loads(acceptance.read_text()), subject)
+        if automatic:
+            from text_release_policy import validate as validate_automatic
+            validate_automatic(json.loads(acceptance.read_text()), subject, report,
+                               json.loads((run / 'independent-review.json').read_text()),
+                               config['client'], Path(config['public_key_file']).read_text().strip())
+        else:
+            validate_acceptance(json.loads(acceptance.read_text()), subject)
         required = ['client', 'key_file', 'public_key_file', 'installer']
         need(all(config.get(k) and Path(config[k]).is_file() for k in required),
              '发布配置缺少已有客户端、密钥路径、公钥或安装包；不自动生成替代密钥')
-        network = network_gate(config, run, subject)
+        # Text-only policy verifies the existing baseline over HTTPS here, local
+        # reconstruction during packaging, and new anonymous/native outputs after
+        # publication. It does not invent a pre-publication runtime test file.
+        network = ({'basis': 'signed-stable-baseline-https-and-package-local-reconstruction',
+                    'runtime_acceptance': False} if automatic else network_gate(config, run, subject))
         need(stable_signature(read_snapshot()) == stable_signature(before),
              '准备期间游戏资源发生变化；重跑维护以使用当前版本，未开始签名发布')
         if prepare_only:
@@ -437,7 +499,7 @@ def execute(config, prepare_only=False):
                    next_action='准备检查通过；去掉 --prepare-only 后继续正式发布。')
             return 0
         record('remote_preflight', blockers=[])
-        index, releases = remote_state(config, work)
+        index, releases = current_remote or remote_state(config, work)
         if 'revision' not in state:
             revision = next_revision(index, releases, version, build)
             record('release_plan', revision=revision, release_id=f'{identity}-r{revision}')

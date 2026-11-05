@@ -72,6 +72,23 @@ class ReleaseWorkflowTests(unittest.TestCase):
             self.execute()
         self.assertEqual(self.calls, [])
 
+    def test_separate_routine_policy_can_authorize_without_relabeling_runtime(self):
+        self.args.channel = 'stable'
+        self.args.acceptance = self.root / 'routine-approval.json'
+        self.args.acceptance.write_text('{"schema":"MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1"}')
+        (self.run / 'official-base.json').write_text('{}')
+        (self.run / 'independent-review.json').write_text('{}')
+        with patch('publisher.subject_for', return_value={}), \
+             patch('text_release_policy.validate', return_value=['arm64']):
+            self.assertEqual(self.execute(), 0)
+        self.assertFalse(self.report['safe_to_install'])
+        self.assertEqual(self.calls, [])
+        with patch('publisher.subject_for', return_value={}), \
+             patch('text_release_policy.validate', side_effect=ValueError('font changed')):
+            with self.assertRaisesRegex(ValueError, 'font changed'):
+                self.execute()
+        self.assertEqual(self.calls, [])
+
     def test_missing_engineering_review_blocks_testing_too(self):
         self.report['static_safe_to_trial'] = False
         (self.run / 'report.json').write_text(json.dumps(self.report))

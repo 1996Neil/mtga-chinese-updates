@@ -3,7 +3,7 @@ from collections import Counter
 import json
 from pathlib import Path
 import sqlite3
-from common import ROOT, STATE, database, fingerprint, read_json, require, save_json, atomic_bytes, managed_path
+from common import ROOT, EVIDENCE_ROOT, STATE, database, fingerprint, read_json, require, save_json, atomic_bytes, managed_path
 from registry import decide, import_corrections, bind_contexts
 from provenance import audit, contexts, evidence_index, evidence_fingerprint, load_rows
 
@@ -93,8 +93,8 @@ def run(run_dir, destination):
                 'baseline_snapshot':fingerprint(run_dir/'snapshot.json'),
                 'baseline_report':fingerprint(run_dir/'report.json'),
                 'community_baseline':baseline.inputs if baseline else {},
-                'approvals':{p.name:fingerprint(p) for p in sorted((ROOT/'reviewed-corrections').glob('*.json'))},
-                'reviewed_resolutions':{str(p.relative_to(ROOT)):fingerprint(p) for p in sorted((ROOT/'reviewed-resolutions').glob('*/*.json'))},
+                'approvals':{p.name:fingerprint(p) for p in sorted((EVIDENCE_ROOT/'reviewed-corrections').glob('*.json'))},
+                'reviewed_resolutions':{str(p.relative_to(EVIDENCE_ROOT)):fingerprint(p) for p in sorted((EVIDENCE_ROOT/'reviewed-resolutions').glob('*/*.json'))},
                 'source_format_pairs':(fingerprint(ROOT/'source-format-reviewed-pairs.json')
                                        if (ROOT/'source-format-reviewed-pairs.json').exists() else None)}
     inputs_before = input_fingerprints()
@@ -103,7 +103,7 @@ def run(run_dir, destination):
         with database(registry_path) as original: original.backup(scratch)
         from cli import source_guard
         source_guard(scratch)
-        result = replay(scratch, official, report['run_id'], report['client_version'], ROOT/'reviewed-corrections', baseline)
+        result = replay(scratch, official, report['run_id'], report['client_version'], EVIDENCE_ROOT/'reviewed-corrections', baseline)
         source_guard(scratch)
         from provenance import guard
         from registry import correction_scope

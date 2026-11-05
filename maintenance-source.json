@@ -1,0 +1,10 @@
+{
+  "schema": "MTGA_CN_ONLINE_SOURCE_LOCK_V1",
+  "repository": "1996Neil/mtga-chinese-baseline",
+  "commit": "4d4091f776673cd79958180a084c3f52bcf0b1ce",
+  "directory": "portable/2026.64.50-r4",
+  "manifest_fingerprint": {
+    "bytes": 2579,
+    "sha256": "8729e5781ff3b68d83e0e5cb3995565967b39d61982f7c0e2de18870b7ba22ae"
+  }
+}

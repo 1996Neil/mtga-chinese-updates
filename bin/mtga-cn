@@ -2,7 +2,24 @@
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 MAINTAINER_ROOT="$SCRIPT_DIR/../tools/chinese-maintainer"
 if [ ! -x "$MAINTAINER_ROOT/.venv/bin/python" ]; then
-  echo "请先按 docs/DEVELOPMENT.md 创建维护器 Python 环境。" >&2
-  exit 1
+  if [ "${1:-}" = "maintain" ] && command -v python3.11 >/dev/null 2>&1; then
+    echo "正在准备固定版本的维护环境；只需首次运行时安装依赖……" >&2
+    python3.11 -m venv "$MAINTAINER_ROOT/.venv" || exit 1
+  else
+    echo "请先按 docs/DEVELOPMENT.md 创建维护器 Python 环境。" >&2
+    exit 1
+  fi
+fi
+if [ "${1:-}" = "maintain" ]; then
+  MTGA_ENV_FINGERPRINT="$(/usr/bin/shasum -a 256 "$MAINTAINER_ROOT/requirements.lock")" || exit 1
+  MTGA_ENV_RECEIPT="$MAINTAINER_ROOT/.venv/requirements.receipt"
+  MTGA_ENV_PREVIOUS=""
+  if [ -f "$MTGA_ENV_RECEIPT" ]; then
+    IFS= read -r MTGA_ENV_PREVIOUS < "$MTGA_ENV_RECEIPT" || true
+  fi
+  if [ "$MTGA_ENV_PREVIOUS" != "$MTGA_ENV_FINGERPRINT" ]; then
+    "$MAINTAINER_ROOT/.venv/bin/python" -m pip install --disable-pip-version-check -r "$MAINTAINER_ROOT/requirements.lock" || exit 1
+    printf '%s\n' "$MTGA_ENV_FINGERPRINT" > "$MTGA_ENV_RECEIPT" || exit 1
+  fi
 fi
 exec "$MAINTAINER_ROOT/.venv/bin/python" "$MAINTAINER_ROOT/cli.py" "$@"

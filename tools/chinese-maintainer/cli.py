@@ -11,7 +11,10 @@ import sqlite3
 import subprocess
 import sys
 from collections import Counter
-from common import (ROOT, STATE, GAME, require, fingerprint, read_json, save_json,
+if __name__ == '__main__':
+    from maintenance_workflow import bootstrap as maintenance_bootstrap
+    maintenance_bootstrap(sys.argv[1:])
+from common import (ROOT, STATE, GAME, EVIDENCE_ROOT, require, fingerprint, read_json, save_json,
                     database, game_stopped, has_chinese, managed_path, copy_checked)
 from detect import detect, snapshot_official, comparison_official, stable_signature, verify_current
 from registry import open_registry, bootstrap, import_donor_review, import_corrections
@@ -128,10 +131,13 @@ def source_guard(registry):
 
 
 def review_input_fingerprints():
-    paths = list((ROOT / 'reviewed-corrections').glob('*.json'))
-    paths += list((ROOT / 'reviewed-resolutions').glob('*/*.json'))
+    from portable_registry import online
+    paths = [] if online() else list((EVIDENCE_ROOT / 'reviewed-corrections').glob('*.json'))
+    if not online():
+        paths += list((EVIDENCE_ROOT / 'reviewed-resolutions').glob('*/*.json'))
     paths += [ROOT / 'source-format-reviewed-pairs.json']
-    paths += [p for p in (STATE / 'donor-review-packet.json', STATE / 'donor-independent-review.json') if p.exists()]
+    if not online():
+        paths += [p for p in (STATE / 'donor-review-packet.json', STATE / 'donor-independent-review.json') if p.exists()]
     result = {str(p): fingerprint(p) for p in sorted(paths)}
     from provenance import evidence_fingerprint, guard
     registry = open_registry()
@@ -191,6 +197,8 @@ def refresh_gates(report, run_dir):
 def update():
     from baseline import configured, activate
     from provenance import contexts
+    from portable_registry import online
+    portable = online()
     build_code = code_fingerprints()
     transaction = load_transaction()
     require(not transaction or transaction['state'] not in {'trial', 'installing', 'rolling-back'},
@@ -225,19 +233,26 @@ def update():
         visual_inputs = visual_input_fingerprints(official, s)
         registry = open_registry()
         try:
-            old = bootstrap(registry)
-            if (STATE / 'donor-independent-review.json').exists():
-                import_donor_review(registry, STATE / 'donor-review-packet.json',
-                                    STATE / 'donor-independent-review.json', s['client_version'])
-            import_corrections(registry, ROOT / 'reviewed-corrections', official, s['client_version'])
+            if portable:
+                from portable_registry import current_contexts, comparison_inputs
+                baseline.register(registry)
+                current = current_contexts(official)
+                old = comparison_inputs(official, p, baseline)
+                delta = baseline.diff(current)
+            else:
+                old = bootstrap(registry)
+                if (STATE / 'donor-independent-review.json').exists():
+                    import_donor_review(registry, STATE / 'donor-review-packet.json',
+                                        STATE / 'donor-independent-review.json', s['client_version'])
+                import_corrections(registry, EVIDENCE_ROOT / 'reviewed-corrections', official, s['client_version'])
+                old = comparison_official(s, p, old)
+                delta = diff(official, old)
             source_guard(registry)
-            old = comparison_official(s, p, old)
-            delta = diff(official, old)
             save_json(p / 'diff.json', delta)
             from provenance import audit, write_audit
             prior_run = prior_run_id or run
-            source_audit = audit(registry, official, s['client_version'], prior_run, refresh=True, activate=True)
-            activate(registry, baseline, contexts(official) if baseline else {})
+            source_audit = audit(registry, official, s['client_version'], prior_run, refresh=not portable, activate=True)
+            activate(registry, baseline, current if portable else (contexts(official) if baseline else {}))
             write_audit(p / 'source-audit', source_audit)
             loc = {}
             migration = {}
@@ -248,8 +263,11 @@ def update():
                 loc[layer] = r
             save_json(p / 'migration-plan.json', migration)
             print('正在生成中文显示、英文导入兼容名称及测试牌表……', flush=True)
-            names = build_names(official['card'], p / 'card-localized.mtga', p / 'card-final.mtga', registry, run, old['card'])
-            fixtures = regressions(official['card'], p / 'card-final.mtga', p / 'fixtures', names)
+            names = build_names(official['card'], p / 'card-localized.mtga', p / 'card-final.mtga',
+                                registry, run, None if portable else old['card'],
+                                previous_identity=baseline.name_history() if portable else None)
+            fixtures = regressions(official['card'], p / 'card-final.mtga', p / 'fixtures', names,
+                                   portable=portable)
             visual_selection = reusable_visuals(
                 previous_dir, previous, visual_inputs, build_code, baseline_inputs,
                 p / 'card-final.mtga', p / 'client-localized.mtga',
@@ -305,6 +323,7 @@ def update():
                   'registry_fingerprint': fingerprint(STATE / 'registry.sqlite'),
                   'review_inputs': review_input_fingerprints(), 'source_audit': source_audit,
                   'baseline_inputs': baseline_inputs,
+                  'maintenance_input_mode': 'git-portable-community' if portable else 'legacy-local-evidence',
                   'visual_inputs': visual_inputs,
                   'visual_artifact_reuse': bool(visual_selection),
                   'high_risk_unknown': ([{'changed_card_identities': names['changed_card_identities']}] if names['changed_card_identities'] else []) +
@@ -563,11 +582,13 @@ class ChineseParser(argparse.ArgumentParser):
 def main():
     # These commands have their own options and return before creating state or
     # taking the installation lock. Reports remain strictly read-only.
-    if len(sys.argv) > 1 and sys.argv[1] in {'report', 'release'}:
+    if len(sys.argv) > 1 and sys.argv[1] in {'report', 'release', 'maintain'}:
         if sys.argv[1] == 'report':
             from workload import main as command_main
-        else:
+        elif sys.argv[1] == 'release':
             from release_workflow import main as command_main
+        else:
+            from maintenance_workflow import main as command_main
         result = command_main(sys.argv[2:])
         if result:
             raise SystemExit(result)
@@ -578,8 +599,8 @@ def main():
     parser._positionals.title = '命令'
     parser._optionals.title = '选项'
     parser.add_argument('-h', '--help', action='help', help='显示命令帮助并退出')
-    parser.add_argument('command', choices=('status', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide', 'report', 'release'),
-                        help='status 查看状态；diagnose-base 检查底稿；update 构建；validate 验证；install 安装；rollback 回滚；guide 操作指南。临时测试与来源维护详见 README。')
+    parser.add_argument('command', choices=('status', 'maintain', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide', 'report', 'release'),
+                        help='maintain 一键检查并构建；status 查看状态；diagnose-base 检查底稿；update 构建；validate 验证；install 安装；rollback 回滚；guide 操作指南。')
     parser.add_argument('--human', action='store_true', help='底稿诊断使用中文摘要；省略时保持原有 JSON 输出')
     parser.add_argument('--details', action='store_true', help='失败时补充原始技术错误，供维护者排查')
     parser.add_argument('--run', type=Path, help='离线预演使用的官方快照目录；默认最近候选')

@@ -14,11 +14,13 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
-STATE = ROOT / 'state'
+STATE = Path(os.environ.get('MTGA_STATE_ROOT', str(ROOT / 'state'))).expanduser().resolve()
+EVIDENCE_ROOT = Path(os.environ.get('MTGA_EVIDENCE_ROOT', str(ROOT))).expanduser().resolve()
 GAME = Path(os.environ.get('MTGA_GAME_PATH', str(Path.home() / 'Library/Application Support/Steam/steamapps/common/MTGA'))).expanduser()
 BACKUPS = Path(os.environ.get('MTGA_BACKUP_ROOT', str(Path.home() / 'Library/Application Support/MTGAChineseMaintainer/backups'))).expanduser()
 OLD = BACKUPS / '2026-09-30-221411-english-chinese'
-HISTORY = Path(os.environ.get('MTGA_HISTORY_ROOT', str(ROOT.parents[1] / 'compatibility/native-import-2026-10-02'))).expanduser()
+COMPATIBILITY_ROOT = Path(os.environ.get('MTGA_COMPATIBILITY_ROOT', str(ROOT.parents[1] / 'compatibility'))).expanduser().resolve()
+HISTORY = Path(os.environ.get('MTGA_HISTORY_ROOT', str(COMPATIBILITY_ROOT / 'native-import-2026-10-02'))).expanduser()
 DONORS = [Path.home() / 'Downloads' / f'MTGA Mod(MacOS) {v}' for v in ('26.9.9', '26.9.30')]
 
 if sys.flags.optimize:
@@ -31,8 +33,9 @@ def require(condition, message):
 
 
 LEGACY_PROJECT = Path('/Users/neil/Documents/ChatGPT/mtga')
-MOVED_ROOTS = ((LEGACY_PROJECT / 'tools/chinese-maintainer', ROOT),
-               (LEGACY_PROJECT / 'compatibility', ROOT.parents[1] / 'compatibility'))
+MOVED_ROOTS = ((LEGACY_PROJECT / 'tools/chinese-maintainer/state', STATE),
+               (LEGACY_PROJECT / 'tools/chinese-maintainer', EVIDENCE_ROOT),
+               (LEGACY_PROJECT / 'compatibility', COMPATIBILITY_ROOT))
 
 
 def managed_path(path):

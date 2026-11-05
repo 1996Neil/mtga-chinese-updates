@@ -13,6 +13,10 @@ from common import ROOT, STATE, read_json, require
 def execute(args, invoke=None):
     """Dry-run validates a candidate and emits a plan without signing or publishing."""
     invoke = invoke or (lambda argv: subprocess.run(argv, check=True))
+    require(not getattr(args, 'reuse_package', None) or args.run is not None,
+            'Frozen package reuse requires explicit --run')
+    require(not getattr(args, 'reuse_review', None) or getattr(args, 'reuse_package', None),
+            '--reuse-review requires --reuse-package')
     if args.baseline_root:
         os.environ['MTGA_BASELINE_ROOT'] = str(args.baseline_root.expanduser().resolve())
     if args.baseline_version:
@@ -37,6 +41,8 @@ def execute(args, invoke=None):
 
 
 def finish(args, run, invoke):
+    if getattr(args, 'reuse_package', None):
+        return finish_reuse(args, run, invoke)
     from cli import validate_run
     report = read_json(run / 'report.json')
     require(report['client_version'] == args.version, 'Candidate version differs from requested release')
@@ -116,6 +122,58 @@ def finish(args, run, invoke):
     return 0
 
 
+def finish_reuse(args, run, invoke):
+    """Explicit legacy compatibility; never edit or upgrade candidate proofs."""
+    sys.path.insert(0, str(ROOT.parent / 'subscriber'))
+    from reuse_package import validate, package
+    require(args.channel == 'stable', 'Frozen package reuse is stable-only')
+    require(all((args.client, args.public_key_file, args.acceptance)),
+            'Reuse requires client, public key and original acceptance')
+    plan, binding = validate(args.reuse_package, run, args.acceptance,
+                             args.repo, args.client, args.public_key_file,
+                             getattr(args, 'reuse_review', None))
+    old = plan['release']
+    require(args.version == old['client_version'], 'Reuse game version mismatch')
+    require(args.revision > old['revision'], 'Reuse revision must increase')
+    release_id = f'{args.version}-{old["steam_build"]}-r{args.revision}'
+    tag = args.tag or 'mtga-' + release_id
+    require(tag == 'mtga-' + release_id, 'Reuse requires canonical release tag')
+    output = (args.output or run / f'release-r{args.revision}').expanduser().resolve()
+    blockers = []
+    if not getattr(args, 'reuse_review', None):
+        blockers.append('缺少独立 stable 冻结包复用审查 --reuse-review')
+    if not args.key:
+        blockers.append('缺少本地签名密钥 --key')
+    result = {'version': args.version, 'run': str(run), 'channel': 'stable',
+              'tag': tag, 'output': str(output), 'source_id': old['id'],
+              'reuse_binding': binding, 'blockers': blockers,
+              'dry_run': args.dry_run, 'resources_rebuilt': False,
+              'historical_evidence_modified': False}
+    if args.dry_run:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 1 if blockers else 0
+    require(not blockers, '; '.join(blockers))
+    package(args.reuse_package, run, args.acceptance, args.reuse_review, output,
+            args.repo, tag, args.client, args.public_key_file, args.key, args.revision)
+    publication = [sys.executable, str(ROOT.parent / 'subscriber/github_publish.py'),
+                   'plan', '--package', str(output), '--repo', args.repo, '--tag', tag,
+                   '--client', str(args.client), '--public-key-file', str(args.public_key_file)]
+    invoke(publication)
+    if args.publish:
+        publication[2] = 'publish'
+        publication += ['--key', str(args.key)]
+        if args.installer:
+            publication += ['--installer', str(args.installer)]
+        if args.receipt:
+            publication += ['--receipt', str(args.receipt)]
+        validate(args.reuse_package, run, args.acceptance, args.repo,
+                 args.client, args.public_key_file, args.reuse_review)
+        invoke(publication)
+    print(json.dumps({**result, 'signing_performed': True,
+                      'network_writes_performed': args.publish}, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--version', required=True)
@@ -137,7 +195,13 @@ def main(argv=None):
     p.add_argument('--include-full', action='store_true')
     p.add_argument('--installer', type=Path)
     p.add_argument('--receipt', type=Path)
+    p.add_argument('--reuse-package', type=Path,
+                   help='显式复用已签名 stable 冻结包；不重建资源或改写历史证明')
+    p.add_argument('--reuse-review', type=Path,
+                   help='绑定本次冻结包、候选及发布代码的新独立工程审查')
     a = p.parse_args(argv)
     require(a.revision > 0, 'Revision must be positive')
     require(not a.include_full or a.minimum_client == 4, 'Complete resources require protocol 4')
+    require(not a.reuse_package or a.run is not None, 'Frozen reuse requires explicit --run')
+    require(not a.reuse_review or a.reuse_package, 'Reuse review requires --reuse-package')
     return execute(a)

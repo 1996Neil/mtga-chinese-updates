@@ -231,8 +231,11 @@ def manual_unityfs_crc(path):
 
 
 def tmp_output(path):
+    from common import STATE, require
+    path = Path(path).expanduser().absolute()
     resolved = path.resolve()
-    assert Path(__file__).resolve().parent / "state" in resolved.parents, "Output must stay under Maintainer state"
+    require(path == resolved and STATE in resolved.parents,
+            "Output must stay under configured Maintainer state without symlinks/traversal")
     return resolved
 
 

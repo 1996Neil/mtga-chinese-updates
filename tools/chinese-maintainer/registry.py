@@ -352,7 +352,7 @@ def decide(c, run, layer, key, english, use, *, persist=True):
     if (fallback and not protected and provenance is None and not scope_failures
             and not conflicts and status in {'candidate', 'needs-review'}):
         value, origin, reason = fallback
-        status = 'baseline-adopted'
+        status = 'keep-english' if reason == 'portable-existing-English-retained' else 'baseline-adopted'
     if conflicts:
         reason += ';lower-priority-source-conflict-recorded'
     if persist:

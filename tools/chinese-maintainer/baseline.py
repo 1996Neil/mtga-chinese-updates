@@ -17,6 +17,9 @@ def context_hash(context):
 
 
 def configured(version):
+    if os.environ.get('MTGA_ONLINE') == '1':
+        from portable_registry import configured as portable
+        return portable()
     root = os.environ.get('MTGA_BASELINE_ROOT')
     return Baseline(Path(root), os.environ.get('MTGA_BASELINE_VERSION') or version) if root else None
 

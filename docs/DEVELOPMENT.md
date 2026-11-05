@@ -4,6 +4,8 @@
 
 维护政策、文本修正与仓库来源统一见 [维护规则与证据](MAINTENANCE.md)，日常操作不再按日期文档选择入口。监控和下载验证跟随当前发布渠道；完整社区基线只在独立私有库保存。
 
+日常维护以线上 Git 为准。在本仓库检出中运行 `./bin/mtga-cn maintain --online`，会按 `maintenance-source.json` 下载锁定提交的私有便携文本、验证数据指纹、准备缓存客户端/安装包，并建立隔离维护状态。首次 `maintain` 会创建本仓库虚拟环境并安装锁定依赖，失败重跑可继续；不用先手工准备 `.venv`。无需找回旧机器的 Registry、历史 `.mtga` 底稿或旧备份。仍需本机当前完整游戏资源、Python 3.11、Xcode 命令行工具、GitHub CLI 已有访问权，以及正式发布时原有发布密钥；这些是运行条件，不是应提交到 Git 的数据。
+
 ## 获取源码与编译客户端
 
 在 macOS 安装 Xcode Command Line Tools（`xcode-select --install`），并准备 Python 3.11。维护器当前锁定的 UnityPy 1.23.0 在 Python 3.14 上不能构建；CI 显式使用 3.11，不能跟随系统 Python 自动升级。客户端是 Swift 原生程序，发布流程所需的 GitHub CLI 由维护者自行安装与登录。
@@ -39,6 +41,16 @@ MTGA_RUN_LOCAL_INTEGRATION=1 .venv/bin/python -m unittest tests_base.PinChainTes
 
 从任意检出位置可执行 `./bin/mtga-cn guide`，或打开 `bin/MTGA 汉化与双语导入维护.command`。源码启动器按自身位置找虚拟环境，不使用维护者电脑的固定安装路径。
 
+维护者的一键入口是（完整执行与接续说明见 [维护流程](MAINTENANCE.md#一键维护更新)）：
+
+```sh
+./bin/mtga-cn maintain --online
+```
+
+首次无需准备个人路径配置：线上模式自动建立 `~/Library/Application Support/MTGAChineseMaintainer/maintenance.json`，之后同样可直接运行 `maintain`。`--online` 明确刷新锁定的 Git 输入；没有配置时 `maintain` 也自动准备线上模式。旧本地配置另存备份，旧维护目录不改动；新状态在用户缓存目录的 `online.noindex` 下。也可传 `--config /绝对路径/maintenance.json` 或使用 `MTGA_MAINTENANCE_CONFIG`。配置在导入维护器前应用，只保存路径、公开信任设置和数据锁，不保存私钥内容或 Token。显式 Shell 环境变量优先。
+
+完整流程包含当前版本诊断、新官方底稿取证、增量候选、实际审查/验收门槛、自动修订、stable 发布及匿名下载/安装包/监控核对。命令在真实门槛保存 `maintenance.json` 接续记录；补齐证据后原命令继续，已冻结发布保留原修订重试。只有全部验证完成才显示“完成”。`--prepare-only` 明确只准备，不签名、不写远端；普通 `maintain` 在门槛齐全时继续正式发布。两者都不安装游戏。
+
 默认游戏路径位于当前用户的 Steam 库。可在启动前设置绝对路径：
 
 ```sh
@@ -49,11 +61,11 @@ export MTGA_HISTORY_ROOT="/你的已核验历史导入资料目录"
 
 备份默认位于当前用户 `Library/Application Support/MTGAChineseMaintainer/backups`。维护状态默认在 `tools/chinese-maintainer/state/`；真实Registry、原始审查包及外部数据库不会随Git同步。筛选后的可复用译文和来源索引位于 [`maintenance-data/`](../maintenance-data/README.md)，不附带原始证据包。
 
-## 为什么只拉源码还不能立即生成完整汉化
+## 从 Git 准备维护输入
 
-候选构建需要与当前游戏匹配的官方底稿、经过核验的历史中文/来源、牌面身份和用途映射、字体及验收材料。源文件不能替代这些资料，也不能把回滚备份冒充官方底稿。
+公开源码不带游戏文件和完整私有文本。线上模式自动获取锁定的私有 `portable/` 文本数据；它包括此前签名发布的中文、真实旧版英文、身份/用途上下文和具体来源链接，原始游戏数据库、二进制、私钥及日志不上传。数据集有独立转录审查，并按公共源码中的提交与 manifest 指纹锁定；转录审查只证明数据传输与上下文，不是重新核实全部中文语义。每次当前匹配仍核对英文、身份、用途及格式，采用状态为 `baseline-adopted`（社区基线），不继承旧人工或游戏批准。
 
-目前 Registry 的首次导入仍包含历史资料结构（`registry.bootstrap`）；自己维护时须准备自己的合法历史来源及对应结构，或开发新的显式导入器并为其建立测试。没有这些资料时可编译客户端、跑通用测试、检查协议和贡献代码，但不能声称一次命令就能重建作者的整库汉化。原机器的固定底稿 pin 也不是新机器通用验收凭证。修改 `capture_base.py` 的 pin 之前必须完成它所要求的独立来源核验。
+线上模式用隔离的新 Registry 登记这些 Git 数据输入，跳过旧 `registry.bootstrap`、donor、旧本地纠错包和历史固定牌表依赖。测试牌表由当前实际卡牌身份与已采用中文生成；版本差异来自便携旧上下文，比较用当前资源副本不会被标为旧版原件。原有本地模式仍保持全部旧来源守卫，只为已有合法本地资料的维护者保留；缺失历史资料时不能靠删登记、换哈希或把旧备份称为新版底稿来继续。当前五层官方底稿仍由真实当前游戏下载、Steam/CodeResources/manifest 证据和独立审查建立。
 
 新补译按 [来源查询规范](../tools/chinese-maintainer/SOURCE_LOOKUP.md) 查找并保存逐项证据。`source_check.py export` 导出核对队列，`validate` 校验 V2 记录与原始快照。官方、社区及AI来源分开。原有1,837项本地审查包和后续13条修正的精简投影已公开到 `maintenance-data/2026.64.50/`；原始审查包、快照和数据库仍未整库上传。公开投影不替代当前官方底稿和准入，不将审查状态升级为人工或游戏验收，也不表示新的玩家资源已经发布。
 
@@ -115,3 +127,5 @@ tools/chinese-maintainer/.venv/bin/python tools/chinese-maintainer/build_baselin
 ```
 
 省略 `--run` 时先执行既有 `update` 构建；dry-run 随后重验候选并打印计划，不读取私钥、不签名、不发布。输出中的 `blockers` 必须清零才可继续。移除 `--dry-run` 会调用既有发布器构建并验证签名差分；只有显式添加 `--publish` 才调用远端发布器。`--channel stable` 还必须提供 `--acceptance`，并通过当前候选的工程审查和游戏验收。编排器不会填造这些证据。已有手工命令继续可用。
+
+历史候选缺少新版维护器证明字段时，不补填 `review_inputs`、`proof_files` 或通过状态。仅当已有正式签名冻结包且五层输入、输出、完整资源、差分重建、受保护文件和原始验收绑定完全一致，才能显式使用 `release --run <历史候选> --reuse-package <原stable包> --reuse-review <新独立审查> --acceptance <原始验收> --channel stable`。原始候选、验收和旧审查保持原字节；新审查单独绑定所有输入哈希及当前发布程序，不能把旧 testing 审查改成 stable。dry-run 未提供新审查时输出所需绑定并阻塞签名；审查者实际核对后独立出具 `MTGA_CN_STABLE_REUSE_REVIEW_V1`，含 `status:PASS`、`stable_republish_approved:true`、空 `blocking_findings`、明确 `reviewer`/`scope` 及完整 `binding`。任何输入变化均使审查失效。此路径只复制已验收资源字节，重新生成新修订的签名清单与索引；不生成新游戏验收、不安装游戏。新修订号仍须从线上索引及已有 Release（含草稿）取最大值加一，禁止重用历史 tag。

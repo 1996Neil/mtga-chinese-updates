@@ -53,6 +53,18 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
         self.assertFalse(self.args.output.exists())
 
+    def test_reuse_options_stop_before_build_when_incomplete(self):
+        self.args.reuse_package = self.root / 'frozen'
+        self.args.run = None
+        with self.assertRaisesRegex(RuntimeError, 'explicit --run'):
+            self.execute()
+        self.assertEqual(self.calls, [])
+        self.args.reuse_package = None
+        self.args.reuse_review = self.root / 'review.json'
+        with self.assertRaisesRegex(RuntimeError, 'requires --reuse-package'):
+            self.execute()
+        self.assertEqual(self.calls, [])
+
     def test_stable_missing_runtime_or_acceptance_stops_before_signing(self):
         self.args.dry_run = False
         self.args.channel = 'stable'
@@ -101,6 +113,24 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.args.dry_run = False
         with self.assertRaises((ValueError, RuntimeError)):
             self.execute()
+        self.assertEqual(self.calls, [])
+
+    def test_reuse_dry_run_requires_new_independent_review_without_strict_candidate_rewrite(self):
+        self.args.reuse_package = self.root / 'frozen'
+        self.args.reuse_review = None
+        self.args.channel = 'stable'
+        self.args.acceptance = self.root / 'acceptance'
+        self.args.revision = 5
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'subscriber'))
+        import reuse_package
+        plan = {'release': {'id': 'fixture-1-r4', 'revision': 4,
+                            'client_version': 'fixture', 'steam_build': '1'}}
+        with patch.object(reuse_package, 'validate', return_value=(plan, {})), \
+             patch.object(cli, 'validate_run', side_effect=AssertionError('strict path used')):
+            self.assertEqual(self.execute(), 1)
+            self.args.reuse_review = self.root / 'new-review'
+            self.assertEqual(self.execute(), 0)
         self.assertEqual(self.calls, [])
 
 

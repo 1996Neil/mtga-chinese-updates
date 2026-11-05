@@ -187,7 +187,17 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         if review.get('status') != 'PASS' or review.get('code_fingerprints') != report['code_fingerprints'] or review.get('candidate_files') != report['candidate_files']:
             raise ValueError('独立工程审查不匹配。')
         evidence = json.loads(Path(acceptance).read_text())
-        arches = validate_acceptance(evidence, subject)
+        if evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
+            # This policy may omit new runtime tests, never actual structural
+            # revalidation. Direct publisher invocations retain the same guard.
+            import sys
+            sys.path.insert(0, str(builder_root))
+            from cli import validate_run
+            validate_run(run, report)
+            from text_release_policy import validate as validate_text_release
+            arches = validate_text_release(evidence, subject, report, review, client, public_key)
+        else:
+            arches = validate_acceptance(evidence, subject)
         status, evidence_hash, scope = 'accepted', fingerprint(acceptance)['sha256'], evidence['scope']
     if local_acceptance is not None:
         if channel != 'testing': raise ValueError('简化本机验收仅适用于测试渠道。')
@@ -236,6 +246,10 @@ def package(run, destination, client, key, public_key, revision, channel='testin
                'platform': 'macOS-Steam', 'architectures': arches,
                'acceptance': {'status': status, 'evidence_sha256': evidence_hash, 'scope': scope},
                'resources': resources, 'protected_files': protected}
+    if channel == 'stable' and evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
+        release['acceptance'].update(
+            basis='owner-authorized-routine-text-policy',
+            runtime_validation='NOT_RUN', human_validation='NOT_RUN')
     for layer, (base, output) in sources.items():
         check(base, subject['input_files'][layer]); check(output, subject['output_files'][layer])
     manifest = destination / (release_id + '.json')

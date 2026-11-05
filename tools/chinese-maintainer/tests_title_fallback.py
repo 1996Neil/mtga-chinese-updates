@@ -17,7 +17,7 @@ class LocIdDriftFallbackTests(unittest.TestCase):
         b = object.__new__(PortableBaseline)
         b.rows = {'card': {}, 'client': {}, 'ui': {}}
         b.titles = []
-        b.title_rows = {647: {'title_id': 647, 'english': 'Forest', 'chinese': '树林', 'grp_id': 6993}}
+        b.title_rows = {647: [{'title_id': 647, 'english': 'Forest', 'chinese': '树林', 'grp_id': 6993}]}
         b.text_index = {}
         return b
 
@@ -27,10 +27,10 @@ class LocIdDriftFallbackTests(unittest.TestCase):
                       [{'GrpId': 6993, 'TitleId': 647}, {'GrpId': 7100, 'TitleId': 647}])
         self.assertEqual(b.check('card', '1250', ctx), ('树林', 'portable-title-identity-match'))
 
-    def test_title_match_needs_the_same_printing(self):
+    def test_title_match_survives_a_new_printing(self):
         b = self.baseline()
         ctx = context('Forest', ['Cards.TitleId'], [{'GrpId': 1, 'TitleId': 647}])
-        self.assertEqual(b.check('card', '1250', ctx)[0], None)
+        self.assertEqual(b.check('card', '1250', ctx), ('树林', 'portable-title-identity-match'))
 
     def test_title_match_needs_the_same_english(self):
         b = self.baseline()
@@ -56,6 +56,14 @@ class LocIdDriftFallbackTests(unittest.TestCase):
         b.text_index[('card', 'Flying', json.dumps([]))] = {'飞行'}
         self.assertEqual(b.check('card', '999', context('Flying', [])),
                          (None, 'portable-unknown-field-use'))
+
+    def test_a_moved_identity_still_matches_the_same_text(self):
+        b = self.baseline()
+        b.rows['card']['7'] = {'english': 'Flying', 'chinese': '飞行', 'field_use': ['Cards.AbilityTextId'],
+                               'context_sha256': 'stale', 'disposition': 'translated'}
+        b.text_index[('card', 'Flying', json.dumps(['Cards.AbilityTextId'], sort_keys=True))] = {'飞行'}
+        ctx = context('Flying', ['Cards.AbilityTextId'], [{'GrpId': 1, 'TitleId': 2}])
+        self.assertEqual(b.check('card', '7', ctx), ('飞行', 'portable-text-context-match'))
 
     def test_a_known_locid_still_uses_the_strict_path(self):
         b = self.baseline()

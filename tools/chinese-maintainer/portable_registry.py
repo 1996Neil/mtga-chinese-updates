@@ -129,7 +129,7 @@ class PortableBaseline:
             self.rows[layer] = rows
         self.title_rows = {}
         for row in getattr(self, 'titles', []):
-            self.title_rows.setdefault(int(row['title_id']), row)
+            self.title_rows.setdefault(int(row['title_id']), []).append(row)
         self.text_index = {}
         for row in self.rows.get('card', {}).values():
             if row['disposition'] != 'translated' or not has_chinese(row['chinese']):
@@ -154,17 +154,37 @@ class PortableBaseline:
             titles = {int(card['TitleId']) for card in cards if card.get('TitleId')}
             printings = {int(card['GrpId']) for card in cards if card.get('GrpId')}
             if len(titles) == 1:
-                row = self.title_rows.get(next(iter(titles)))
-                if (row is not None and row['english'] == english and
-                        int(row['grp_id']) in printings and has_chinese(row['chinese']) and
-                        not safe_format(english, row['chinese'])):
-                    return row['chinese'], 'portable-title-identity-match'
+                rows = self.title_rows.get(next(iter(titles))) or []
+                # The TitleId names the card, so a new printing keeps the name;
+                # prefer the row for the printing actually present here.
+                ordered = sorted(rows, key=lambda row: int(row['grp_id']) not in printings)
+                for row in ordered:
+                    if (row['english'] == english and has_chinese(row['chinese']) and
+                            not safe_format(english, row['chinese'])):
+                        return row['chinese'], 'portable-title-identity-match'
         values = self.text_index.get((layer, english, json.dumps(use, sort_keys=True)))
         if layer == 'card' and values and len(values) == 1:
             chinese = next(iter(values))
             if not safe_format(english, chinese):
                 return chinese, 'portable-text-context-match'
         return None, 'portable-new-context'
+
+    def text_match(self, layer, context):
+        """Same English in exactly the same field use, with one agreed value."""
+        english, use = context.get('english'), context.get('field_use') or []
+        if layer != 'card' or not use or not isinstance(english, str) or not english.strip():
+            return None, 'portable-unchanged-context-required'
+        cards = (context.get('identity') or {}).get('cards') or []
+        # Digital or rebalanced printings carry client-specific wording; the
+        # paper translation must not be substituted for them.
+        if cards and all(card.get('IsRebalanced') or card.get('IsDigitalOnly') for card in cards):
+            return None, 'portable-digital-client-authority'
+        values = self.text_index.get((layer, english, json.dumps(use, sort_keys=True)))
+        if values and len(values) == 1:
+            chinese = next(iter(values))
+            if not safe_format(english, chinese):
+                return chinese, 'portable-text-context-match'
+        return None, 'portable-unchanged-context-required'
 
     def check(self, layer, key, context):
         row = self.rows.get(layer, {}).get(str(key))
@@ -173,7 +193,11 @@ class PortableBaseline:
         if row['english'] != context['english']:
             return None, 'portable-english-changed'
         if row['context_sha256'] != context_hash(context):
-            return None, 'portable-identity-or-use-changed'
+            # The LocId kept its row but its identity moved (a new printing or a
+            # rebuilt localization table). Identical English in the identical
+            # field use is still the same text; anything else stays English.
+            recovered = self.text_match(layer, context)
+            return recovered if recovered[0] is not None else (None, 'portable-identity-or-use-changed')
         if not context['field_use']:
             return None, 'portable-unknown-field-use'
         failures = safe_format(context['english'], row['chinese'])

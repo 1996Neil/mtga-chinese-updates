@@ -373,6 +373,21 @@ def print_summary(p, report):
         print('下一步：先完成上述阻塞项；临时测试与验收操作见菜单 6 或 mtga-cn guide。')
 
 
+def prune_runs(keep):
+    """Drop the bulk of finished candidates, keeping a small verifiable record."""
+    from prune import archive_state, protected_runs
+    require(keep >= 1, '归档至少要保留一个候选目录')
+    archived = archive_state(STATE, keep=keep, protected=protected_runs(STATE))
+    if not archived:
+        print('没有需要归档的候选。')
+        return
+    saved = 0
+    for name, summary in archived:
+        saved += summary['bytes_freed']
+        print(f'{name}: {summary["bytes_before"] // 1048576} MB -> {summary["bytes_after"] // 1048576} MB')
+    print(f'合计释放 {saved // 1048576} MB。')
+
+
 def validate_run(p, report):
     require(report.get('schema') == 'MTGA_CN_MAINTAINER_V1', 'Incomplete/unknown candidate')
     from baseline import guard_inputs
@@ -603,8 +618,9 @@ def main():
     parser._positionals.title = '命令'
     parser._optionals.title = '选项'
     parser.add_argument('-h', '--help', action='help', help='显示命令帮助并退出')
-    parser.add_argument('command', choices=('status', 'maintain', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide', 'report', 'release'),
+    parser.add_argument('command', choices=('status', 'maintain', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide', 'report', 'release', 'prune'),
                         help='maintain 一键检查并构建；status 查看状态；diagnose-base 检查底稿；update 构建；validate 验证；install 安装；rollback 回滚；guide 操作指南。')
+    parser.add_argument('--keep', type=int, default=2, help='归档时保留最近几个候选目录，默认 2')
     parser.add_argument('--human', action='store_true', help='底稿诊断使用中文摘要；省略时保持原有 JSON 输出')
     parser.add_argument('--details', action='store_true', help='失败时补充原始技术错误，供维护者排查')
     parser.add_argument('--run', type=Path, help='离线预演使用的官方快照目录；默认最近候选')
@@ -679,6 +695,8 @@ def main():
         elif args.command == 'test-session':
             require(args.begin, 'test-session requires --begin after accepting temporary testing')
             install(trial=True)
+        elif args.command == 'prune':
+            prune_runs(args.keep)
         elif args.command == 'record-runtime':
             require(args.evidence is not None, '--evidence required')
             record_runtime(args.evidence)

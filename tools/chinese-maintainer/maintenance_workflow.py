@@ -571,6 +571,17 @@ def execute(config, prepare_only=False):
              '维护过程中游戏资源发生变化，不能声称完成')
         record('complete', completed=True, blockers=[], verification=evidence)
         print(f'维护发布完成：{release_id}；stable 签名、匿名资源、安装包和监控入口核对通过。')
+        # The signed release on GitHub is the artifact; keep only the record
+        # that explains it instead of 1.6 GB of inputs and intermediates.
+        if Path(receipt).is_file():
+            from prune import archive, archive_state, protected_runs
+            try:
+                summary = archive(run, publication=receipt)
+                archive_state(STATE, keep=2, protected=protected_runs(STATE))
+                print(f'已归档候选：{summary["bytes_before"] // 1048576} MB -> '
+                      f'{summary["bytes_after"] // 1048576} MB')
+            except (RuntimeError, OSError, ValueError) as error:
+                print(f'候选归档未完成（发布已成功）：{error}')
         return 0
     except (RuntimeError, OSError, ValueError, KeyError, sqlite3.Error) as error:
         record(state.get('stage', 'preflight'), completed=False, blockers=[str(error)])

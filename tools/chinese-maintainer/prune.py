@@ -98,6 +98,34 @@ def protected_runs(state):
     return result
 
 
+def prune_registry(state, *, keep_runs):
+    """Drop decision rows whose candidate directory no longer exists.
+
+    The registry keeps one decisions row per localization key per run; seven
+    runs of 92k rows reach 376 MB for candidates that were already removed.
+    """
+    import sqlite3
+    state = Path(state)
+    path = state / 'registry.sqlite'
+    if not path.is_file():
+        return {'removed_rows': 0, 'bytes_before': 0, 'bytes_after': 0}
+    keep = {str(name) for name in keep_runs}
+    before = path.stat().st_size
+    connection = sqlite3.connect(path)
+    try:
+        runs = [row[0] for row in connection.execute('SELECT DISTINCT run_id FROM decisions')]
+        stale = [run for run in runs if run not in keep]
+        for run in stale:
+            connection.execute('DELETE FROM decisions WHERE run_id=?', (run,))
+        connection.commit()
+        removed = connection.total_changes
+        connection.execute('VACUUM')
+    finally:
+        connection.close()
+    return {'removed_rows': removed, 'removed_runs': len(stale),
+            'bytes_before': before, 'bytes_after': path.stat().st_size}
+
+
 def archive_state(state, *, keep=2, protected=()):
     """Archive every run except the newest keep and the protected base captures."""
     state = Path(state)

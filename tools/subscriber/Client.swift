@@ -444,7 +444,13 @@ final class Client {
         return j
     }
     func txdir(_ j: Journal) -> URL { state.appendingPathComponent("transactions").appendingPathComponent(j.id) }
-    func backup(_ j: Journal, _ row: Row) -> URL { txdir(j).appendingPathComponent("before-" + row.layer) }
+    func backup(_ j: Journal, _ row: Row) -> URL {
+        // A layer whose installed bytes already were the official input keeps
+        // only original-*; a layer that did not change keeps nothing, because
+        // rolling it back would rewrite the same bytes.
+        let before = txdir(j).appendingPathComponent("before-" + row.layer)
+        return fm.fileExists(atPath: before.path) ? before : original(j, row)
+    }
     func original(_ j: Journal, _ row: Row) -> URL { txdir(j).appendingPathComponent("original-" + row.layer) }
     func cacheRegular(_ url: URL) throws -> Int64 {
         try checked(url)
@@ -631,9 +637,20 @@ final class Client {
         try verifyProtected(game.root, j.protected_files)
         for r in j.rows { let fp = try fingerprint(target(game.root, r.relative)); try need(fp == r.after || (partial && fp == r.before), "资源存在未知变化，已停止覆盖：\(r.layer)") }
     }
+    func pruneTransactions(keeping id: String) {
+        // A finished install only needs its own rollback set; older ones are
+        // pure history and cost about half a gigabyte each.
+        let root = state.appendingPathComponent("transactions")
+        guard let entries = try? fm.contentsOfDirectory(atPath: root.path) else { return }
+        for name in entries where name != id {
+            let path = root.appendingPathComponent(name)
+            guard matching(name, "^[A-Fa-f0-9-]{36}$") else { continue }
+            try? fm.removeItem(at: path)
+        }
+    }
     func restore(_ old: Journal) throws {
         var j = old; try stopped(); try guardGame(j, partial: true)
-        for row in j.rows { try verify(backup(j, row), row.before) }
+        for row in j.rows where row.before != row.after { try verify(backup(j, row), row.before) }
         j.state = "rolling-back"; try save(j, journalURL)
         for row in j.rows.reversed() {
             let dest = try target(game.root, row.relative)
@@ -664,7 +681,9 @@ final class Client {
             // An exact desired output is already authenticated by the selected signed
             // release. Preserve it without inventing an official reconstruction base.
             if actual == row.output {
-                try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+                if actual != row.output && actual != row.input {
+                    try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+                }
                 try copyVerified(current, work.appendingPathComponent("after-" + row.layer), row.output)
                 var available = false
                 if actual == row.input {
@@ -686,7 +705,9 @@ final class Client {
                 // A verified official base can rebuild this output even if another patch changed current bytes.
                 source = original(previous, r); try verify(source!, row.input)
             }
-            try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+            if actual != row.output && actual != row.input {
+                try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+            }
             if let source = source {
                 try copyVerified(source, work.appendingPathComponent("original-" + row.layer), row.input)
                 let patch = try fetch(row.patch.name, expected: row.patch.fingerprint, limit: 512*1024*1024, remote: row.patch.url)
@@ -724,6 +745,7 @@ final class Client {
                 #endif
             }
             try guardGame(j, partial: false); j.state = "installed"; try save(j, journalURL)
+            pruneTransactions(keeping: j.id)
             print("更新已应用，文件检查通过。现在可以打开 MTGA，游戏语言必须保持 English（英语）。\n更新前的文件已备份；如有问题，完全退出游戏后选择 5「撤销上次更新」。")
         } catch {
             let initial = String(describing: error)
@@ -759,7 +781,7 @@ MTGA 中文维护 · 使用说明
 收到朋友转发的安装包也可从这里找到后续更新；提示需要升级工具时再重新下载安装。
 """
 let help = """
-MTGA 中文维护订阅客户端 v3.4（macOS + Steam）
+MTGA 中文维护订阅客户端 v3.5（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
 preview    下载并检查更新文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏
@@ -865,7 +887,7 @@ func main() throws {
     let profile = try json(Profile.self, small(URL(fileURLWithPath: opt["--profile"] ?? state.appendingPathComponent("profile.json").path)))
     let (library, game) = try discover(opt["--steam-library"])
     let client = try Client(state: state, profile: profile, library: library, game: game)
-    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.4")
+    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.5")
     if command == "status" { if let j = try client.journal() { let labels = ["prepared": "文件已准备，安装未完成", "installing": "上次安装中断，请选择 5 撤销上次更新", "installed": "已安装", "rolling-back": "上次恢复中断，请选择 5 继续恢复", "rolled-back": "已撤销上次更新"]; print("上次更新：\(j.release_id)；状态：\(labels[j.state] ?? j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
     if command == "rollback" || command == "recover" { guard let j = try client.journal() else { print("没有需要恢复的安装记录。"); return }; if j.state == "rolled-back" { print("此前已完成恢复。"); return }; try client.restore(j); return }
     guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。请等待适配当前游戏的汉化发布后，再选择 2「检查更新」。"); return }

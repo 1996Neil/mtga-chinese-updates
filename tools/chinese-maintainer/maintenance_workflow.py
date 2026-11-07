@@ -574,10 +574,11 @@ def execute(config, prepare_only=False):
         # The signed release on GitHub is the artifact; keep only the record
         # that explains it instead of 1.6 GB of inputs and intermediates.
         if Path(receipt).is_file():
-            from prune import archive, archive_state, protected_runs
+            from prune import archive, archive_state, protected_runs, prune_registry
             try:
                 summary = archive(run, publication=receipt)
                 archive_state(STATE, keep=2, protected=protected_runs(STATE))
+                prune_registry(STATE, keep_runs=[p.name for p in (STATE / 'runs').iterdir()])
                 print(f'已归档候选：{summary["bytes_before"] // 1048576} MB -> '
                       f'{summary["bytes_after"] // 1048576} MB')
             except (RuntimeError, OSError, ValueError) as error:

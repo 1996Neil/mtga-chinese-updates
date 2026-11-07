@@ -375,9 +375,14 @@ def print_summary(p, report):
 
 def prune_runs(keep):
     """Drop the bulk of finished candidates, keeping a small verifiable record."""
-    from prune import archive_state, protected_runs
+    from prune import archive_state, protected_runs, prune_registry
     require(keep >= 1, '归档至少要保留一个候选目录')
     archived = archive_state(STATE, keep=keep, protected=protected_runs(STATE))
+    kept = [entry.name for entry in (STATE / 'runs').iterdir()]
+    registry = prune_registry(STATE, keep_runs=kept)
+    if registry['removed_rows']:
+        print(f'注册表清理：删除 {registry["removed_rows"]} 行历史决策，'
+              f'{registry["bytes_before"] // 1048576} MB -> {registry["bytes_after"] // 1048576} MB')
     if not archived:
         print('没有需要归档的候选。')
         return

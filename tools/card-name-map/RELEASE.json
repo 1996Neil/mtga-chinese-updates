@@ -1,10 +1,10 @@
 {
   "package": "1996Neil/mtga-card-names",
-  "release": "data-2026.64.50-r5",
-  "data_version": "2026.64.50-r5",
-  "cards_jsonl_sha256": "791a6581b49a48de0acb7386bbcdb52537e4ed0fd668eb3330553f3843135e96",
-  "cards_jsonl_gz_sha256": "4252e364c69712d78d4ee848a33a95bbb1dd628975dcdb435632d5b6b4040b0a",
-  "manifest_sha256": "c1fba401dc02fdf844b38ab20ae1ef5e3759931d62e7dc5587650e5a97c0d3e0",
-  "rows": 27236,
+  "release": "data-2026.65.0-r1",
+  "data_version": "2026.65.0-r1",
+  "cards_jsonl_sha256": "47a1560c736ce549a43629bc5cedb941f0e2fd4e81c578180a9a4e2d3dbe3331",
+  "cards_jsonl_gz_sha256": "f763d13ff327cfdd42ad82bb1d5bcf4238557a83f79e72b7a0e1ad6fa6810ce0",
+  "manifest_sha256": "7fad200a6d88202536c9ed94ff8f7118cf29bf15a907c6b91aa84004c3f22e0f",
+  "rows": 27720,
   "notes": "Names-only release. Source of truth: https://github.com/1996Neil/mtga-card-names"
 }

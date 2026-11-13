@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Build EN<->ZH card-name maps for a MTG Arena set.
 
-Chinese names come from reviewed localizations in the user's maintenance
-registry.sqlite. They may be official, community, or explicitly AI-authored;
-the registry evidence, not the presence of Chinese, determines their source.
+Chinese names come from the public names-only release:
+  https://github.com/1996Neil/mtga-card-names
 Card metadata (rarity / colors / mana cost / type) comes from Scryfall, and is
 joined on Arena GrpId (Scryfall `arena_id`) so it cannot drift on duplicate names.
 
-Read-only: never writes to registry.sqlite or any MTGA install files.
+Read-only: never writes to the names cache, Scryfall cache, or any MTGA files.
 """
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
+import os
 import re
-import sqlite3
 import sys
 import time
 import urllib.parse
@@ -22,9 +22,9 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_REGISTRY = HERE.parent / "chinese-maintainer" / "state" / "registry.sqlite"
+DEFAULT_NAMES = Path(os.environ.get("MTGA_CARD_NAMES", HERE / "data" / "cards.jsonl.gz"))
 SETS_DIR = HERE / "sets"
-UA = "mtga-card-name-map/1.0 (local read-only export)"
+UA = "mtga-card-name-map/2.0 (names-only release + Scryfall metadata)"
 
 CJK = re.compile(r"[\u3400-\u9fff]")
 RARITY_ORDER = {"mythic": 0, "rare": 1, "uncommon": 2, "common": 3, "special": 4, "bonus": 5}
@@ -34,57 +34,50 @@ RARITY_ZH = {"mythic": "秘稀", "rare": "稀有", "uncommon": "非普通", "com
              "special": "特殊", "bonus": "赠卡"}
 
 
-def readonly_sqlite(path: Path) -> sqlite3.Connection:
-    if not path.exists():
-        sys.exit(f"[error] registry not found: {path}")
-    base = path.resolve().as_uri()
-    # registry.sqlite is shared with the mtga-cn maintainer; if it is mid-write
-    # (journal present) fall back to immutable reads instead of blocking or failing.
-    for params in ("?mode=ro", "?mode=ro&immutable=1"):
-        try:
-            conn = sqlite3.connect(base + params, uri=True, timeout=5)
-            conn.execute("select count(*) from card_names").fetchone()
-            return conn
-        except sqlite3.OperationalError as exc:
-            if "locked" not in str(exc).lower() and "busy" not in str(exc).lower():
-                raise
-    sys.exit("[error] registry.sqlite 被占用且无法只读打开，稍后重试")
+def resolve_names_path(path: Path) -> Path:
+    """Accept cards.jsonl, cards.jsonl.gz, or a directory containing either."""
+    if path.is_dir():
+        for name in ("cards.jsonl", "cards.jsonl.gz"):
+            candidate = path / name
+            if candidate.is_file():
+                return candidate
+    elif path.is_file():
+        return path
+    sys.exit(f"[error] names data not found: {path}\n"
+             "Run `python3 fetch_names.py --apply` first, or pass --names.")
 
 
-def latest_run(db: sqlite3.Connection) -> str:
-    """Newest client version run in card_names (version strings sort chronologically here)."""
-    rows = db.execute(
-        "select run_id, count(*) c from card_names group by run_id order by run_id desc"
-    ).fetchall()
-    if not rows:
-        sys.exit("[error] card_names is empty")
-    # run ids look like 2026.64.50_20261020T2044...  -> descending string order is newest first
-    for run_id, count in rows:
-        if count > 1000:
-            return run_id
-    return rows[0][0]
-
-
-def load_client_names(db: sqlite3.Connection, run_id: str) -> dict[int, dict]:
-    """arena_grp_id -> {en, zh, cn, token, primary, expansion}"""
+def load_names(path: Path) -> dict[int, dict]:
+    path = resolve_names_path(path)
     out: dict[int, dict] = {}
-    cur = db.execute(
-        "select arena_grp_id, identity_json, english_canonical, chinese_display "
-        "from card_names where run_id = ?", (run_id,))
-    for grp_id, identity, en, zh in cur:
-        try:
-            ident = json.loads(identity)
-        except json.JSONDecodeError:
-            ident = {}
-        out[grp_id] = {
-            "en": (en or "").strip(),
-            "zh": (zh or "").strip(),
-            "cn": str(ident.get("CollectorNumber") or ""),
-            "token": bool(ident.get("IsToken")),
-            "primary": bool(ident.get("IsPrimaryCard")),
-            "expansion": ident.get("ExpansionCode") or "",
-        }
+    opener = gzip.open(path, "rt", encoding="utf-8") if path.suffix == ".gz" else path.open(encoding="utf-8")
+    with opener as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            try:
+                grp_id = int(row["grp_id"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            out[grp_id] = {
+                "en": str(row.get("en") or "").strip(),
+                "zh": str(row.get("zh") or "").strip(),
+                "cn": str(row.get("collector_number") or ""),
+                "token": bool(row.get("is_token")),
+                "primary": bool(row.get("is_primary")),
+                "expansion": str(row.get("set") or ""),
+            }
     return out
+
+
+def read_data_version(path: Path) -> str:
+    path = resolve_names_path(path)
+    try:
+        manifest = json.loads((path.parent / "manifest.json").read_text(encoding="utf-8"))
+        return str(manifest.get("data_version") or "unknown")
+    except (OSError, ValueError):
+        return "unknown"
 
 
 def scryfall_set(set_code: str) -> list[dict]:
@@ -113,15 +106,13 @@ def scryfall_set(set_code: str) -> list[dict]:
     return cards
 
 
-def build(set_code: str, registry: Path, offline: bool) -> dict:
-    db = readonly_sqlite(registry)
-    run_id = latest_run(db)
-    names = load_client_names(db, run_id)
-    db.close()
+def build(set_code: str, names_path: Path, offline: bool) -> dict:
+    names = load_names(names_path)
+    data_version = read_data_version(names_path)
 
     client_rows = {gid: v for gid, v in names.items() if v["expansion"].upper() == set_code.upper()}
     if not client_rows:
-        sys.exit(f"[error] no cards of set {set_code} in registry run {run_id}")
+        sys.exit(f"[error] no cards of set {set_code} in {names_path}")
 
     scry: dict[int, dict] = {}
     by_num: dict[str, dict] = {}
@@ -150,7 +141,7 @@ def build(set_code: str, registry: Path, offline: bool) -> dict:
             "cn": row["cn"],
             "en": row["en"],
             "zh": zh,
-            "zh_verified": bool(zh != row["en"]),
+            "zh_verified": bool(zh and zh != row["en"]),
             "is_token": row["token"],
             "is_primary": row["primary"],
             "rarity": (meta or {}).get("rarity", ""),
@@ -169,10 +160,10 @@ def build(set_code: str, registry: Path, offline: bool) -> dict:
     cards.sort(key=sort_key)
     return {
         "set": set_code.upper(),
-        "registry_run": run_id,
-        "registry_path": str(registry),
+        "data_version": data_version,
+        "names_source": "1996Neil/mtga-card-names (names-only release)",
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-        "source_zh": "MTGA 官方客户端本地化数据（经用户 mtga-cn 汉化流程入库）",
+        "source_zh": "MTGA 官方/社区中文牌名（mtga-card-names names-only release）",
         "source_meta": "Scryfall API（arena_id 精确对齐）" if not offline else "offline",
         "counts": {
             "total": len(cards),
@@ -271,7 +262,7 @@ tbody tr:hover{{background:#fff}}
 </style></head><body>
 <header>
   <h1>{data['set']} · 中英卡表</h1>
-  <div class="sub">中文名取自 MTGA 官方客户端本地化文本（与游戏内汉化显示一致）·
+  <div class="sub">中文名取自 mtga-card-names names-only release（官方/社区/已标注 AI）·
     全 {len(rows)} 张主系列牌</div>
   <div class="controls">
     <input type="search" id="q" placeholder="搜索英文或中文牌名…" autocomplete="off" autofocus>
@@ -326,7 +317,7 @@ def render_markdown(data: dict) -> str:
     out = [f"# {data['set']} 卡表中英对照（轮抽用）", ""]
     out.append(f"- 中文来源：{data['source_zh']}")
     out.append(f"- 元数据来源：{data['source_meta']}")
-    out.append(f"- 客户端版本 run：`{data['registry_run']}`　生成时间：{data['generated_at']}")
+    out.append(f"- 数据版本：`{data.get('data_version', 'unknown')}`　生成时间：{data['generated_at']}")
     out.append(f"- 主系列牌张：{len(mains)}　异画/特殊版本：{len(variants)}"
                f"　衍生物：{data['counts']['tokens']}　中文缺失：{data['counts']['missing_zh']}")
     out.append("")
@@ -392,14 +383,15 @@ def render_markdown(data: dict) -> str:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="导出某系列卡表中英对照（中文取自本地官方客户端数据）")
+    ap = argparse.ArgumentParser(description="导出某系列卡表中英对照（中文取自 mtga-card-names release）")
     ap.add_argument("set_code", help="系列代码，如 DFT / FRA / DSK")
-    ap.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    ap.add_argument("--names", type=Path, default=DEFAULT_NAMES,
+                    help="cards.jsonl / cards.jsonl.gz / 目录（默认 tools/card-name-map/data）")
     ap.add_argument("--out", type=Path, default=SETS_DIR)
     ap.add_argument("--offline", action="store_true", help="不访问 Scryfall，只导出名字")
     args = ap.parse_args()
 
-    data = build(args.set_code, args.registry, args.offline)
+    data = build(args.set_code, args.names, args.offline)
     files = write_outputs(data, args.out / data["set"])
     print(json.dumps({"set": data["set"], "counts": data["counts"], "files": [str(f) for f in files]},
                      ensure_ascii=False, indent=2))

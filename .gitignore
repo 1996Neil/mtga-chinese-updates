@@ -14,6 +14,7 @@ deliverables/
 QuickDraft-v0.2-local-validation-20261011/
 tools/chinese-maintainer/reviewed-resolutions/
 tools/card-name-map/sets/
+tools/card-name-map/data/
 tools/card-name-map/current-quickdraft.json
 __pycache__/
 *.pyc

@@ -77,6 +77,96 @@ func atomic(_ data: Data, _ url: URL, mode: mode_t = 0o600) throws {
     try syncDirectory(url.deletingLastPathComponent())
 }
 func save<T: Encodable>(_ value: T, _ url: URL) throws { try atomic(encoder.encode(value), url) }
+
+func setupProfile(_ profile: Profile, state: URL) throws {
+    let profilePath = state.appendingPathComponent("profile.json")
+    let trustPath = state.appendingPathComponent("trust.json")
+    let paths = [profilePath, trustPath].filter { fm.fileExists(atPath: $0.path) }
+    let existing = try paths.map { try json(Profile.self, small($0)) }
+    for old in existing {
+        try need(old.schema == profile.schema && old.public_key == profile.public_key && old.feed == profile.feed,
+                 "安装包的更新地址或公钥与现有安装不同，已保留原配置和备份。")
+        try need(old.channel == profile.channel || (old.channel == "testing" && profile.channel == "stable"),
+                 "不支持自动切换此订阅渠道；已保留原配置和备份。")
+    }
+    let promoting = existing.contains { $0.channel != profile.channel }
+    let receiptPath = state.appendingPathComponent("channel-promotion.json")
+    // A saved intent makes an interrupted trust/profile pair update retryable.
+    // Neither profile may change feed or key, even during recovery.
+    let recovering: Bool
+    if fm.fileExists(atPath: receiptPath.path) {
+        let saved = try json(Profile.self, small(receiptPath))
+        recovering = saved.schema == profile.schema && saved.feed == profile.feed &&
+            saved.public_key == profile.public_key && saved.channel == "stable" && profile.channel == "stable"
+    } else { recovering = false }
+    if promoting || recovering {
+        let journalPath = state.appendingPathComponent("installation.json")
+        if fm.fileExists(atPath: journalPath.path) {
+            let journal = try json(Journal.self, small(journalPath))
+            try need(["installed", "rolled-back"].contains(journal.state),
+                     "上次安装或恢复尚未完成，请先用原工具恢复，再切换正式渠道。")
+        }
+        let scratch = state.appendingPathComponent(".channel-check-" + UUID().uuidString)
+        try folder(scratch); defer { try? fm.removeItem(at: scratch) }
+        let indexPath = scratch.appendingPathComponent("index-stable.json")
+        if profile.feed.hasPrefix("https://") {
+            guard let url = URLComponents(string: profile.feed) else { throw Problem(description: "更新地址无效。") }
+            try need(url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil &&
+                     url.query == nil && url.fragment == nil, "更新地址必须为不含凭据的 HTTPS 目录。")
+            try downloadMetadata(feed: profile.feed, name: "index-stable.json", target: indexPath,
+                                 limit: 2 * 1024 * 1024)
+        } else {
+            #if TESTING
+            try need(profile.feed.hasPrefix("/"), "测试更新源路径无效。")
+            try fm.copyItem(at: URL(fileURLWithPath: profile.feed).appendingPathComponent("index-stable.json"), to: indexPath)
+            #else
+            throw Problem(description: "渠道迁移仅支持 HTTPS 更新源。")
+            #endif
+        }
+        let data = try small(indexPath, limit: 2 * 1024 * 1024)
+        let envelope = try json(Envelope.self, data)
+        guard let payload = Data(base64Encoded: envelope.payload),
+              let signature = Data(base64Encoded: envelope.signature),
+              let publicData = Data(base64Encoded: profile.public_key) else {
+            throw Problem(description: "正式渠道签名封装无效，未切换配置。")
+        }
+        let key = try Curve25519.Signing.PublicKey(rawRepresentation: publicData)
+        try need(key.isValidSignature(signature, for: payload), "正式渠道签名校验失败，未切换配置。")
+        let index = try json(Index.self, payload)
+        try need(index.schema == "MTGA_CN_INDEX_V1" && index.channel == "stable" &&
+                 index.sequence > 0 && !index.releases.isEmpty && index.releases.count <= 10000,
+                 "正式渠道索引无效，未切换配置。")
+        guard let expiry = ISO8601DateFormatter().date(from: index.expires_at) else {
+            throw Problem(description: "正式渠道有效期无效。")
+        }
+        try need(expiry > Date(), "正式渠道索引已过期，未切换配置。")
+        let seenPath = state.appendingPathComponent("seen-stable.json")
+        if fm.fileExists(atPath: seenPath.path) {
+            let seen = try json(Seen.self, small(seenPath))
+            let indexFP = try fingerprint(indexPath)
+            try need(index.sequence >= seen.sequence &&
+                     (index.sequence != seen.sequence || indexFP == seen.fingerprint),
+                     "正式渠道索引倒退或同序号内容不同，未切换配置。")
+            try need(Date().timeIntervalSince1970 >= seen.checked_at - 300, "本机时间倒退，未切换配置。")
+        }
+        for path in paths {
+            let backup = state.appendingPathComponent(path.lastPathComponent + ".before-stable")
+            if !fm.fileExists(atPath: backup.path) { try atomic(small(path), backup) }
+        }
+        try save(profile, receiptPath)
+        try save(profile, trustPath)
+        #if TESTING
+        if ProcessInfo.processInfo.environment["MTGA_TEST_INTERRUPT_CHANNEL_PROMOTION"] == "1" {
+            throw Problem(description: "模拟渠道切换中断。")
+        }
+        #endif
+    }
+    try save(profile, profilePath)
+    if promoting || recovering {
+        try fm.removeItem(at: receiptPath)
+        try syncDirectory(state)
+    }
+}
 func copyVerified(_ source: URL, _ target: URL, _ fp: Fingerprint, precommit: () throws -> Void = {}) throws {
     try verify(source, fp); try folder(target.deletingLastPathComponent())
     if fm.fileExists(atPath: target.path) { try checked(target) }
@@ -102,6 +192,58 @@ func run(_ path: String, _ args: [String], input: FileHandle? = nil) throws -> (
     if let input = input { p.standardInput = input }
     try p.run(); let data = out.fileHandleForReading.readDataToEndOfFile(); p.waitUntilExit()
     return (p.terminationStatus, String(decoding: data, as: UTF8.self))
+}
+func metadataAPIURL(feed: String, name: String) -> URL? {
+    guard matching(name, "^[A-Za-z0-9][A-Za-z0-9._-]{0,145}\\.json$"),
+          let source = URLComponents(string: feed) else { return nil }
+    let parts = source.path.split(separator: "/").map(String.init)
+    guard source.scheme == "https", source.host == "raw.githubusercontent.com",
+          source.port == nil, source.user == nil, source.password == nil,
+          source.query == nil, source.fragment == nil, parts.count == 4,
+          parts[3] == "feed",
+          parts.prefix(3).allSatisfy({ matching($0, "^[A-Za-z0-9][A-Za-z0-9._-]{0,150}$") &&
+              $0 != "." && $0 != ".." }),
+          feed == "https://raw.githubusercontent.com/" + parts.joined(separator: "/")
+    else { return nil }
+    return URL(string: "https://api.github.com/repos/\(parts[0])/\(parts[1])/contents/feed/\(name)?ref=\(parts[2])")
+}
+func downloadMetadata(feed: String, name: String, target: URL, limit: Int) throws {
+    try basename(name)
+    try need(limit > 0, "元数据大小限制无效。")
+    guard let source = URL(string: feed) else { throw Problem(description: "更新源地址无效。") }
+    let primary = source.appendingPathComponent(name)
+    var curl = "/usr/bin/curl"
+    #if TESTING
+    curl = ProcessInfo.processInfo.environment["MTGA_TEST_CURL"] ?? curl
+    #endif
+    func transfer(_ url: URL, fallback: Bool) throws -> Int32 {
+        let incoming = target.deletingLastPathComponent().appendingPathComponent(
+            "." + UUID().uuidString + "-metadata")
+        defer { try? fm.removeItem(at: incoming) }
+        var args = ["--disable", "--fail", "--silent", "--show-error",
+                    "--retry", fallback ? "1" : "0", "--retry-max-time", fallback ? "35" : "15",
+                    "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https",
+                    "--connect-timeout", fallback ? "10" : "5", "--max-time", fallback ? "30" : "15",
+                    "--max-filesize", String(limit), "--output", incoming.path]
+        if fallback { args += ["--header", "Accept: application/vnd.github.raw+json"] }
+        args.append(url.absoluteString)
+        let result = try run(curl, args)
+        if result.0 == 0 {
+            _ = try small(incoming, limit: limit)
+            try need(!fm.fileExists(atPath: target.path), "拒绝覆盖已有元数据暂存。")
+            try fm.moveItem(at: incoming, to: target)
+        }
+        return result.0
+    }
+    let status = try transfer(primary, fallback: false)
+    if status == 0 { return }
+    // Invalid successful JSON/signatures and HTTP errors are never retried via a
+    // different transport. Only connection/TLS/timeout/interrupted-body errors.
+    let transportFailures: Set<Int32> = [5, 6, 7, 18, 28, 35, 52, 55, 56, 60]
+    if transportFailures.contains(status), let alternate = metadataAPIURL(feed: feed, name: name) {
+        if try transfer(alternate, fallback: true) == 0 { return }
+    }
+    throw Problem(description: "下载失败：\(name)。请检查网络或更新源权限后重试。原有游戏文件未因下载而改变。")
 }
 func stopped() throws {
     #if TESTING
@@ -302,7 +444,13 @@ final class Client {
         return j
     }
     func txdir(_ j: Journal) -> URL { state.appendingPathComponent("transactions").appendingPathComponent(j.id) }
-    func backup(_ j: Journal, _ row: Row) -> URL { txdir(j).appendingPathComponent("before-" + row.layer) }
+    func backup(_ j: Journal, _ row: Row) -> URL {
+        // A layer whose installed bytes already were the official input keeps
+        // only original-*; a layer that did not change keeps nothing, because
+        // rolling it back would rewrite the same bytes.
+        let before = txdir(j).appendingPathComponent("before-" + row.layer)
+        return fm.fileExists(atPath: before.path) ? before : original(j, row)
+    }
     func original(_ j: Journal, _ row: Row) -> URL { txdir(j).appendingPathComponent("original-" + row.layer) }
     func cacheRegular(_ url: URL) throws -> Int64 {
         try checked(url)
@@ -435,12 +583,9 @@ final class Client {
             let isPatch = name.hasSuffix(".delta") || name.hasSuffix(".full")
             if isPatch, let fp = expected { return try deltaDownload(name, url: url, fp: fp, limit: limit) }
             if isPatch { print("正在下载资源：\(name)（\((expected?.bytes ?? 0) / 1024 / 1024) MiB）。慢速网络可能需要较长时间。完成校验前不会修改游戏。"); fflush(stdout) }
-            var curl = "/usr/bin/curl"
-            #if TESTING
-            curl = ProcessInfo.processInfo.environment["MTGA_TEST_CURL"] ?? curl
-            #endif
-            let r = try run(curl, ["--disable", "--fail", "--silent", "--show-error", "--retry", "2", "--retry-delay", "1", "--retry-max-time", "120", "--speed-limit", "1024", "--speed-time", "90", "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", "10", "--max-time", isPatch ? "1800" : "180", "--max-filesize", String(min(Int64(limit), expected?.bytes ?? Int64(limit))), "--output", target.path, url.absoluteString])
-            try need(r.0 == 0, "下载失败：\(name)。请检查网络或更新源权限后重试。原有游戏文件未因下载而改变。")
+            try need(!isPatch && remote == nil, "资源下载必须带签名给出的完整哈希和大小。")
+            try downloadMetadata(feed: profile.feed, name: name, target: target,
+                                 limit: min(limit, Int(expected?.bytes ?? Int64(limit))))
         } else {
             try need(remote == nil, "本地源不能指定外部差分地址。")
             try need(profile.feed.hasPrefix("/"), "更新源仅支持 HTTPS 或明确选择的本地发布目录。")
@@ -492,9 +637,20 @@ final class Client {
         try verifyProtected(game.root, j.protected_files)
         for r in j.rows { let fp = try fingerprint(target(game.root, r.relative)); try need(fp == r.after || (partial && fp == r.before), "资源存在未知变化，已停止覆盖：\(r.layer)") }
     }
+    func pruneTransactions(keeping id: String) {
+        // A finished install only needs its own rollback set; older ones are
+        // pure history and cost about half a gigabyte each.
+        let root = state.appendingPathComponent("transactions")
+        guard let entries = try? fm.contentsOfDirectory(atPath: root.path) else { return }
+        for name in entries where name != id {
+            let path = root.appendingPathComponent(name)
+            guard matching(name, "^[A-Fa-f0-9-]{36}$") else { continue }
+            try? fm.removeItem(at: path)
+        }
+    }
     func restore(_ old: Journal) throws {
         var j = old; try stopped(); try guardGame(j, partial: true)
-        for row in j.rows { try verify(backup(j, row), row.before) }
+        for row in j.rows where row.before != row.after { try verify(backup(j, row), row.before) }
         j.state = "rolling-back"; try save(j, journalURL)
         for row in j.rows.reversed() {
             let dest = try target(game.root, row.relative)
@@ -525,7 +681,9 @@ final class Client {
             // An exact desired output is already authenticated by the selected signed
             // release. Preserve it without inventing an official reconstruction base.
             if actual == row.output {
-                try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+                if actual != row.output && actual != row.input {
+                    try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+                }
                 try copyVerified(current, work.appendingPathComponent("after-" + row.layer), row.output)
                 var available = false
                 if actual == row.input {
@@ -547,7 +705,9 @@ final class Client {
                 // A verified official base can rebuild this output even if another patch changed current bytes.
                 source = original(previous, r); try verify(source!, row.input)
             }
-            try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+            if actual != row.output && actual != row.input {
+                try copyVerified(current, work.appendingPathComponent("before-" + row.layer), actual)
+            }
             if let source = source {
                 try copyVerified(source, work.appendingPathComponent("original-" + row.layer), row.input)
                 let patch = try fetch(row.patch.name, expected: row.patch.fingerprint, limit: 512*1024*1024, remote: row.patch.url)
@@ -585,6 +745,7 @@ final class Client {
                 #endif
             }
             try guardGame(j, partial: false); j.state = "installed"; try save(j, journalURL)
+            pruneTransactions(keeping: j.id)
             print("更新已应用，文件检查通过。现在可以打开 MTGA，游戏语言必须保持 English（英语）。\n更新前的文件已备份；如有问题，完全退出游戏后选择 5「撤销上次更新」。")
         } catch {
             let initial = String(describing: error)
@@ -620,7 +781,7 @@ MTGA 中文维护 · 使用说明
 收到朋友转发的安装包也可从这里找到后续更新；提示需要升级工具时再重新下载安装。
 """
 let help = """
-MTGA 中文维护订阅客户端 v3.2（macOS + Steam）
+MTGA 中文维护订阅客户端 v3.5（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
 preview    下载并检查更新文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏
@@ -643,6 +804,12 @@ func main() throws {
     if command == "help" { print(help); return }
     if command == "guide" { print(userGuide); return }
     #if TESTING
+    if command == "metadata-fallback-url" {
+        guard let name = opt["--input"], let feed = opt["--profile"],
+              let url = metadataAPIURL(feed: feed, name: name)
+        else { throw Problem(description: "此来源或文件不允许元数据后备读取。") }
+        print(url.absoluteString); return
+    }
     if command == "validate-release-url" {
         guard let value = opt["--input"], let feed = opt["--profile"], let name = opt["--output"] else { throw Problem(description: "测试参数不完整。") }
         _ = try releaseURL(value, feed: feed, name: name); return
@@ -683,10 +850,14 @@ func main() throws {
             profile = Profile(schema: profile.schema, feed: localFeed.path, public_key: profile.public_key, channel: profile.channel)
         }
         try folder(state)
-        let profilePath = state.appendingPathComponent("profile.json")
-        if fm.fileExists(atPath: profilePath.path) { let old = try json(Profile.self, small(profilePath)); try need(old.public_key == profile.public_key && old.feed == profile.feed && old.channel == profile.channel, "此安装使用不同的订阅源或公钥。请选择独立 --state 目录，不自动替换信任设置。") }
+        let setupLockPath = state.appendingPathComponent("client.lock")
+        if fm.fileExists(atPath: setupLockPath.path) { try checked(setupLockPath) }
+        let setupLock = open(setupLockPath.path, O_RDWR | O_CREAT | O_NOFOLLOW, 0o600)
+        try need(setupLock >= 0, "无法打开安装锁。")
+        defer { flock(setupLock, LOCK_UN); close(setupLock) }
+        try need(flock(setupLock, LOCK_EX | LOCK_NB) == 0, "另一项维护操作正在运行，请稍后安装。")
+        try setupProfile(profile, state: state)
         try atomic(Data(contentsOf: exe), state.appendingPathComponent("mtga-cn"), mode: 0o755)
-        try save(profile, profilePath)
         let shell = """
         #!/bin/zsh
         ROOT="${0:A:h}"
@@ -716,7 +887,7 @@ func main() throws {
     let profile = try json(Profile.self, small(URL(fileURLWithPath: opt["--profile"] ?? state.appendingPathComponent("profile.json").path)))
     let (library, game) = try discover(opt["--steam-library"])
     let client = try Client(state: state, profile: profile, library: library, game: game)
-    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.2")
+    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.5")
     if command == "status" { if let j = try client.journal() { let labels = ["prepared": "文件已准备，安装未完成", "installing": "上次安装中断，请选择 5 撤销上次更新", "installed": "已安装", "rolling-back": "上次恢复中断，请选择 5 继续恢复", "rolled-back": "已撤销上次更新"]; print("上次更新：\(j.release_id)；状态：\(labels[j.state] ?? j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
     if command == "rollback" || command == "recover" { guard let j = try client.journal() else { print("没有需要恢复的安装记录。"); return }; if j.state == "rolled-back" { print("此前已完成恢复。"); return }; try client.restore(j); return }
     guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。请等待适配当前游戏的汉化发布后，再选择 2「检查更新」。"); return }

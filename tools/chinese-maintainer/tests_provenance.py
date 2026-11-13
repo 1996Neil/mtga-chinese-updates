@@ -111,7 +111,21 @@ class IntegrationTests(unittest.TestCase):
     def test_real_audit_reuses_review_event(self):
         self.seed();a=self.audit();b=self.audit()
         self.assertFalse(a['registered_evaluations'][0]['reused_review']);self.assertTrue(b['registered_evaluations'][0]['reused_review'])
+        self.assertTrue(b['registered_evaluations'][0]['reused_selection'])
         self.assertEqual(a['registered_evaluations'][0]['id'],b['registered_evaluations'][0]['id'])
+    def test_selection_cache_skips_repeated_semantic_evaluation(self):
+        self.seed();self.audit()
+        with patch.object(p, 'evaluate', side_effect=AssertionError('cache miss')):
+            report = self.audit()
+        self.assertEqual(report['registered_evaluations'][0]['status'], 'verified')
+        self.assertTrue(report['registered_evaluations'][0]['reused_selection'])
+    def test_selection_cache_invalidates_when_source_observation_changes(self):
+        doc,_=self.seed();self.audit()
+        p.append(self.c,'provenance_observations',{'document_id':doc,'status':'unavailable','at':'changed'})
+        with patch.object(p, 'evaluate', wraps=p.evaluate) as evaluate:
+            report=self.audit()
+        self.assertGreater(evaluate.call_count, 0)
+        self.assertEqual(report['registered_evaluations'][0]['reason'],'source-unavailable-or-changed')
     def test_new_version_stable_source_reuses_translation_without_semantic_review(self):
         self.seed();a=self.audit();self.assertEqual(a['registered_evaluations'][0]['status'],'verified')
         with patch.object(p,'guard'),patch.object(p,'contexts',return_value={('card','1160075'):self.ctx}):

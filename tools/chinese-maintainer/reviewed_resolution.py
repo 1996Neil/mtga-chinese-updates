@@ -5,7 +5,7 @@ human approval, client acceptance, or authority to install a game resource.
 """
 from pathlib import Path
 import json
-from common import (ROOT, database, fingerprint, read_json, require, safe_format,
+from common import (ROOT, EVIDENCE_ROOT, database, fingerprint, read_json, require, safe_format,
                     has_chinese, save_json)
 
 # Historical AI-only pack, retained solely for reproducible old evidence/tests.
@@ -35,7 +35,7 @@ def import_resolutions(c, official, version, directory=None):
     """
     from registry import source, add, bind_contexts
     from provenance import append
-    directory = directory or ROOT / 'reviewed-resolutions'
+    directory = directory or EVIDENCE_ROOT / 'reviewed-resolutions'
     packs = sorted(directory.glob('*/pack.json'))
     if not packs:
         return 0

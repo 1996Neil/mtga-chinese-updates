@@ -1,0 +1,24 @@
+{
+  "schema": "MTGA_CN_RELEASE_POLICY_V1",
+  "owner_authorization": "以后一键就维护发布了，除非是游戏版本没对上这种问题不对之外，日常的文本更新不会有问题",
+  "routine_text_updates": {
+    "enabled": true,
+    "runtime_acceptance_required": false,
+    "requires_same_client_version": true,
+    "requires_same_steam_build": true,
+    "requires_unchanged_fonts": true,
+    "requires_independent_review": true
+  },
+  "owner_receipt_release": {
+    "enabled": true,
+    "verification_mode": "post_hoc",
+    "required_checks": [
+      "chinese_display",
+      "font_rendering",
+      "english_import",
+      "chinese_import"
+    ],
+    "independent_review": "best_effort",
+    "index_validity_days": 180
+  }
+}

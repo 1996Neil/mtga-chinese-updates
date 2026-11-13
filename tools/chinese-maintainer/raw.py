@@ -84,8 +84,8 @@ def build_localization(source, output, layer, registry, run):
     save_json(output.parent / (layer + '-decisions.json'), decisions)
     stats = dict(Counter(r['status'] for r in decisions))
     stats.update({'applied': len(updates), 'conflicts': sum(bool(r['conflicts']) for r in decisions),
-                  'by_source': dict(Counter(r['source'] for r in decisions if r['status'] == 'verified')),
-                  'reasons': dict(Counter(r['reason'] for r in decisions if r['status'] != 'verified'))})
+                  'by_source': dict(Counter(r['source'] for r in decisions if r['status'] in {'verified', 'baseline-adopted'})),
+                  'reasons': dict(Counter(r['reason'] for r in decisions if r['status'] not in {'verified', 'baseline-adopted'}))})
     return {'validation': validation, 'counts': stats, 'updates': updates}
 
 
@@ -127,9 +127,22 @@ def validate_names(official, localized, candidate, additions):
                 'canonical_exact_cross_title_collisions': 0, 'derived_generated_F0': len(derived)}
 
 
-def build_names(official, localized, output, registry, run, old_official):
+def build_names(official, localized, output, registry, run, old_official, *, previous_identity=None):
     added, uncovered, conflicts, names = [], [], [], []
-    with database(official) as o, database(localized) as z, database(old_official) as old:
+    if previous_identity is not None:
+        require(old_official is None and set(previous_identity) == {'cards', 'titles'},
+                'Portable name history must use explicit previous identities')
+        old_cards = previous_identity['cards']
+        old_names = {int(title): {0: text} for title, text in previous_identity['titles'].items()}
+        old_titles = set(old_names)
+    else:
+        with database(old_official) as old:
+            old_cards = {r[0]: r[1:] for r in old.execute('SELECT GrpId,TitleId,ExpansionCode,CollectorNumber,IsToken,IsPrimaryCard,LinkedFaceType,LinkedFaceGrpIds FROM Cards')}
+            old_names = defaultdict(dict)
+            for i, f, text in old.execute('SELECT * FROM Localizations_enUS'):
+                old_names[i][f] = text
+            old_titles = {r[0] for r in old.execute(TITLE_QUERY)}
+    with database(official) as o, database(localized) as z:
         original = defaultdict(dict)
         current = defaultdict(dict)
         for i, f, text in o.execute('SELECT * FROM Localizations_enUS'):
@@ -139,11 +152,6 @@ def build_names(official, localized, output, registry, run, old_official):
         titles = {r[0] for r in o.execute(TITLE_QUERY)}
         cards = [dict(zip([col[0] for col in cur.description], row))
                  for cur in [o.execute('SELECT * FROM Cards')] for row in cur]
-        old_cards = {r[0]: r[1:] for r in old.execute('SELECT GrpId,TitleId,ExpansionCode,CollectorNumber,IsToken,IsPrimaryCard,LinkedFaceType,LinkedFaceGrpIds FROM Cards')}
-        old_names = defaultdict(dict)
-        for i, f, text in old.execute('SELECT * FROM Localizations_enUS'):
-            old_names[i][f] = text
-        old_titles = {r[0] for r in old.execute(TITLE_QUERY)}
         changed_canonical = []
         new_groups, changed_identity = [], []
         for card in cards:
@@ -254,12 +262,13 @@ def deck_quantities(pairs):
     return result
 
 
-def regressions(official, candidate, out, name_result):
+def regressions(official, candidate, out, name_result, *, portable=False):
     """Checks registry matching, explicitly not a substitute for native import."""
     out.mkdir()
-    original = (HISTORY / 'original-60.txt').read_text()
-    lines = deck_lines(original)
-    require(sum(r[0] for r in lines) == 60, 'Historical deck no longer 60 cards')
+    if not portable:
+        original = (HISTORY / 'original-60.txt').read_text()
+        lines = deck_lines(original)
+        require(sum(r[0] for r in lines) == 60, 'Historical deck no longer 60 cards')
     with database(official) as o, database(candidate) as c:
         cards = list(o.execute('SELECT GrpId,TitleId,ExpansionCode,CollectorNumber,IsPrimaryCard,IsToken FROM Cards'))
         en = defaultdict(dict)
@@ -275,7 +284,26 @@ def regressions(official, candidate, out, name_result):
             name = canonical(en[title])[0]
             english_map[name].add(title)
             chinese_map[zh[title].get(1)].add(title)
-        fixed = {'english-60': original, 'qualified-60': (HISTORY / 'full-qualified-60.txt').read_text()}
+        if portable:
+            # Generate name/quantity fixtures from current identities rather than lost historical files.
+            choices = [title for title in sorted(eligible)
+                       if has_chinese(zh[title].get(1)) and
+                       not any(char in zh[title][1] for char in '<>\r\n\x00') and
+                       len(chinese_map[zh[title][1]]) == 1 and
+                       len(english_map[canonical(en[title])[0]]) == 1][:15]
+            require(choices, 'No unambiguous current Chinese titles for portable import fixture')
+            quantities = [60 // len(choices)] * len(choices)
+            quantities[-1] += 60 - sum(quantities)
+            lines = [(quantity, canonical(en[title])[0], None, None)
+                     for quantity, title in zip(quantities, choices)]
+            original = 'Deck\n' + ''.join(f'{quantity} {name}\n' for quantity, name, _, _ in lines)
+            qualified = ['Deck']
+            for quantity, title in zip(quantities, choices):
+                printing = next(row for row in cards if row[1] == title and row[4] and not row[5])
+                qualified.append(f'{quantity} {canonical(en[title])[0]} ({printing[2]}) {printing[3]}')
+            fixed = {'english-60': original, 'qualified-60': '\n'.join(qualified) + '\n'}
+        else:
+            fixed = {'english-60': original, 'qualified-60': (HISTORY / 'full-qualified-60.txt').read_text()}
         chinese, mixed, expected = ['Deck'], ['Deck'], []
         for index, (quantity, name, _, _) in enumerate(lines):
             ids = english_map[name]

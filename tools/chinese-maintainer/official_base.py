@@ -5,6 +5,7 @@ Opaque assets use an explicitly pinned, previously reviewed LOCAL capture only;
 this is not a publisher signature and does not authorize another release.
 """
 from pathlib import Path
+import re
 from common import ROOT, STATE, GAME, fingerprint, read_json, require, managed_path, evidence_path
 
 LAYERS = ('card', 'client', 'resources', 'bootstrap_fonts', 'font_bundle')
@@ -44,6 +45,9 @@ def release(snapshot):
 
 def opaque_baseline(snapshot, state=STATE):
     state = managed_path(state)
+    approved = approved_opaque(snapshot, state)
+    if approved is not None:
+        return approved
     review_path = PIN_REVIEW_PATH
     receipt_path = PIN_RECEIPT_PATH
     run = state / 'runs' / PIN_RUN
@@ -67,6 +71,65 @@ def opaque_baseline(snapshot, state=STATE):
         rows[layer] = {'official_base_path': str(path), 'fingerprint': expected,
                        'authority': 'reviewed-local-capture-not-publisher-signature',
                        'evidence': {'review': PIN_REVIEW, 'receipt': PIN_RECEIPT, 'snapshot': PIN_SNAPSHOT}}
+    return rows
+
+
+def approved_opaque(snapshot, state=STATE):
+    """Load a separately reviewed current-depot capture, leaving old pins intact."""
+    if not all(key in snapshot for key in ('client_version', 'steam_build')):
+        return None
+    identity = snapshot['client_version'] + '-' + snapshot['steam_build']
+    require(bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,120}', identity)),
+            'Unsafe base approval identity')
+    registration = state / 'base-approvals' / (identity + '.json')
+    if not registration.exists():
+        return None
+    from common import regular
+    entry = read_json(regular(registration))
+    require(entry.get('schema') == 'MTGA_CN_STEAM_BASE_APPROVAL_V1',
+            'Unknown current base approval schema')
+    run = Path(entry['run'])
+    require(run.is_absolute() and run == run.resolve() and run.parent == state / 'runs',
+            'Approved capture outside managed runs')
+    capture_path, snapshot_path = run / 'base-capture.json', run / 'snapshot.json'
+    review_path = run / 'independent-base-review.json'
+    require(fingerprint(capture_path) == entry['capture_fingerprint'] and
+            fingerprint(review_path) == entry['review_fingerprint'],
+            'Approved capture or independent review changed')
+    review, capture = read_json(review_path), read_json(capture_path)
+    from steam_capture import CODE_RESOURCES
+    require(review.get('schema') == 'MTGA_CN_STEAM_BASE_REVIEW_V1' and
+            review.get('status') == 'PASS' and review.get('blocking_findings') == [] and
+            bool(review.get('reviewer', '').strip()) and bool(review.get('scope', '').strip()) and
+            review.get('capture_fingerprint') == entry['capture_fingerprint'] and
+            review.get('snapshot_fingerprint') == fingerprint(snapshot_path) and
+            review.get('capture_code_fingerprint') == fingerprint(ROOT / 'steam_capture.py'),
+            'Missing, stale or mismatched independent current base review')
+    baseline = read_json(snapshot_path)
+    require(capture.get('schema') == 'MTGA_CN_STEAM_BASE_CAPTURE_V1' and
+            capture.get('all_pass') is True and capture.get('runtime_acceptance') is False and
+            capture.get('vendor_authentication') is False and capture.get('snapshot') == baseline and
+            release(baseline) == release(snapshot),
+            'Reviewed capture belongs to another release or evidence changed')
+    depot = run / 'evidence/depot.manifest'
+    require(fingerprint(depot) == fp(capture['depot_manifest']),
+            'Reviewed Steam manifest changed')
+    require(fingerprint(run / 'official' / CODE_RESOURCES) ==
+            capture['code_resources']['fingerprint'], 'Reviewed CodeResources changed')
+    for relative, expected in baseline['manifests'].items():
+        require(fingerprint(run / 'official' / relative_path(relative)) == expected,
+                'Reviewed current official manifest changed')
+    rows = {}
+    for layer in OPAQUE:
+        record = baseline['files'][layer]
+        path = run / 'official' / relative_path(record['relative'])
+        require(fingerprint(path) == fp(record) == capture['depot_files'][layer]['fingerprint'],
+                'Reviewed current opaque file changed')
+        rows[layer] = {'official_base_path': str(path), 'fingerprint': fp(record),
+                       'authority': 'independently-reviewed-local-steam-depot-and-seal',
+                       'evidence': {'capture': entry['capture_fingerprint'],
+                                    'review': entry['review_fingerprint'],
+                                    'snapshot': fingerprint(snapshot_path)}}
     return rows
 
 

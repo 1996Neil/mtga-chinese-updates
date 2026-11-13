@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """mtga-cn: one version migration, two independent capability gates."""
 import argparse
+import copy
 import datetime
 import fcntl
 import json
+import os
 from pathlib import Path
 import sqlite3
 import subprocess
 import sys
 from collections import Counter
-from common import (ROOT, STATE, GAME, require, fingerprint, read_json, save_json,
-                    database, game_stopped, has_chinese, managed_path)
+if __name__ == '__main__':
+    from maintenance_workflow import bootstrap as maintenance_bootstrap
+    maintenance_bootstrap(sys.argv[1:])
+from common import (ROOT, STATE, GAME, EVIDENCE_ROOT, require, fingerprint, read_json, save_json,
+                    database, game_stopped, has_chinese, managed_path, copy_checked)
 from detect import detect, snapshot_official, comparison_official, stable_signature, verify_current
 from registry import open_registry, bootstrap, import_donor_review, import_corrections
 from raw import build_localization, build_names, regressions, validate_db, validate_names, deck_lines
@@ -28,16 +33,111 @@ def latest():
     return p, read_json(p / 'report.json')
 
 
+def visual_input_fingerprints(official, snapshot):
+    return {
+        'official': {layer: fingerprint(official[layer])
+                     for layer in ('resources', 'bootstrap_fonts', 'font_bundle')},
+        'font_bundle_entry': snapshot['official_entries'][official['font_bundle'].name],
+    }
+
+
+def visual_proof(previous_dir, previous, name):
+    path = previous_dir / name
+    require(fingerprint(path) == previous['proof_files'][name],
+            'Previous visual proof changed: ' + name)
+    return read_json(path)
+
+
+def reusable_visuals(previous_dir, previous, visual_inputs, build_code, baseline_inputs,
+                     card_candidate, client_candidate, official_ui=None, registry=None, run=None):
+    """Return previous visual artifacts only when every affecting input matches."""
+    if not previous_dir or not previous or previous.get('schema') != 'MTGA_CN_MAINTAINER_V1':
+        return False
+    if previous.get('code_fingerprints') != build_code:
+        return False
+    if previous.get('review_inputs') != review_input_fingerprints():
+        return False
+    if previous.get('baseline_inputs', {}) != baseline_inputs:
+        return False
+    if previous.get('visual_inputs') != visual_inputs:
+        return False
+    if (previous.get('localization', {}).get('static_status') != 'PASS' or
+            previous.get('localization', {}).get('fonts', {}).get('status') != 'PASS'):
+        return False
+    for layer, candidate in (('card', card_candidate), ('client', client_candidate)):
+        previous_candidate = previous.get('candidate_files', {}).get(layer, {})
+        if fingerprint(candidate) != {k: previous_candidate.get(k) for k in ('sha256', 'bytes')}:
+            return False
+    try:
+        fonts = visual_proof(previous_dir, previous, 'fonts-validation.json')
+        plan = visual_proof(previous_dir, previous, 'migration-plan.json')
+        for layer, name in (('resources', 'resources.assets'),
+                            ('bootstrap_fonts', 'sharedassets0.assets'),
+                            ('font_bundle', Path(fonts['bundle_path']).name)):
+            row = previous['candidate_files'][layer]
+            require(fingerprint(previous_dir / name) == {k: row[k] for k in ('sha256', 'bytes')},
+                    'Previous visual candidate changed: ' + layer)
+        require(set(fonts['source_fonts']) == {'Light', 'Medium'}, 'Missing font sources')
+        for face in fonts['source_fonts'].values():
+            require(fingerprint(Path(face['source'])) == face['source_fingerprint'], 'System font changed')
+    except (OSError, KeyError, TypeError, ValueError, RuntimeError):
+        # Missing/old cache metadata or unavailable outputs fall back to the
+        # normal builder; they never count as successful reuse.
+        return False
+    if official_ui is None or registry is None or run is None:
+        return True
+    # Registry changes may affect UI while card/client output remains identical.
+    # Re-run only UI selection (no font generation or asset serialization).
+    import UnityPy
+    from unity_layers import objects, localization, select_ui_translations
+    rows = json.loads(localization(objects(UnityPy.load(str(official_ui)))).read().m_Script)
+    translated, decisions = select_ui_translations(rows, registry, run)
+    if translated != plan['ui']:
+        return False
+    return {'ui': translated, 'decisions': decisions}
+
+
+def reuse_visual_artifacts(previous_dir, previous, destination, migration, loc, selection=None):
+    """Copy already-validated visual outputs into a fresh run directory."""
+    previous_fonts = visual_proof(previous_dir, previous, 'fonts-validation.json')
+    selection = selection or {'ui': read_json(previous_dir / 'migration-plan.json')['ui'], 'decisions': []}
+    migration['ui'] = dict(selection['ui'])
+    bundle = destination / Path(previous_fonts['bundle_path']).name
+    for layer, name in (('resources', 'resources.assets'),
+                        ('bootstrap_fonts', 'sharedassets0.assets'),
+                        ('font_bundle', bundle.name)):
+        row = previous['candidate_files'][layer]
+        copy_checked(previous_dir / name, destination / name,
+                     {k: row[k] for k in ('sha256', 'bytes')})
+    for face in previous_fonts.get('source_fonts', {}).values():
+        source = Path(face['source'])
+        if source.exists():
+            require(fingerprint(source) == face['source_fingerprint'], 'System font changed')
+    fonts = {**previous_fonts, 'bundle_path': str(bundle),
+             'bootstrap_path': str(destination / 'sharedassets0.assets'), 'runtime_rendering': '未验证'}
+    save_json(destination / 'fonts-validation.json', fonts)
+    if selection['decisions']:
+        save_json(destination / 'ui-decisions.json', selection['decisions'])
+    loc['resources'] = copy.deepcopy(previous['localization']['resources'])
+    loc['resources']['counts'] = dict(Counter(r['status'] for r in selection['decisions']))
+    loc['fonts'] = copy.deepcopy(previous['localization']['fonts'])
+    loc['fonts']['runtime_rendering'] = '未验证'
+    return fonts
+
+
 def source_guard(registry):
     for path, sha, size in registry.execute('SELECT path,sha256,bytes FROM sources'):
         require(fingerprint(Path(path)) == {'sha256': sha, 'bytes': size}, f'Registry source changed: {path}')
 
 
 def review_input_fingerprints():
-    paths = list((ROOT / 'reviewed-corrections').glob('*.json'))
-    paths += list((ROOT / 'reviewed-resolutions').glob('*/*.json'))
+    from portable_registry import online
+    paths = [] if online() else list((EVIDENCE_ROOT / 'reviewed-corrections').glob('*.json'))
+    if not online():
+        paths += list((EVIDENCE_ROOT / 'reviewed-resolutions').glob('*/*.json'))
     paths += [ROOT / 'source-format-reviewed-pairs.json']
-    paths += [p for p in (STATE / 'donor-review-packet.json', STATE / 'donor-independent-review.json') if p.exists()]
+    if not online():
+        paths += [p for p in (STATE / 'donor-review-packet.json', STATE / 'donor-independent-review.json') if p.exists()]
     result = {str(p): fingerprint(p) for p in sorted(paths)}
     from provenance import evidence_fingerprint, guard
     registry = open_registry()
@@ -79,6 +179,10 @@ def refresh_gates(report, run_dir):
         report['blockers'].append('双语导入静态检查未通过')
     if report['high_risk_unknown']:
         report['blockers'].append('高风险未知项未处理')
+    # Static-only view, kept separate from the review gate below so the
+    # owner-receipt policy can release a candidate whose review went stale
+    # because the builder code changed after it was reviewed.
+    report['static_checks_passed'] = not report['blockers']
     review = run_dir / 'independent-review.json'
     review_pass = False
     if review.exists():
@@ -95,15 +199,23 @@ def refresh_gates(report, run_dir):
 
 
 def update():
+    from baseline import configured, activate
+    from provenance import contexts
+    from portable_registry import online
+    portable = online()
     build_code = code_fingerprints()
     transaction = load_transaction()
     require(not transaction or transaction['state'] not in {'trial', 'installing', 'rolling-back'},
             'A test/recovery transaction is active; record results or rollback before update')
     s = detect()
+    baseline = configured(s['client_version'])
+    baseline_inputs = baseline.inputs if baseline else {}
+    previous_dir = previous = None
     if (STATE / 'latest.json').exists():
         previous_dir, previous = latest()
         if (previous.get('schema') == 'MTGA_CN_MAINTAINER_V1' and previous.get('code_fingerprints') == code_fingerprints()
-                and previous.get('review_inputs') == review_input_fingerprints()):
+                and previous.get('review_inputs') == review_input_fingerprints()
+                and previous.get('baseline_inputs', {}) == baseline_inputs):
             same_before = stable_signature(s) == stable_signature(read_json(previous_dir / 'snapshot.json'))
             same_installed = (transaction and transaction['state'] == 'installed' and
                               transaction['run_id'] == previous['run_id'] and stable_signature(s) == expected_signature(transaction, after=True))
@@ -113,7 +225,7 @@ def update():
                 print('未发现新的官方更新；已重新验证现有候选／安装。', flush=True)
                 print_summary(previous_dir, previous)
                 return
-    prior_run_id = latest()[1]['run_id'] if (STATE / 'latest.json').exists() else None
+    prior_run_id = previous['run_id'] if previous else None
     run = s['client_version'] + '_' + datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     p = STATE / 'runs' / run
     p.mkdir(parents=True)
@@ -122,20 +234,29 @@ def update():
     try:
         print('正在核验官方底稿、版本与文件完整性；通过后保存构建用副本……', flush=True)
         official = snapshot_official(s, p)
+        visual_inputs = visual_input_fingerprints(official, s)
         registry = open_registry()
         try:
-            old = bootstrap(registry)
-            if (STATE / 'donor-independent-review.json').exists():
-                import_donor_review(registry, STATE / 'donor-review-packet.json',
-                                    STATE / 'donor-independent-review.json', s['client_version'])
-            import_corrections(registry, ROOT / 'reviewed-corrections', official, s['client_version'])
+            if portable:
+                from portable_registry import current_contexts, comparison_inputs
+                baseline.register(registry)
+                current = current_contexts(official)
+                old = comparison_inputs(official, p, baseline)
+                delta = baseline.diff(current)
+            else:
+                old = bootstrap(registry)
+                if (STATE / 'donor-independent-review.json').exists():
+                    import_donor_review(registry, STATE / 'donor-review-packet.json',
+                                        STATE / 'donor-independent-review.json', s['client_version'])
+                import_corrections(registry, EVIDENCE_ROOT / 'reviewed-corrections', official, s['client_version'])
+                old = comparison_official(s, p, old)
+                delta = diff(official, old)
             source_guard(registry)
-            old = comparison_official(s, p, old)
-            delta = diff(official, old)
             save_json(p / 'diff.json', delta)
             from provenance import audit, write_audit
             prior_run = prior_run_id or run
-            source_audit = audit(registry, official, s['client_version'], prior_run, refresh=True, activate=True)
+            source_audit = audit(registry, official, s['client_version'], prior_run, refresh=not portable, activate=True)
+            activate(registry, baseline, current if portable else (contexts(official) if baseline else {}))
             write_audit(p / 'source-audit', source_audit)
             loc = {}
             migration = {}
@@ -146,30 +267,43 @@ def update():
                 loc[layer] = r
             save_json(p / 'migration-plan.json', migration)
             print('正在生成中文显示、英文导入兼容名称及测试牌表……', flush=True)
-            names = build_names(official['card'], p / 'card-localized.mtga', p / 'card-final.mtga', registry, run, old['card'])
-            fixtures = regressions(official['card'], p / 'card-final.mtga', p / 'fixtures', names)
-            print('正在基于官方资源构建中文界面和字体……', flush=True)
-            resources = build_resources(official['resources'], official['bootstrap_fonts'], p / 'resources.assets', registry, run)
-            migration['ui'] = resources.pop('translations')
-            loc['resources'] = resources
+            names = build_names(official['card'], p / 'card-localized.mtga', p / 'card-final.mtga',
+                                registry, run, None if portable else old['card'],
+                                previous_identity=baseline.name_history() if portable else None)
+            fixtures = regressions(official['card'], p / 'card-final.mtga', p / 'fixtures', names,
+                                   portable=portable)
+            visual_selection = reusable_visuals(
+                previous_dir, previous, visual_inputs, build_code, baseline_inputs,
+                p / 'card-final.mtga', p / 'client-localized.mtga',
+                official['resources'], registry, run)
+            if visual_selection:
+                print('中文候选未变化；复用上一版 UI 与字体资源……', flush=True)
+                fonts = reuse_visual_artifacts(previous_dir, previous, p, migration, loc, visual_selection)
+            else:
+                print('正在基于官方资源构建中文界面和字体……', flush=True)
+                resources = build_resources(official['resources'], official['bootstrap_fonts'], p / 'resources.assets', registry, run)
+                migration['ui'] = resources.pop('translations')
+                loc['resources'] = resources
+                chars = ''.join(migration['ui'].values())
+                for file, query in [('card-final.mtga', 'SELECT Loc FROM Localizations_enUS WHERE Formatted=1'),
+                                    ('client-localized.mtga', 'SELECT enUS FROM Loc')]:
+                    with database(p / file) as db:
+                        chars += ''.join(text or '' for text, in db.execute(query))
+                fonts = build_fonts(official['bootstrap_fonts'], official['font_bundle'], p, s, chars)
+                save_json(p / 'fonts-validation.json', fonts)
+                loc['fonts'] = {'status': 'PASS', 'glyphs_checked': fonts['glyphs_checked'],
+                                'missing_glyphs': fonts['missing_glyphs'], 'runtime_rendering': '未验证',
+                                'bootstrap_validation': fonts['bootstrap_validation'], 'bundle_validation': fonts['bundle_validation'],
+                                'official_manifest_modified': False}
             save_json(p / 'migration-plan.json', migration)
-            chars = ''.join(migration['ui'].values())
-            for file, query in [('card-final.mtga', 'SELECT Loc FROM Localizations_enUS WHERE Formatted=1'),
-                                ('client-localized.mtga', 'SELECT enUS FROM Loc')]:
-                with database(p / file) as db:
-                    chars += ''.join(text or '' for text, in db.execute(query))
-            fonts = build_fonts(official['bootstrap_fonts'], official['font_bundle'], p, s, chars)
-            save_json(p / 'fonts-validation.json', fonts)
-            loc['fonts'] = {'status': 'PASS', 'glyphs_checked': fonts['glyphs_checked'],
-                            'missing_glyphs': fonts['missing_glyphs'], 'runtime_rendering': '未验证',
-                            'bootstrap_validation': fonts['bootstrap_validation'], 'bundle_validation': fonts['bundle_validation'],
-                            'official_manifest_modified': False}
             registry.commit()
             # Report the actual completed decisions, not the prior run's queue.
             source_audit = audit(registry, official, s['client_version'], run, refresh=False, activate=False)
             source_audit['queue_basis'] = 'actual-current-build-decisions'
             write_audit(p / 'source-audit', source_audit)
             source_guard(registry)
+            if baseline:
+                baseline.guard()
         finally:
             registry.close()
         candidate_paths = {'card': p / 'card-final.mtga', 'client': p / 'client-localized.mtga',
@@ -192,6 +326,10 @@ def update():
                   'official_asset_fingerprints': {layer: fingerprint(official[layer]) for layer in ('resources', 'bootstrap_fonts')},
                   'registry_fingerprint': fingerprint(STATE / 'registry.sqlite'),
                   'review_inputs': review_input_fingerprints(), 'source_audit': source_audit,
+                  'baseline_inputs': baseline_inputs,
+                  'maintenance_input_mode': 'git-portable-community' if portable else 'legacy-local-evidence',
+                  'visual_inputs': visual_inputs,
+                  'visual_artifact_reuse': bool(visual_selection),
                   'high_risk_unknown': ([{'changed_card_identities': names['changed_card_identities']}] if names['changed_card_identities'] else []) +
                                        ([{'changed_canonical_names': names['changed_canonical_names']}] if names['changed_canonical_names'] else []),
                   'blockers': [], 'safe_to_install': False}
@@ -235,8 +373,30 @@ def print_summary(p, report):
         print('下一步：先完成上述阻塞项；临时测试与验收操作见菜单 6 或 mtga-cn guide。')
 
 
+def prune_runs(keep):
+    """Drop the bulk of finished candidates, keeping a small verifiable record."""
+    from prune import archive_state, protected_runs, prune_registry
+    require(keep >= 1, '归档至少要保留一个候选目录')
+    archived = archive_state(STATE, keep=keep, protected=protected_runs(STATE))
+    kept = [entry.name for entry in (STATE / 'runs').iterdir()]
+    registry = prune_registry(STATE, keep_runs=kept)
+    if registry['removed_rows']:
+        print(f'注册表清理：删除 {registry["removed_rows"]} 行历史决策，'
+              f'{registry["bytes_before"] // 1048576} MB -> {registry["bytes_after"] // 1048576} MB')
+    if not archived:
+        print('没有需要归档的候选。')
+        return
+    saved = 0
+    for name, summary in archived:
+        saved += summary['bytes_freed']
+        print(f'{name}: {summary["bytes_before"] // 1048576} MB -> {summary["bytes_after"] // 1048576} MB')
+    print(f'合计释放 {saved // 1048576} MB。')
+
+
 def validate_run(p, report):
     require(report.get('schema') == 'MTGA_CN_MAINTAINER_V1', 'Incomplete/unknown candidate')
+    from baseline import guard_inputs
+    guard_inputs(report.get('baseline_inputs', {}))
     require(report['code_fingerprints'] == code_fingerprints(), 'Maintainer code changed; run update again')
     require(report['review_inputs'] == review_input_fingerprints(), 'Reviewed translation inputs changed; run update again')
     for name, fp in report['proof_files'].items():
@@ -444,14 +604,28 @@ class ChineseParser(argparse.ArgumentParser):
 
 
 def main():
+    # These commands have their own options and return before creating state or
+    # taking the installation lock. Reports remain strictly read-only.
+    if len(sys.argv) > 1 and sys.argv[1] in {'report', 'release', 'maintain'}:
+        if sys.argv[1] == 'report':
+            from workload import main as command_main
+        elif sys.argv[1] == 'release':
+            from release_workflow import main as command_main
+        else:
+            from maintenance_workflow import main as command_main
+        result = command_main(sys.argv[2:])
+        if result:
+            raise SystemExit(result)
+        return
     parser = ChineseParser(description='MTGA 中文汉化与双语导入维护。首次使用请执行：mtga-cn guide',
                            prog='mtga-cn', formatter_class=ChineseHelp,
                            add_help=False, usage='%(prog)s 命令 [选项]')
     parser._positionals.title = '命令'
     parser._optionals.title = '选项'
     parser.add_argument('-h', '--help', action='help', help='显示命令帮助并退出')
-    parser.add_argument('command', choices=('status', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide'),
-                        help='status 查看状态；diagnose-base 检查底稿；update 构建；validate 验证；install 安装；rollback 回滚；guide 操作指南。临时测试与来源维护详见 README。')
+    parser.add_argument('command', choices=('status', 'maintain', 'update', 'validate', 'install', 'rollback', 'test-session', 'record-runtime', 'audit-sources', 'import-sources', 'preflight', 'diagnose-base', 'guide', 'report', 'release', 'prune'),
+                        help='maintain 一键检查并构建；status 查看状态；diagnose-base 检查底稿；update 构建；validate 验证；install 安装；rollback 回滚；guide 操作指南。')
+    parser.add_argument('--keep', type=int, default=2, help='归档时保留最近几个候选目录，默认 2')
     parser.add_argument('--human', action='store_true', help='底稿诊断使用中文摘要；省略时保持原有 JSON 输出')
     parser.add_argument('--details', action='store_true', help='失败时补充原始技术错误，供维护者排查')
     parser.add_argument('--run', type=Path, help='离线预演使用的官方快照目录；默认最近候选')
@@ -461,7 +635,13 @@ def main():
     parser.add_argument('--review', type=Path, help='独立来源审查记录路径')
     parser.add_argument('--limit', type=int, default=20, help='来源审计最多展示的工作项数量，默认 20')
     parser.add_argument('--refresh', action='store_true', help='刷新已登记的官方规则来源，最多读取两个地址，不批量抓取卡牌')
+    parser.add_argument('--baseline-root', type=Path, help='私有基线库绝对路径；不设置则保持旧流程')
+    parser.add_argument('--baseline-version', help='显式复用的基线版本；仍逐项核对当前英文、身份和用途')
     args = parser.parse_args()
+    if args.baseline_root:
+        os.environ['MTGA_BASELINE_ROOT'] = str(args.baseline_root.expanduser().resolve())
+    if args.baseline_version:
+        os.environ['MTGA_BASELINE_VERSION'] = args.baseline_version
     if args.command == 'guide':
         print(GUIDE)
         print(f'完整验收清单与维护文档：{ROOT / "README.md"}')
@@ -520,6 +700,8 @@ def main():
         elif args.command == 'test-session':
             require(args.begin, 'test-session requires --begin after accepting temporary testing')
             install(trial=True)
+        elif args.command == 'prune':
+            prune_runs(args.keep)
         elif args.command == 'record-runtime':
             require(args.evidence is not None, '--evidence required')
             record_runtime(args.evidence)

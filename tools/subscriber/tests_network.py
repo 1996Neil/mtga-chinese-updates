@@ -71,6 +71,20 @@ class PublicationTests(SubscriberTests):
             (run/name).write_bytes(canonical(value))
         return run,snapshot,report
 
+    def test_changed_private_baseline_blocks_direct_packaging_before_signing(self):
+        run, snapshot, report = self.publisher_run_fixture()
+        baseline = self.root / 'community-baseline.jsonl'
+        baseline.write_bytes(b'synthetic baseline input')
+        report['baseline_inputs'] = {'client': {'path': str(baseline), **fingerprint(baseline)}}
+        (run / 'report.json').write_bytes(canonical(report))
+        baseline.write_bytes(b'changed after candidate build')
+        destination = self.root / 'rejected-baseline-package'
+        with patch('publisher.sign') as sign:
+            with self.assertRaises(ValueError):
+                build_package(run, destination, BINARY, self.private, self.pub, 2)
+            sign.assert_not_called()
+        self.assertFalse(destination.exists())
+
     def test_local_acceptance_preserves_exact_test_scope(self):
         run,snapshot,report=self.publisher_run_fixture()
         expected={k:{x:v[x] for x in ('relative','sha256','bytes')} for k,v in report['candidate_files'].items()}

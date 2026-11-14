@@ -73,15 +73,29 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
 
     def test_separate_routine_policy_can_authorize_without_relabeling_runtime(self):
+        self.report.update(static_safe_to_trial=False, static_checks_passed=True)
+        (self.run / 'report.json').write_text(json.dumps(self.report))
         self.args.channel = 'stable'
         self.args.acceptance = self.root / 'routine-approval.json'
         self.args.acceptance.write_text('{"schema":"MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1"}')
         (self.run / 'official-base.json').write_text('{}')
-        (self.run / 'independent-review.json').write_text('{}')
+        with patch('publisher.subject_for', return_value={}), \
+             patch('text_release_policy.validate', return_value=['arm64']) as validate:
+            self.assertEqual(self.execute(), 0)
+        self.assertEqual(validate.call_args.args[3], {})
+        self.assertFalse(self.report['safe_to_install'])
+        self.assertEqual(self.calls, [])
+
+    def test_automatic_receipt_does_not_bypass_failed_static_checks(self):
+        self.report.update(static_safe_to_trial=False, static_checks_passed=False)
+        (self.run / 'report.json').write_text(json.dumps(self.report))
+        self.args.channel = 'stable'
+        self.args.acceptance = self.root / 'routine-approval.json'
+        self.args.acceptance.write_text('{"schema":"MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1"}')
+        (self.run / 'official-base.json').write_text('{}')
         with patch('publisher.subject_for', return_value={}), \
              patch('text_release_policy.validate', return_value=['arm64']):
-            self.assertEqual(self.execute(), 0)
-        self.assertFalse(self.report['safe_to_install'])
+            self.assertEqual(self.execute(), 1)
         self.assertEqual(self.calls, [])
         with patch('publisher.subject_for', return_value={}), \
              patch('text_release_policy.validate', side_effect=ValueError('font changed')):

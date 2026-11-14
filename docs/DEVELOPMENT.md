@@ -49,7 +49,7 @@ MTGA_RUN_LOCAL_INTEGRATION=1 .venv/bin/python -m unittest tests_base.PinChainTes
 
 首次无需准备个人路径配置：线上模式自动建立 `~/Library/Application Support/MTGAChineseMaintainer/maintenance.json`，之后同样可直接运行 `maintain`。`--online` 明确刷新锁定的 Git 输入；没有配置时 `maintain` 也自动准备线上模式。旧本地配置另存备份，旧维护目录不改动；新状态在用户缓存目录的 `online.noindex` 下。也可传 `--config /绝对路径/maintenance.json` 或使用 `MTGA_MAINTENANCE_CONFIG`。配置在导入维护器前应用，只保存路径、公开信任设置和数据锁，不保存私钥内容或 Token。显式 Shell 环境变量优先。
 
-完整流程包含当前版本诊断、新官方底稿取证、增量候选、实际审查/验收门槛、自动修订、stable 发布及匿名下载/安装包/监控核对。命令在真实门槛保存 `maintenance.json` 接续记录；补齐证据后原命令继续，已冻结发布保留原修订重试。只有全部验证完成才显示“完成”。`--prepare-only` 明确只准备，不签名、不写远端；普通 `maintain` 在门槛齐全时继续正式发布。两者都不安装游戏。
+维护入口保存 `maintenance.json` 接续记录与 `timing.json` 阶段耗时。日常按检查版本、补译、打包发布执行，不重复工程测试、不要求独立审查或人工/游戏验收；仍保留机器格式、资源、版本及签名检查，未审未测如实记录，详见 [当前维护规则](MAINTENANCE.md#日常文本自动发布)。`--prepare-only` 不签名、不写远端，不算完成发布；普通 `maintain` 在适用政策通过后继续正式发布。两者都不安装游戏，已冻结发布失败重试保留原修订。
 
 默认游戏路径位于当前用户的 Steam 库。可在启动前设置绝对路径：
 

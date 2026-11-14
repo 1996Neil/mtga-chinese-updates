@@ -236,6 +236,8 @@ def package(run, destination, client, key, public_key, revision, channel='testin
     status, evidence_hash, scope = 'testing', None, '离线构建及文件验证；真实游戏内验收尚未完成'
     acceptance_meta = {}
     if channel == 'stable':
+        from text_release_policy import toolchain_for, toolchain_review_matches
+        frozen_toolchain = toolchain_for(subject, client)
         if report.get('high_risk_unknown'):
             raise ValueError('候选仍有高风险未知项，不能发布稳定包。')
         if not acceptance:
@@ -250,9 +252,11 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         review_ok = (review.get('status') == 'PASS' and
                      review.get('code_fingerprints') == report['code_fingerprints'] and
                      review.get('candidate_files') == report['candidate_files'])
-        if not review_ok and not (post_hoc and block['independent_review'] == 'best_effort'):
+        automatic_text = evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1'
+        if not review_ok and not automatic_text and not (
+                post_hoc and block['independent_review'] == 'best_effort'):
             raise ValueError('独立工程审查不匹配。')
-        if evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
+        if automatic_text:
             # This policy may omit new runtime tests, never actual structural
             # revalidation. Direct publisher invocations retain the same guard.
             import sys
@@ -319,19 +323,40 @@ def package(run, destination, client, key, public_key, revision, channel='testin
     if channel == 'stable' and evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
         release['acceptance'].update(
             basis='owner-authorized-routine-text-policy',
-            runtime_validation='NOT_RUN', human_validation='NOT_RUN')
+            runtime_validation='NOT_RUN', human_validation='NOT_RUN',
+            independent_review=evidence['independent_review'],
+            independent_review_rerun=evidence['independent_review_rerun'],
+            toolchain_review=evidence['toolchain_review'])
     if acceptance_meta:
         release['acceptance'].update(acceptance_meta)
+    if channel == 'stable':
+        release['toolchain'] = frozen_toolchain
+        release['acceptance'].setdefault('independent_review', 'PASS' if review_ok else 'NOT_RERUN')
+        release['acceptance'].setdefault(
+            'toolchain_review', 'PASS' if toolchain_review_matches(
+                report, review, release['toolchain']) else 'NOT_RECORDED')
     for layer, (base, output) in sources.items():
         check(base, subject['input_files'][layer]); check(output, subject['output_files'][layer])
+
+    def guard_toolchain():
+        if channel == 'stable':
+            for name, fp in report['code_fingerprints'].items():
+                path = Path(name) if Path(name).is_absolute() else builder_root / name
+                check(path, fp)
+            if toolchain_for(subject, client) != frozen_toolchain:
+                raise ValueError('打包期间工具链发生变化；停止签名，需重建并重新核对审查。')
+
     manifest = destination / (release_id + '.json')
+    guard_toolchain()
     sign(client, key, release, manifest, destination)
     index = {'schema': 'MTGA_CN_INDEX_V1', 'sequence': sequence if sequence is not None else time.time_ns() // 1000000,
              'expires_at': (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=index_validity_days())).strftime('%Y-%m-%dT%H:%M:%SZ'),
              'channel': channel, 'releases': [{'id': release_id, 'revision': revision,
                  'client_version': snapshot['client_version'], 'steam_build': snapshot['steam_build'],
                  'manifest': {'name': manifest.name, 'fingerprint': fingerprint(manifest)}}]}
+    guard_toolchain()
     sign(client, key, index, destination / ('index-' + channel + '.json'), destination)
+    guard_toolchain()
     dump(destination / 'profile.json', {'schema': 'MTGA_CN_PROFILE_V1', 'feed': feed or str(destination),
                                       'public_key': public_key, 'channel': channel})
     template = {'schema': 'MTGA_CN_PUBLISHER_ACCEPTANCE_V1', 'subject_sha256': hashlib.sha256(canonical(subject)).hexdigest(),

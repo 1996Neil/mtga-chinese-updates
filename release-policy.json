@@ -7,7 +7,7 @@
     "requires_same_client_version": true,
     "requires_same_steam_build": true,
     "requires_unchanged_fonts": true,
-    "requires_independent_review": true
+    "requires_independent_review": false
   },
   "owner_receipt_release": {
     "enabled": true,

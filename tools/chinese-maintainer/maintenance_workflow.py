@@ -11,6 +11,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG = Path.home() / 'Library/Application Support/MTGAChineseMaintainer/maintenance.json'
@@ -93,6 +94,42 @@ def latest():
     return read_latest()
 
 
+def candidate_review(run):
+    path = run / 'independent-review.json'
+    return json.loads(path.read_text()) if path.is_file() else {}
+
+
+class RunTiming:
+    """Measure every attempt, without equating a quick stop with completion."""
+    def __init__(self, preparation_seconds=0):
+        self.started = self.changed = time.perf_counter()
+        self.preparation_seconds = preparation_seconds
+        self.stage = 'input_checks'
+        self.stages = ([{'stage': 'online_preparation', 'seconds': preparation_seconds}]
+                       if preparation_seconds else [])
+
+    def switch(self, stage):
+        if stage != self.stage:
+            now = time.perf_counter()
+            self.stages.append({'stage': self.stage, 'seconds': now - self.changed})
+            self.changed, self.stage = now, stage
+
+    def summary(self, *, completed, prepare_only):
+        now = time.perf_counter()
+        elapsed = now - self.started + self.preparation_seconds
+        stages = self.stages + [{'stage': self.stage, 'seconds': now - self.changed}]
+        return {
+            'schema': 'MTGA_CN_MAINTENANCE_TIMING_V1',
+            'mode': 'prepare-only' if prepare_only else 'publish',
+            'completed': completed, 'total_seconds': round(elapsed, 3),
+            'budget_seconds': 300, 'within_time_budget': elapsed <= 300,
+            'completion_target_met': completed and not prepare_only and elapsed <= 300,
+            'stages': [{'stage': row['stage'], 'seconds': round(row['seconds'], 3)}
+                       for row in stages],
+            'excludes': ['launcher_dependency_installation'],
+        }
+
+
 def source_preflight():
     """List every missing/changed registered source without creating a database."""
     from common import STATE, fingerprint
@@ -156,7 +193,7 @@ def automatic_text_acceptance(config, work, run, subject, report):
         # A retry must preserve the original signed baseline and frozen binding.
         evidence = json.loads(path.read_text())
         validate(evidence, subject, report,
-                 json.loads((run / 'independent-review.json').read_text()),
+                 candidate_review(run),
                  config['client'], Path(config['public_key_file']).read_text().strip())
         index, releases = remote_state(config, work)
         next_revision(index, releases, subject['client_version'], subject['steam_build'])
@@ -177,7 +214,7 @@ def automatic_text_acceptance(config, work, run, subject, report):
              baseline, 2 * 1024 * 1024, 180)
     check(baseline, ref['manifest']['fingerprint'])
     evidence = create(subject, report,
-                      json.loads((run / 'independent-review.json').read_text()),
+                      candidate_review(run),
                       baseline, config['client'], config['public_key_file'])
     dump(path, evidence)
     return path, index, releases
@@ -372,7 +409,8 @@ def native_preview(config, work, plan):
     return {'status': 'PASS', 'reused_verified_preview': False}
 
 
-def execute(config, prepare_only=False):
+def execute(config, prepare_only=False, preparation_seconds=0):
+    timing = RunTiming(preparation_seconds)
     configure(config)
     from common import STATE, save_json, fingerprint
     from detect import stable_signature
@@ -392,12 +430,18 @@ def execute(config, prepare_only=False):
          '维护接续记录不属于当前资源')
 
     def record(stage, **values):
+        timing.switch(stage)
         state.update(stage=stage, **values)
         if stage not in state['stages']:
             state['stages'].append(stage)
         save_json(state_path, state)
 
     try:
+        if (before.get('game') and config.get('client') and config.get('public_key_file') and
+                not (STATE / 'installation.json').exists()):
+            record('subscriber_recognition', completed=False, blockers=[])
+            from subscriber_installation import prepare
+            prepare(config, before, STATE)
         missing_sources = source_preflight()
         save_json(work / 'blocked-inputs.json', {'sources': missing_sources})
         record('official_base', completed=False, blockers=[])
@@ -463,7 +507,7 @@ def execute(config, prepare_only=False):
                             owner_receipt_policy() is not None)
             except (OSError, ValueError):
                 post_hoc = False
-        if report.get('static_safe_to_trial') and not acceptance.is_file():
+        if (report.get('static_checks_passed') or report.get('static_safe_to_trial')) and not acceptance.is_file():
             record('automatic_text_policy', blockers=[])
             try:
                 acceptance, index, releases = automatic_text_acceptance(config, work, run, subject, report)
@@ -493,7 +537,7 @@ def execute(config, prepare_only=False):
         if automatic:
             from text_release_policy import validate as validate_automatic
             validate_automatic(json.loads(acceptance.read_text()), subject, report,
-                               json.loads((run / 'independent-review.json').read_text()),
+                               candidate_review(run),
                                config['client'], Path(config['public_key_file']).read_text().strip())
         else:
             validate_acceptance(json.loads(acceptance.read_text()), subject)
@@ -574,6 +618,7 @@ def execute(config, prepare_only=False):
         # The signed release on GitHub is the artifact; keep only the record
         # that explains it instead of 1.6 GB of inputs and intermediates.
         if Path(receipt).is_file():
+            timing.switch('archive')
             from prune import archive, archive_state, protected_runs, prune_registry
             try:
                 summary = archive(run, publication=receipt)
@@ -588,6 +633,10 @@ def execute(config, prepare_only=False):
         record(state.get('stage', 'preflight'), completed=False, blockers=[str(error)])
         return 2
     finally:
+        measured = timing.summary(completed=state['completed'], prepare_only=prepare_only)
+        save_json(work / 'timing.json', measured)
+        print(f'本次维护耗时：{measured["total_seconds"]:.2f} 秒'
+              f'（{"仅准备/检查，未完成发布" if prepare_only or not state["completed"] else "完整发布及验证"}）。')
         print(f'维护状态：{state["stage"]}；{"完成" if state["completed"] else "未完成"}')
         for blocker in state.get('blockers', []):
             print('阻塞：' + blocker)
@@ -596,21 +645,39 @@ def execute(config, prepare_only=False):
 
 
 def main(argv=None):
+    preparation_started = time.perf_counter()
+    attempt = RunTiming()
+    attempt.stage = 'online_preparation'
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path,
                         default=Path(os.environ.get('MTGA_MAINTENANCE_CONFIG', str(DEFAULT_CONFIG))))
     parser.add_argument('--prepare-only', action='store_true', help='仅准备到发布门槛，不签名或写远端')
     parser.add_argument('--online', action='store_true', help='从锁定的线上源码和私有文本库准备隔离维护环境')
     args = parser.parse_args(argv)
-    config = load_config(args.config) if args.config.exists() else None
-    if args.online or config is None or config.get('online') is True:
-        from online_sources import prepare_online
-        config = prepare_online(args.config)
-    need(config is not None, '维护配置未建立')
-    os.environ['MTGA_MAINTENANCE_CONFIG'] = str(args.config.expanduser().resolve())
-    configure(config)
-    from common import STATE
-    STATE.mkdir(parents=True, exist_ok=True)
-    with (STATE / 'maintenance-workflow.lock').open('a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return execute(config, args.prepare_only)
+    try:
+        config = load_config(args.config) if args.config.exists() else None
+        if args.online or config is None or config.get('online') is True:
+            from online_sources import prepare_online
+            config = prepare_online(args.config)
+        need(config is not None, '维护配置未建立')
+        os.environ['MTGA_MAINTENANCE_CONFIG'] = str(args.config.expanduser().resolve())
+        configure(config)
+        from common import STATE
+        STATE.mkdir(parents=True, exist_ok=True)
+        with (STATE / 'maintenance-workflow.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            preparation_seconds = time.perf_counter() - preparation_started
+            attempt.switch('input_checks')
+            return execute(config, args.prepare_only, preparation_seconds)
+    except (RuntimeError, OSError, ValueError, KeyError, sqlite3.Error) as error:
+        measured = attempt.summary(completed=False, prepare_only=args.prepare_only)
+        measured.update(failed_stage=attempt.stage, error_type=type(error).__name__)
+        # Early preparation/detection failures have no per-release work folder.
+        path = args.config.expanduser().resolve().with_name('last-attempt-timing.json')
+        try:
+            from common import save_json
+            save_json(path, measured)
+        except OSError:
+            print('无法保存本次失败计时；保留原始维护错误。', file=sys.stderr)
+        print(f'本次维护耗时：{measured["total_seconds"]:.2f} 秒（准备/输入阶段失败，未完成发布）。')
+        raise

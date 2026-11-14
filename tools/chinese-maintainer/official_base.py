@@ -219,6 +219,31 @@ def diagnose(snapshot, game=GAME, state=STATE):
     pinned_run = state / 'runs' / PIN_RUN
     if pinned_run not in runs:
         runs.append(pinned_run)
+    subscriber = None
+    patched = any(
+        fp(snapshot['files'][layer]) != (
+            snapshot['official_entries'][Path(snapshot['files'][layer]['relative']).name]['fingerprint']
+            if layer in MANIFEST_LAYERS else pins[layer]['fingerprint'])
+        for layer in LAYERS if layer in MANIFEST_LAYERS or layer in pins)
+    if transaction is None and patched:
+        try:
+            from subscriber_installation import recognize
+            subscriber = recognize(snapshot, game, state)
+            if subscriber is not None:
+                inputs.update(subscriber['inputs'])
+                registration = state / 'base-approvals' / (
+                    snapshot['client_version'] + '-' + snapshot['steam_build'] + '.json')
+                # Only an already reviewed capture may supply original bytes.
+                # The subscriber journal and its rollback copies never can.
+                entry = read_json(registration)
+                approved = managed_path(Path(entry['run']))
+                require(approved == approved.resolve() and approved.parent == state / 'runs',
+                        'Subscriber official capture is outside managed runs')
+                runs.append(approved)
+                inputs[str(registration)] = fingerprint(registration)
+        except (OSError, RuntimeError, KeyError, ValueError) as error:
+            subscriber = None
+            errors.append(str(error))
     caches, rejected = [], []
     for run in runs:
         if not run.exists():
@@ -240,18 +265,24 @@ def diagnose(snapshot, game=GAME, state=STATE):
                         else pins[layer]['fingerprint'])
             item['manifest_hash'] = expected if layer in MANIFEST_LAYERS else None
             item['expected_official'] = expected
+            if subscriber is not None:
+                require(subscriber['originals'][layer] == expected,
+                        'Subscriber input differs from trusted official base: ' + layer)
             source = None
             if fp(record) == expected:
                 source = {'official_base_path': str(current), 'fingerprint': expected,
                           'authority': 'current-manifest' if layer in MANIFEST_LAYERS else pins[layer]['authority'],
                           'evidence': {'manifest': snapshot['official_entries'][rel.name]} if layer in MANIFEST_LAYERS else pins[layer]['evidence']}
             else:
-                require(transaction is not None and transaction.get('state') in {'installed', 'trial', 'rolled-back'},
-                        'Unknown current patched resource: ' + layer)
-                require(release(transaction['snapshot']) == release(snapshot), 'Update retained old patch or release drift: ' + layer)
-                old = [r for r in transaction['files'] if r['layer'] == layer and r['relative'] == str(rel)]
-                expected_current = 'before' if transaction['state'] == 'rolled-back' else 'candidate'
-                require(len(old) == 1 and old[0][expected_current] == fp(record), 'Unrecognized current patch: ' + layer)
+                if subscriber is not None:
+                    require(subscriber['outputs'][layer] == fp(record), 'Unrecognized subscriber patch: ' + layer)
+                else:
+                    require(transaction is not None and transaction.get('state') in {'installed', 'trial', 'rolled-back'},
+                            'Unknown current patched resource: ' + layer)
+                    require(release(transaction['snapshot']) == release(snapshot), 'Update retained old patch or release drift: ' + layer)
+                    old = [r for r in transaction['files'] if r['layer'] == layer and r['relative'] == str(rel)]
+                    expected_current = 'before' if transaction['state'] == 'rolled-back' else 'candidate'
+                    require(len(old) == 1 and old[0][expected_current] == fp(record), 'Unrecognized current patch: ' + layer)
                 source = next((c[layer] for c in caches if c[layer]['fingerprint'] == expected), None)
                 require(source is not None, 'No independently verified official copy: ' + layer)
             item.update(source, status='verified')

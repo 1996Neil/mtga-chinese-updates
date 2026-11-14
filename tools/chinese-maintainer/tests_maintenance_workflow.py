@@ -124,6 +124,59 @@ class MaintenanceWorkflowTests(unittest.TestCase):
             self.assertEqual(self.execute(prepare=True), 0)
         self.assertEqual(self.result()['stage'], 'ready_for_release')
         self.assertFalse(self.result()['completed'])
+        timing = json.loads(next((self.root / 'work').glob('*/*/timing.json')).read_text())
+        self.assertEqual(timing['mode'], 'prepare-only')
+        self.assertFalse(timing['completion_target_met'])
+        self.assertFalse(timing['completed'])
+
+    def test_fast_blocked_run_records_time_without_claiming_completion(self):
+        with patch.object(workflow, 'source_preflight', return_value=[{'reason': 'missing'}]):
+            self.assertEqual(self.execute(), 2)
+        timing = json.loads(next((self.root / 'work').glob('*/*/timing.json')).read_text())
+        self.assertTrue(timing['within_time_budget'])
+        self.assertFalse(timing['completion_target_met'])
+        self.assertFalse(timing['completed'])
+        self.assertIn('input_checks', [row['stage'] for row in timing['stages']])
+
+    def test_online_preparation_failure_has_timing_without_release_directory(self):
+        config = self.root / 'configuration/maintenance.json'
+        with patch('online_sources.prepare_online', side_effect=RuntimeError('network unavailable')), \
+             contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(RuntimeError, 'network unavailable'):
+                workflow.main(['--config', str(config), '--online', '--prepare-only'])
+        timing = json.loads(config.with_name('last-attempt-timing.json').read_text())
+        self.assertEqual(timing['failed_stage'], 'online_preparation')
+        self.assertFalse(timing['completed'])
+        self.assertFalse(timing['completion_target_met'])
+        self.assertFalse((self.root / 'work').exists())
+
+    def test_early_snapshot_failure_has_timing_without_release_directory(self):
+        config = self.root / 'configuration/maintenance.json'
+        with patch('online_sources.prepare_online', return_value=self.config), \
+             patch.object(workflow, 'read_snapshot', side_effect=RuntimeError('game missing')), \
+             patch.dict(os.environ), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(RuntimeError, 'game missing'):
+                workflow.main(['--config', str(config), '--online', '--prepare-only'])
+        timing = json.loads(config.with_name('last-attempt-timing.json').read_text())
+        self.assertEqual(timing['failed_stage'], 'input_checks')
+        self.assertFalse(timing['completion_target_met'])
+
+    def test_lightweight_policy_can_run_from_structural_only_candidate_without_review_file(self):
+        run = self.ready()
+        Path(self.config['acceptance']).unlink()
+        self.report.update(safe_to_install=False, static_safe_to_trial=False,
+                           static_checks_passed=True, blockers=['独立工程审查未通过或证据已过期'])
+        (run / 'report.json').write_text(json.dumps(self.report))
+        evidence = self.root / 'automatic.json'
+        evidence.write_text('{}')
+        with patch.object(workflow, 'automatic_text_acceptance',
+                          return_value=(evidence, {}, [])) as create, \
+             patch('text_release_policy.validate', return_value=['arm64']) as validate, \
+             patch.object(workflow, 'invoke', side_effect=AssertionError('unexpected publication')):
+            self.assertEqual(self.execute(prepare=True), 0)
+        create.assert_called_once()
+        self.assertEqual(validate.call_args.args[3], {})
+        self.assertFalse((run / 'independent-review.json').exists())
 
     def test_routine_policy_does_not_claim_runtime_pass_or_require_manual_file(self):
         run = self.ready()
@@ -247,6 +300,30 @@ class MaintenanceWorkflowTests(unittest.TestCase):
         path.write_text(json.dumps(value))
         with self.assertRaisesRegex(RuntimeError, '绝对路径'):
             workflow.load_config(path)
+
+
+class RunTimingTests(unittest.TestCase):
+    def test_preparation_and_phase_durations_are_counted_once(self):
+        with patch.object(workflow.time, 'perf_counter', side_effect=[10, 12, 15]):
+            timing = workflow.RunTiming(preparation_seconds=4)
+            timing.switch('candidate')
+            summary = timing.summary(completed=True, prepare_only=False)
+        self.assertEqual(summary['total_seconds'], 9)
+        self.assertEqual(summary['stages'], [
+            {'stage': 'online_preparation', 'seconds': 4},
+            {'stage': 'input_checks', 'seconds': 2},
+            {'stage': 'candidate', 'seconds': 3}])
+        self.assertTrue(summary['completion_target_met'])
+
+    def test_slow_completion_and_fast_preparation_are_not_target_success(self):
+        with patch.object(workflow.time, 'perf_counter', side_effect=[0, 301]):
+            summary = workflow.RunTiming().summary(completed=True, prepare_only=False)
+        self.assertFalse(summary['within_time_budget'])
+        self.assertFalse(summary['completion_target_met'])
+        with patch.object(workflow.time, 'perf_counter', side_effect=[0, 1]):
+            summary = workflow.RunTiming().summary(completed=True, prepare_only=True)
+        self.assertTrue(summary['within_time_budget'])
+        self.assertFalse(summary['completion_target_met'])
 
 
 class RegisteredSourcePreflightTests(unittest.TestCase):

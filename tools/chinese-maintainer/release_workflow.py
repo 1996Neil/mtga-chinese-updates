@@ -62,21 +62,25 @@ def finish(args, run, invoke):
     from publisher import is_post_hoc, owner_receipt_policy
     receipt = read_json(args.acceptance) if (args.acceptance is not None and args.acceptance.is_file()) else {}
     post_hoc = is_post_hoc(receipt) and owner_receipt_policy() is not None
+    automatic_text = (args.channel == 'stable' and
+                      receipt.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1')
     blockers = []
-    if post_hoc:
+    if post_hoc or automatic_text:
         if not report.get('static_checks_passed'):
             blockers.append('当前候选的静态检查未通过')
     elif not report.get('static_safe_to_trial'):
         blockers.append('当前候选的静态门槛或独立工程审查未通过')
     if args.channel == 'stable':
         automatic = False
-        if receipt.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
+        if automatic_text:
             require(all((args.client, args.public_key_file)),
                     'Automatic text release needs verifier and public key')
             from publisher import subject_for
             from text_release_policy import validate as validate_automatic
             subject = subject_for(snapshot, report, read_json(run / 'official-base.json'))
-            validate_automatic(receipt, subject, report, read_json(run / 'independent-review.json'),
+            review_path = run / 'independent-review.json'
+            review = read_json(review_path) if review_path.is_file() else {}
+            validate_automatic(receipt, subject, report, review,
                                args.client, args.public_key_file.read_text().strip())
             automatic = True
         if not report.get('safe_to_install') and not automatic and not post_hoc:

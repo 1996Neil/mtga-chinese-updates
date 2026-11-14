@@ -17,6 +17,55 @@ POLICY_FLAGS = {
     'requires_same_client_version': True, 'requires_same_steam_build': True,
     'requires_unchanged_fonts': True, 'requires_independent_review': True,
 }
+LIGHTWEIGHT_POLICY_FLAGS = {
+    **POLICY_FLAGS, 'requires_independent_review': False,
+    'requires_reviewed_toolchain': True,
+}
+OWNER_TEXT_POLICY_FLAGS = {**POLICY_FLAGS, 'requires_independent_review': False}
+ENABLED_POLICIES = (POLICY_FLAGS, LIGHTWEIGHT_POLICY_FLAGS, OWNER_TEXT_POLICY_FLAGS)
+
+
+def toolchain_for(subject, client):
+    """Portable fingerprints only; never publish local paths or private inputs."""
+    root = Path(__file__).resolve().parents[2]
+    builder = {}
+    for name, value in subject.get('builder_code', {}).items():
+        path = Path(name)
+        if path.is_absolute():
+            name = str(path.relative_to(root))
+        else:
+            name = str(Path('tools/chinese-maintainer') / path)
+        need(name not in builder, '构建代码指纹路径重复')
+        builder[name] = value
+    return {
+        'schema': 'MTGA_CN_REVIEWED_TOOLCHAIN_V1',
+        'builder_sha256': hashlib.sha256(canonical(builder)).hexdigest(),
+        'publisher_code': {
+            name: fingerprint(Path(__file__).parent / name)
+            for name in ('publisher.py', 'text_release_policy.py', 'github_publish.py',
+                         'package_installer.py', 'profile.json')
+        },
+        'client': fingerprint(client),
+    }
+
+
+def review_matches(report, review):
+    return (review.get('status') == 'PASS' and
+            review.get('candidate_files') == report.get('candidate_files') and
+            review.get('code_fingerprints') == report.get('code_fingerprints'))
+
+
+def toolchain_review_matches(report, review, toolchain):
+    return (review_matches(report, review) and bool(toolchain) and
+            review.get('toolchain') == toolchain)
+
+
+def reviewed_toolchain_reusable(subject, report, baseline, toolchain):
+    return (bool(subject.get('builder_code')) and
+            subject['builder_code'] == report.get('code_fingerprints') and
+            bool(toolchain) and baseline.get('toolchain') == toolchain and
+            baseline.get('acceptance', {}).get('toolchain_review') in
+            {'PASS', 'REUSED_SIGNED_TOOLCHAIN'})
 
 
 def need(condition, message):
@@ -28,7 +77,7 @@ def read_policy(path=None):
     path = Path(path or POLICY_PATH).resolve()
     value = json.loads(path.read_text())
     need(value.get('schema') == 'MTGA_CN_RELEASE_POLICY_V1' and
-         value.get('routine_text_updates') == POLICY_FLAGS and
+         value.get('routine_text_updates') in ENABLED_POLICIES and
          isinstance(value.get('owner_authorization'), str) and
          bool(value['owner_authorization'].strip()), '常规文本自动发布政策未明确启用或范围变化')
     return value, {'path': str(path), **fingerprint(path)}
@@ -51,10 +100,11 @@ def native_baseline(path, client, public_file):
     return release
 
 
-def evaluate(subject, report, review, baseline, policy):
+def evaluate(subject, report, review, baseline, policy, toolchain=None):
     """Return every structural blocker; no caller booleans can override them."""
     blockers = []
-    if policy.get('routine_text_updates') != POLICY_FLAGS:
+    flags = policy.get('routine_text_updates')
+    if flags not in ENABLED_POLICIES:
         blockers.append('routine-text-policy-not-enabled')
     for field in ('client_version', 'steam_build', 'platform'):
         if baseline.get(field) != subject.get(field):
@@ -62,13 +112,20 @@ def evaluate(subject, report, review, baseline, policy):
     if (report.get('localization', {}).get('static_status') != 'PASS' or
             report.get('import_compatibility', {}).get('static_status') != 'PASS'):
         blockers.append('candidate-static-validation-not-pass')
-    if report.get('static_safe_to_trial') is not True:
+    # static_safe_to_trial also includes the old per-candidate review gate.
+    # Only explicit owner-authorized lightweight modes use the structural result.
+    static_safe = (report.get('static_checks_passed')
+                   if flags in (LIGHTWEIGHT_POLICY_FLAGS, OWNER_TEXT_POLICY_FLAGS)
+                   else report.get('static_safe_to_trial'))
+    if static_safe is not True:
         blockers.append('candidate-not-statically-safe')
     if report.get('high_risk_unknown') != []:
         blockers.append('candidate-high-risk-unknown')
-    if (review.get('status') != 'PASS' or
-            review.get('candidate_files') != report.get('candidate_files') or
-            review.get('code_fingerprints') != report.get('code_fingerprints')):
+    review_ok = (toolchain_review_matches(report, review, toolchain)
+                 if flags == LIGHTWEIGHT_POLICY_FLAGS else review_matches(report, review))
+    if flags != OWNER_TEXT_POLICY_FLAGS and not review_ok and not (
+            flags == LIGHTWEIGHT_POLICY_FLAGS and
+            reviewed_toolchain_reusable(subject, report, baseline, toolchain)):
         blockers.append('independent-engineering-review-mismatch')
     names = report.get('import_compatibility', {}).get('names', {})
     validation = names.get('validation', {})
@@ -157,14 +214,35 @@ def _binding(subject, report, review, baseline_manifest, policy_record):
 def create(subject, report, review, baseline_manifest, client, public_key_file, policy_path=None):
     policy, policy_record = read_policy(policy_path)
     baseline = native_baseline(baseline_manifest, client, public_key_file)
-    blockers = evaluate(subject, report, review, baseline, policy)
+    toolchain = toolchain_for(subject, client)
+    blockers = evaluate(subject, report, review, baseline, policy, toolchain)
     need(not blockers, '常规文本自动发布不适用：' + '; '.join(blockers))
     arches = baseline.get('architectures')
     need(isinstance(arches, list) and arches and set(arches) <= {'arm64', 'x86_64'},
          '基线架构范围无效')
+    owner_only = policy['routine_text_updates'] == OWNER_TEXT_POLICY_FLAGS
+    review_ok = (False if owner_only else
+                 toolchain_review_matches(report, review, toolchain)
+                 if policy['routine_text_updates'] == LIGHTWEIGHT_POLICY_FLAGS
+                 else review_matches(report, review))
+    review_basis = ('NOT_REQUIRED_BY_OWNER_POLICY' if owner_only else
+                    'PASS' if review_ok else 'REUSED_SIGNED_TOOLCHAIN')
+    scope = SCOPE if review_ok else (
+        '按维护者授权自动批准同游戏版本、同 Steam build 的常规文本修订；'
+        '官方输入、资源路径、受保护文件及字体输出不变，静态完整性检查通过。'
+        '构建/发布代码与正式客户端和已签名的已审工具链完全一致，复用工程审查，本次未重跑独立工程审查。'
+        '本次未执行新的真实游戏验收，不代表人工审校或游戏测试通过。')
+    if owner_only:
+        scope = ('按维护者明确授权发布同游戏版本、同 Steam build 的文本修订；'
+                 '仅执行机器完整性、官方输入/受保护文件/字体及导入结构检查。'
+                 '不要求独立工程审查或新的人工及游戏验收，本次均未执行。')
     return {
         'schema': SCHEMA, **_binding(subject, report, review, baseline_manifest, policy_record),
-        'architectures': arches, 'scope': SCOPE,
+        'architectures': arches, 'scope': scope,
+        'independent_review': review_basis, 'independent_review_rerun': review_ok,
+        'toolchain_review': ('NOT_RECORDED' if owner_only else review_basis if
+                            (not review_ok or toolchain_review_matches(report, review, toolchain))
+                            else 'NOT_RECORDED'),
         'decision': 'owner-authorized-routine-text-release',
         'runtime_acceptance': False, 'human_acceptance': False,
         'runtime_validation': 'NOT_RUN', 'human_validation': 'NOT_RUN',
@@ -172,7 +250,8 @@ def create(subject, report, review, baseline_manifest, client, public_key_file, 
             'same_game_and_steam_build': True, 'official_inputs_and_paths_unchanged': True,
             'protected_files_and_manifests_unchanged': True, 'font_outputs_unchanged': True,
             'official_card_identity_and_import_structure_unchanged_against_stable': True,
-            'static_integrity_and_independent_engineering_review': True,
+            'static_integrity': True,
+            'engineering_review_basis': review_basis,
         },
     }
 

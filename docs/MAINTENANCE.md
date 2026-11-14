@@ -21,6 +21,10 @@
 发布说明记录 `independent_review:"NOT_REQUIRED_BY_OWNER_POLICY"`，人工及游戏状态为
 `NOT_RUN`；这不是审查或实测通过。下方受审工具链模式仅为可选的较严政策，不是日常前置。
 
+新补译可保存为 `maintenance-data/<版本>/owner-translations-<日期或修订>.json`；
+维护器直接读取用户授权的文本记录，逐槽匹配当前英文、身份、用途并检查参数格式，
+不生成独立审核或人工/游戏通过标签。来源、AI 适配及原始响应哈希保留在记录中。
+
 用户授权已保存在 `release-policy.json`。同一游戏版本与 Steam build 已有正式签名 stable 时，维护器自动下载并验签这个基准；官方输入、受保护文件、资源路径、字体输出及导入身份/牌名逻辑未变，候选机器检查和所选发布政策通过，就自动生成 `MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1` 并进入 stable 发布，不再等待用户逐项审文案或重复游戏实测。
 
 这是独立的“文本策略批准”，不是新的游戏测试。记录包含当前候选、签名基准及策略的哈希，明确 `human_acceptance:false`、`runtime_acceptance:false`；签名发布范围说明也保留这个限制。原始人工验收格式及历史记录不改写；发布器会重新核对签名基准和全部适用条件，不接受调用方自行填写的通过标签。

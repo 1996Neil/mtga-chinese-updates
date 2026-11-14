@@ -220,7 +220,7 @@ def bind_contexts(c, contexts):
 
 def correction_scope(c, origin, layer, key, english, use):
     """A persisted human row cannot outlive the scope in its immutable approval."""
-    if not origin.startswith(('manual-correction-', 'independent-resolution-')):
+    if not origin.startswith(('manual-correction-', 'independent-resolution-', 'owner-translation-')):
         return None
     from pathlib import Path
     source_row = c.execute('SELECT path,sha256,bytes FROM sources WHERE id=?', (origin,)).fetchone()
@@ -258,7 +258,7 @@ def correction_scope(c, origin, layer, key, english, use):
 def decide(c, run, layer, key, english, use, *, persist=True):
     rows = c.execute('SELECT chinese,source_id,status,priority,english,field_use FROM localization WHERE layer=? AND key=? ORDER BY priority DESC,source_id',
                      (layer, str(key))).fetchall()
-    scope_failures = {r[1]: correction_scope(c, r[1], layer, key, english, use) for r in rows if r[1].startswith(('manual-correction-', 'independent-resolution-'))}
+    scope_failures = {r[1]: correction_scope(c, r[1], layer, key, english, use) for r in rows if r[1].startswith(('manual-correction-', 'independent-resolution-', 'owner-translation-'))}
     matches = [r for r in rows if r[4] == english and not scope_failures.get(r[1])]
     verified = [r for r in matches if r[2] == 'verified' and json.loads(r[5]) == use]
     if not use:
@@ -323,7 +323,9 @@ def decide(c, run, layer, key, english, use, *, persist=True):
     provenance = select(c, layer, key, english, use)
     manual = status == 'verified' and any(r[1] == origin and (r[3] >= 300 or r[1].startswith('independent-resolution-')) for r in verified)
     if provenance and manual:
-        reason += (';independent-AI-resolution-retained-over-source-candidate'
+        reason += (';owner-policy-translation-retained-over-source-candidate'
+                   if origin.startswith('owner-translation-') else
+                   ';independent-AI-resolution-retained-over-source-candidate'
                    if origin.startswith('independent-resolution-')
                    else ';manual-correction-retained-over-source-candidate')
     if provenance and not manual and status != 'keep-english':

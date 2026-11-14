@@ -136,6 +136,8 @@ def review_input_fingerprints():
     if not online():
         paths += list((EVIDENCE_ROOT / 'reviewed-resolutions').glob('*/*.json'))
     paths += [ROOT / 'source-format-reviewed-pairs.json']
+    from owner_translations import paths as owner_translation_paths
+    paths += owner_translation_paths()
     if not online():
         paths += [p for p in (STATE / 'donor-review-packet.json', STATE / 'donor-independent-review.json') if p.exists()]
     result = {str(p): fingerprint(p) for p in sorted(paths)}
@@ -241,6 +243,8 @@ def update():
                 from portable_registry import current_contexts, comparison_inputs
                 baseline.register(registry)
                 current = current_contexts(official)
+                from owner_translations import import_translations
+                import_translations(registry, current, s['client_version'])
                 old = comparison_inputs(official, p, baseline)
                 delta = baseline.diff(current)
             else:

@@ -193,7 +193,7 @@ def sign(client, key, value, out, scratch):
     payload.unlink()
 
 
-def package(run, destination, client, key, public_key, revision, channel='testing', acceptance=None, sequence=None, feed=None, asset_base=None, local_acceptance=None, minimum_client=None, include_full=False):
+def package(run, destination, client, key, public_key, revision, channel='testing', acceptance=None, sequence=None, feed=None, asset_base=None, local_acceptance=None, minimum_client=None, include_full=False, reuse_manifest=None):
     run, destination = Path(run).resolve(), Path(destination).resolve()
     snapshot = json.loads((run / 'snapshot.json').read_text())
     report = json.loads((run / 'report.json').read_text())
@@ -290,11 +290,34 @@ def package(run, destination, client, key, public_key, revision, channel='testin
         import re
         if not re.fullmatch(r'https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/[A-Za-z0-9_.-]+', asset_base):
             raise ValueError('需要精确 GitHub Release HTTPS 资产目录。')
+    reused_baseline = None
+    if reuse_manifest is not None:
+        from asset_reuse import load_baseline
+        if channel != 'stable' or asset_base is None:
+            raise ValueError('资源复用只支持正式网络发布。')
+        repo = asset_base.split('/')[3:5]
+        repo = '/'.join(repo)
+        reused_baseline = load_baseline(reuse_manifest, client, public_key, repo)
+        if (reused_baseline['client_version'], reused_baseline['steam_build']) != (
+                snapshot['client_version'], snapshot['steam_build']):
+            raise ValueError('资源复用基准版本不匹配。')
     destination.mkdir(parents=True, exist_ok=False)
+    if reused_baseline is not None:
+        shutil.copyfile(reuse_manifest, destination / 'reuse-baseline.json')
     resources = []
     for layer in LAYERS:
         row = report['candidate_files'][layer]
         base, output = sources[layer]
+        original_fp = {k: subject['input_files'][layer][k] for k in ('sha256', 'bytes')}
+        output_fp = {k: subject['output_files'][layer][k] for k in ('sha256', 'bytes')}
+        if reused_baseline is not None:
+            from asset_reuse import matching_row
+            reused = matching_row(reused_baseline, snapshot['client_version'], snapshot['steam_build'],
+                                  layer, row['relative'], original_fp, output_fp)
+            if reused is not None and (not include_full or 'full' in reused):
+                # The client already accepts same-repo Release URLs across tags.
+                resources.append(json.loads(json.dumps(reused)))
+                continue
         artifact_id = hashlib.sha256(canonical({'input':subject['input_files'][layer], 'output':subject['output_files'][layer]})).hexdigest()
         patch = destination / (layer + '-' + artifact_id + '.delta')
         fp = make_delta(base, output, patch)
@@ -320,6 +343,13 @@ def package(run, destination, client, key, public_key, revision, channel='testin
                'platform': 'macOS-Steam', 'architectures': arches,
                'acceptance': {'status': status, 'evidence_sha256': evidence_hash, 'scope': scope},
                'resources': resources, 'protected_files': protected}
+    if reused_baseline is not None:
+        release['distribution'] = {
+            'mode': 'complete' if include_full else 'routine-delta',
+            'baseline_release_id': reused_baseline['id'],
+        }
+        if not include_full and not list(destination.glob('*.delta')):
+            raise ValueError('资源输出没有变化，不创建空修订。')
     if channel == 'stable' and evidence.get('schema') == 'MTGA_CN_AUTOMATIC_TEXT_RELEASE_V1':
         release['acceptance'].update(
             basis='owner-authorized-routine-text-policy',
@@ -378,8 +408,9 @@ def main():
     p.add_argument('--minimum-client', type=int, choices=(2,3,4),
                    help='Require a client protocol version; version 3 enables authenticated-output adoption')
     p.add_argument('--include-full', action='store_true', help='Add signed complete resources for replacing unknown patches')
+    p.add_argument('--reuse-manifest', type=Path, help='Reuse exact unchanged artifacts from an authenticated stable manifest')
     args = p.parse_args()
-    result = package(args.run,args.output,args.client,args.key,args.public_key,args.revision,args.channel,args.acceptance,args.sequence,args.feed,args.asset_base,args.local_acceptance,args.minimum_client,args.include_full)
+    result = package(args.run,args.output,args.client,args.key,args.public_key,args.revision,args.channel,args.acceptance,args.sequence,args.feed,args.asset_base,args.local_acceptance,args.minimum_client,args.include_full,args.reuse_manifest)
     print('本地发布包：',args.output,'；验收状态：',result['acceptance']['status'])
 
 

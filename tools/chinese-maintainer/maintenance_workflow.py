@@ -293,7 +293,7 @@ def sync_monitor(config, work, run, plan):
 def verify_publication(config, work, package, release_id):
     """Anonymous bodies and production-client reconstruction; never game install."""
     sys.path.insert(0, str(ROOT.parent / 'subscriber'))
-    from github_publish import download, signed, publication_plan, inspect_installer
+    from github_publish import download, signed, publication_plan, inspect_installer, verify_remote_asset
     from publisher import check, fingerprint
     repo = config.get('repo', '1996Neil/mtga-chinese-updates')
     plan = publication_plan(package, repo, 'mtga-' + release_id,
@@ -310,9 +310,30 @@ def verify_publication(config, work, package, release_id):
     check(manifest, ref['manifest']['fingerprint'])
     need(signed(manifest, config['client'], config['public_key_file']) == plan['release'],
          '发布后清单不一致')
+    routine = plan['release']['acceptance'].get('basis') == 'owner-authorized-routine-text-policy'
+    publication = (json.loads((work / 'publication.json').read_text())
+                   if routine and (work / 'publication.json').is_file() else {})
+    saved_assets = (publication.get('assets_verified', {}) if
+                    publication.get('schema') == 'MTGA_CN_GITHUB_PUBLICATION_V1' and
+                    publication.get('repository') == repo and
+                    publication.get('release_id') == release_id else {})
     for row in plan['release']['resources']:
         for kind in ('patch', 'full'):
+            if kind not in row:
+                continue
             asset = row[kind]
+            if routine:
+                from asset_reuse import asset_tag
+                saved = saved_assets.get(asset['name'], {})
+                evidence = saved.get('verification', {})
+                if (all(saved.get(key) == asset['fingerprint'][key] for key in ('sha256', 'bytes')) and
+                        evidence.get('method') == 'SERVER_DIGEST_AND_ANONYMOUS_HEAD' and
+                        evidence.get('github_digest') == 'sha256:' + asset['fingerprint']['sha256'] and
+                        evidence.get('anonymous_head_status') == 200):
+                    continue
+                tag = asset_tag(asset['url'], repo, asset['name'])
+                verify_remote_asset(repo, tag, asset['name'], asset['fingerprint'], cache)
+                continue
             path = cache / asset['name']
             if not path.exists() or fingerprint(path) != asset['fingerprint']:
                 download(asset['url'], path, asset['fingerprint']['bytes'])
@@ -328,7 +349,8 @@ def verify_publication(config, work, package, release_id):
     download(pointer['installer_url'], installer, pointer['fingerprint']['bytes'])
     check(installer, pointer['fingerprint'])
     inspect_installer(installer, plan, config['public_key_file'], config['client'])
-    native = native_preview(config, work, plan)
+    native = ({'status': 'NOT_RUN', 'reason': 'owner-authorized-routine-text-policy'}
+              if routine else native_preview(config, work, plan))
     download(f'https://raw.githubusercontent.com/{repo}/main/mtga-watch/config.json',
              cache / 'monitor.json', 2 * 1024 * 1024, 180)
     monitor = json.loads((cache / 'monitor.json').read_text())
@@ -337,7 +359,9 @@ def verify_publication(config, work, package, release_id):
          monitor['resource_probe']['published_release_id'] == release_id,
          '监控入口尚未与新发布同步；请更新当前监控种子后重跑维护验证')
     return {'status': 'PASS', 'release_id': release_id,
-            'signed_index': 'PASS', 'anonymous_all_resource_bodies': 'PASS',
+            'signed_index': 'PASS',
+            'anonymous_resource_availability': 'PASS',
+            'anonymous_all_resource_bodies': 'NOT_RUN' if routine else 'PASS',
             'installer_profile_hash': 'PASS', 'monitor_entry': 'PASS',
             'production_client_reconstruction': native,
             'game_installation': 'NOT_RUN'}
@@ -582,8 +606,10 @@ def execute(config, prepare_only=False, preparation_seconds=0):
                     '--tag', 'mtga-' + release_id, '--output', package,
                     '--client', config['client'], '--key', config['key_file'],
                     '--public-key-file', config['public_key_file'], '--acceptance', acceptance,
-                    '--minimum-client', '4', '--include-full', '--installer', config['installer'],
+                    '--minimum-client', '4', '--installer', config['installer'],
                     '--receipt', receipt, '--publish']
+            if not automatic:
+                args.append('--include-full')
             invoke(args, work / 'release.log')
         elif not receipt.exists():
             # Reuse the same frozen ID after interrupted upload/index/finalization.

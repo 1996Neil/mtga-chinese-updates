@@ -121,6 +121,11 @@ def finish(args, run, invoke):
         package += ['--minimum-client', str(args.minimum_client)]
     if args.include_full:
         package += ['--include-full']
+    if automatic_text:
+        baseline_path = receipt.get('baseline_manifest', {}).get('path')
+        require(isinstance(baseline_path, str) and Path(baseline_path).is_absolute(),
+                'Text release requires its authenticated baseline manifest')
+        package += ['--reuse-manifest', baseline_path]
     invoke(package)
     validate_run(run, report)
     publication = [sys.executable, str(subscriber / 'github_publish.py'), 'plan',

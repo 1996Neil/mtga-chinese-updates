@@ -43,7 +43,7 @@ def toolchain_for(subject, client):
         'publisher_code': {
             name: fingerprint(Path(__file__).parent / name)
             for name in ('publisher.py', 'text_release_policy.py', 'github_publish.py',
-                         'package_installer.py', 'profile.json')
+                         'asset_reuse.py', 'package_installer.py', 'profile.json')
         },
         'client': fingerprint(client),
     }

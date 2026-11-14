@@ -86,15 +86,40 @@ def publication_plan(package, repo, tag, client, public_file):
     if any(release[k]!=ref[k] for k in ('id','revision','client_version','steam_build')):raise ValueError('索引与清单身份不一致。')
     if release['minimum_client']<2:raise ValueError('网络分发要求 v2 客户端。')
     if channel=='stable' and release['acceptance']['status']!='accepted':raise ValueError('测试内容不能发布到稳定渠道。')
-    assets={}
+    assets={};reused_assets={}
+    reuse_path=package/'reuse-baseline.json'
+    baseline=None
+    if reuse_path.exists():
+        from asset_reuse import load_baseline
+        baseline=load_baseline(reuse_path,client,Path(public_file).read_text().strip(),repo)
+        if (baseline['client_version'],baseline['steam_build'])!=(release['client_version'],release['steam_build']):
+            raise ValueError('资源复用基准版本不匹配。')
+
+    def artifact(resource, kind):
+        from asset_reuse import asset_tag, matching_row
+        item=resource[kind];name=item['name']
+        source_tag=asset_tag(item.get('url'),repo,name)
+        if source_tag!=tag:
+            row=(matching_row(baseline,release['client_version'],release['steam_build'],
+                              resource['layer'],resource['relative'],resource['input'],resource['output'])
+                 if baseline else None)
+            if row is None or row.get(kind)!=item:
+                raise ValueError('旧资源引用与签名基准不一致。')
+            if name in assets or name in reused_assets:raise ValueError('重复资源名称。')
+            reused_assets[name]={'url':item['url'],'tag':source_tag,**item['fingerprint']}
+            return
+        path=package/name
+        if name in assets or name in reused_assets or path.is_symlink() or path.resolve().parent!=package:
+            raise ValueError('资源不在发布目录中或名称重复。')
+        check(path,item['fingerprint']);assets[name]={'path':str(path),**item['fingerprint']}
+
+    if len(release['resources'])!=5 or {row['layer'] for row in release['resources']}!=set(
+            ('card','client','resources','bootstrap_fonts','font_bundle')):
+        raise ValueError('必须保留五层完整签名资源目录。')
     for resource in release['resources']:
         patch=resource['patch'];name=patch['name']
         if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,140}\.delta',name):raise ValueError('资源名无效。')
-        if patch.get('url')!=f'https://github.com/{repo}/releases/download/{tag}/{name}':raise ValueError('资源地址不属于目标 Release。')
-        path=package/name
-        if path.is_symlink() or path.resolve().parent!=package:raise ValueError('资源不在发布目录中。')
-        check(path,patch['fingerprint']);assets[name]={'path':str(path),**patch['fingerprint']}
-    if len(assets)!=5:raise ValueError('必须有五份差分。')
+        artifact(resource,'patch')
     for resource in release['resources']:
         if 'full' not in resource:continue
         full=resource['full'];name=full['name']
@@ -102,11 +127,13 @@ def publication_plan(package, repo, tag, client, public_file):
             raise ValueError('完整资源须匹配签名输出且要求协议4。')
         if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,140}\.full',name) or name in assets:
             raise ValueError('完整资源名无效或重复。')
-        if full.get('url')!=f'https://github.com/{repo}/releases/download/{tag}/{name}':raise ValueError('完整资源地址不属于目标 Release。')
-        path=package/name
-        if path.is_symlink() or path.resolve().parent!=package:raise ValueError('完整资源不在发布目录中。')
-        check(path,full['fingerprint']);assets[name]={'path':str(path),**full['fingerprint']}
-    return {'repo':repo,'tag':tag,'feed':feed,'channel':channel,'index':index,'manifest':str(manifest),'release':release,'assets':assets}
+        artifact(resource,'full')
+    if release.get('distribution',{}).get('mode')=='routine-delta':
+        if any(name.endswith('.full') for name in assets):
+            raise ValueError('日常文本修订禁止上传完整资源；请显式选择完整发布模式。')
+        if sum(item['bytes'] for item in assets.values())>32*1024*1024:
+            raise ValueError('日常新增资源超过 32 MiB；停止上传。请检查资源变化，确需大包时显式使用 --include-full。')
+    return {'repo':repo,'tag':tag,'feed':feed,'channel':channel,'index':index,'manifest':str(manifest),'release':release,'assets':assets,'reused_assets':reused_assets}
 
 
 def derived_metadata_api(url, limit):
@@ -338,6 +365,10 @@ def upload_assets(plan, installer, cwd, scratch, *, release=None):
         installer=Path(installer).resolve()
         if installer.suffix!='.zip' or installer.is_symlink():raise ValueError('安装包必须是本地 ZIP 文件。')
         assets[installer.name]={'path':str(installer),**fingerprint(installer)}
+    pending=[name for name in assets if name not in by_name]
+    print('本次实际新增上传：'+str(len(pending))+' 个文件，'+
+          f'{sum(assets[name]["bytes"] for name in pending)/1048576:.2f} MiB；'
+          '已存在的同指纹附件直接复用。',flush=True)
     for name,item in assets.items():
         if name in by_name:
             old=by_name[name]
@@ -370,11 +401,19 @@ def finalize_release(plan, state, assets, scratch):
 
 def publish(package, repo, tag, client, public_file, private_key, installer=None, output_receipt=None):
     plan=publication_plan(package,repo,tag,client,public_file)
+    local_bytes=sum(item['bytes'] for item in plan['assets'].values())
+    print('本包资源计划（重试会跳过已上传附件）：'+str(len(plan['assets']))+' 个本地资源，'+
+          f'{local_bytes/1048576:.2f} MiB；复用 '+str(len(plan.get('reused_assets',{})))+' 个旧资源。',flush=True)
+    for name,item in plan['assets'].items():
+        print(f'  本地资源 {name}：{item["bytes"]/1048576:.2f} MiB',flush=True)
     remote=json.loads(run(['gh','repo','view',repo,'--json','nameWithOwner,visibility']))
     if remote['nameWithOwner'].lower()!=repo.lower() or remote['visibility']!='PUBLIC':raise ValueError('目标必须是明确的公开分发仓库。')
     with tempfile.TemporaryDirectory(prefix='mtga-github-publish-') as directory:
         scratch=Path(directory).resolve();checkout=scratch/'repo'
         plan,installer=freeze_publication(plan,installer,scratch,public_file,client)
+        reused_verification={}
+        for name,item in plan.get('reused_assets',{}).items():
+            reused_verification[name]=verify_remote_asset(repo,item['tag'],name,item,scratch)
         run(['git','clone','--quiet','--branch','main',f'https://github.com/{repo}.git',checkout])
         old_head=run(['git','rev-parse','HEAD'],checkout).strip()
         feed=checkout/'feed'
@@ -417,6 +456,7 @@ def publish(package, repo, tag, client, public_file, private_key, installer=None
                  'release_id':plan['release']['id'],'channel':plan['channel'],'installer_url':public_installer,
                  'release_tag':tag,'release_publication':publication_status,
                  'assets_verified':{n:{k:a[k] for k in ('sha256','bytes','verification')} for n,a in assets.items()},
+                 'reused_assets_verified':reused_verification,
                  'full_client_network_verification':'PENDING_SEPARATE_VALIDATION',
                  'signed_index_commit_url_verified':True}
         if output_receipt:dump(output_receipt,receipt)
@@ -432,7 +472,7 @@ def main():
     a=p.parse_args()
     if a.command=='plan':
         result=publication_plan(a.package,a.repo,a.tag,a.client,a.public_key_file)
-        print(json.dumps({'repo':a.repo,'tag':a.tag,'feed':result['feed'],'release':result['release']['id'],'asset_count':len(result['assets']),'asset_bytes':sum(x['bytes'] for x in result['assets'].values())},ensure_ascii=False,indent=2))
+        print(json.dumps({'repo':a.repo,'tag':a.tag,'feed':result['feed'],'release':result['release']['id'],'asset_count':len(result['assets']),'asset_bytes':sum(x['bytes'] for x in result['assets'].values()),'reused_asset_count':len(result.get('reused_assets',{}))},ensure_ascii=False,indent=2))
     else:
         if not a.key:p.error('publish requires --key')
         print(json.dumps(publish(a.package,a.repo,a.tag,a.client,a.public_key_file,a.key,a.installer,a.receipt),ensure_ascii=False,indent=2))

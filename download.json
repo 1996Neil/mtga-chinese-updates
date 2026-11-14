@@ -3,7 +3,7 @@
   "feed": "https://raw.githubusercontent.com/1996Neil/mtga-chinese-updates/main/feed",
   "fingerprint": {
     "bytes": 345733,
-    "sha256": "ffea01a08259eb0935d2040ab07106ede5c3cb27702fc55e7c75aa59057b1956"
+    "sha256": "2fd8786e03e75c2014e4d146ee0f4e86858885f85d94f6d7725291faa4d74867"
   },
-  "installer_url": "https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.5/MTGA-Chinese-Subscriber-v3.5.zip"
+  "installer_url": "https://github.com/1996Neil/mtga-chinese-updates/releases/download/mtga-2026.65.0-26149138-r6/MTGA-Chinese-Subscriber-v3.3.zip"
 }

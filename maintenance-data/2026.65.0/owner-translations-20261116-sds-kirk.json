@@ -1,0 +1,99 @@
+{
+  "schema": "MTGA_CN_OWNER_TRANSLATIONS_V1",
+  "source_version": "2026.65.0",
+  "owner_authorization": "Owner requested fixing the untranslated Kirk observed in the November 15 23:10 draft and the confirmed dynamic Discover tooltip gap, under routine text policy.",
+  "human_acceptance": false,
+  "runtime_acceptance": false,
+  "independent_review": "NOT_REQUIRED_BY_OWNER_POLICY",
+  "scope": "SDS 4 / Arena 106934: underlying Sisay title, alternate Kirk title, both rule identities and flavor; shared dynamic Discover title/body. No game installation.",
+  "records": [
+    {
+      "layer": "card", "key": "429966",
+      "english": "Sisay, Weatherlight Captain",
+      "field_use": ["Cards.TitleId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "晴空号船长西赛",
+      "translation_kind": "official-print-name-via-aggregator", "source_coverage": "exact-full-text",
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=mh1&collector_number=29", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "f4a58df5fc396a9aab5d0e0fe15e908e4ed619c49a1bded633e3f7a73ddc200f", "snapshot_bytes": 6458, "field": "zhs_card.name", "source_kind": "official-print", "source_declared": "Chinese Simplified / multiverse_id 466264", "source_english": "Sisay, Weatherlight Captain", "source_chinese": "晴空号船长西赛"}],
+      "adaptation": "Exact underlying card identity. SDS 4 alternate display title is translated separately; English import name is preserved."
+    },
+    {
+      "layer": "card", "key": "429967",
+      "english": "CARDNAME gets <nobr>+1/+1</nobr> for each color among other legendary permanents you control.",
+      "field_use": ["Abilities.TextId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "由你操控的其他传奇永久物每包括一种颜色，CARDNAME便得<nobr>+1/+1</nobr>。",
+      "translation_kind": "community-oracle-with-AI-slot-adaptation", "source_coverage": "source-backed-concepts", "ai_expression": true,
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=sds&collector_number=4", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "52ebe7ac922fd67b1ff85ca526d9286ed72c5aa61999681423ecd8e20c9239f3", "snapshot_bytes": 5547, "field": "zhs_oracle.oracle_text", "source_kind": "community-oracle", "source_declared": "MTGZH", "source_english": "Sisay gets +1/+1 for each color among other legendary permanents you control.", "source_chinese": "由你操控的其他传奇永久物每包括一种颜色，西赛便得+1/+1。"}],
+      "adaptation": "Replace the source self-name with the exact current CARDNAME placeholder and retain nobr layout; rule unchanged."
+    },
+    {
+      "layer": "card", "key": "1028846",
+      "english": "{oWoUoBoRoG}: Search your library for a legendary permanent card with mana value less than CARDNAME's power, put that card onto the battlefield, then shuffle.",
+      "field_use": ["Abilities.TextId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "{oWoUoBoRoG}：从你的牌库中搜寻一张法术力值小于CARDNAME力量的传奇永久物牌，将该牌放进战场，然后洗牌。",
+      "translation_kind": "community-oracle-with-AI-slot-adaptation", "source_coverage": "source-backed-concepts", "ai_expression": true,
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=sds&collector_number=4", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "52ebe7ac922fd67b1ff85ca526d9286ed72c5aa61999681423ecd8e20c9239f3", "snapshot_bytes": 5547, "field": "zhs_oracle.oracle_text", "source_kind": "community-oracle", "source_declared": "MTGZH", "source_english": "{W}{U}{B}{R}{G}: Search your library for a legendary permanent card with mana value less than Sisay's power, put that card onto the battlefield, then shuffle.", "source_chinese": "{W}{U}{B}{R}{G}：从你的牌库中搜寻一张法术力值小于西赛力量的传奇永久物牌，将该牌放进战场，然后洗牌。"}],
+      "adaptation": "Keep current Arena mana token and CARDNAME placeholder. Strictly less than, legendary permanent, library-to-battlefield and shuffle are unchanged."
+    },
+    {
+      "layer": "card", "key": "1164592",
+      "english": "Kirk gets <nobr>+1/+1</nobr> for each color among other legendary permanents you control.",
+      "field_use": ["Cards.AbilityTextId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "由你操控的其他传奇永久物每包括一种颜色，柯克便得<nobr>+1/+1</nobr>。",
+      "translation_kind": "community-oracle-with-AI-slot-adaptation", "source_coverage": "source-backed-concepts", "ai_expression": true,
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=sds&collector_number=4", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "52ebe7ac922fd67b1ff85ca526d9286ed72c5aa61999681423ecd8e20c9239f3", "snapshot_bytes": 5547, "field": "zhs_oracle.oracle_text; zhs_flavor.flavor_name", "source_kind": "community-oracle", "source_declared": "MTGZH", "source_english": "Sisay gets +1/+1 for each color among other legendary permanents you control.", "source_chinese": "由你操控的其他传奇永久物每包括一种颜色，西赛便得+1/+1。"}],
+      "adaptation": "Current SDS printing explicitly substitutes Kirk for Sisay. Use community alternate name 柯克 and retain nobr layout."
+    },
+    {
+      "layer": "card", "key": "1164593",
+      "english": "{oWoUoBoRoG}: Search your library for a legendary permanent card with mana value less than Kirk's power, put that card onto the battlefield, then shuffle.",
+      "field_use": ["Cards.AbilityTextId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "{oWoUoBoRoG}：从你的牌库中搜寻一张法术力值小于柯克力量的传奇永久物牌，将该牌放进战场，然后洗牌。",
+      "translation_kind": "community-oracle-with-AI-slot-adaptation", "source_coverage": "source-backed-concepts", "ai_expression": true,
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=sds&collector_number=4", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "52ebe7ac922fd67b1ff85ca526d9286ed72c5aa61999681423ecd8e20c9239f3", "snapshot_bytes": 5547, "field": "zhs_oracle.oracle_text; zhs_flavor.flavor_name", "source_kind": "community-oracle", "source_declared": "MTGZH", "source_english": "{W}{U}{B}{R}{G}: Search your library for a legendary permanent card with mana value less than Sisay's power, put that card onto the battlefield, then shuffle.", "source_chinese": "{W}{U}{B}{R}{G}：从你的牌库中搜寻一张法术力值小于西赛力量的传奇永久物牌，将该牌放进战场，然后洗牌。"}],
+      "adaptation": "Current SDS printing explicitly substitutes Kirk for Sisay; retain current mana token, strict inequality and all zones/actions."
+    },
+    {
+      "layer": "card", "key": "1134076",
+      "english": "<i>\"Either we're going down . . . or they are.\"</i>",
+      "field_use": ["Cards.FlavorTextId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "<i>「不是我们死…就是他们亡。」</i>",
+      "translation_kind": "community-localization", "source_coverage": "exact-full-text",
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=sds&collector_number=4", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "52ebe7ac922fd67b1ff85ca526d9286ed72c5aa61999681423ecd8e20c9239f3", "snapshot_bytes": 5547, "field": "zhs_flavor.flavor_text", "source_kind": "community-localization", "source_declared": "MTGZH", "source_english": "\"Either we're going down . . . or they are.\"", "source_chinese": "「不是我们死…就是他们亡。」"}],
+      "adaptation": "Retain current italic formatting."
+    },
+    {
+      "layer": "card", "key": "1134077",
+      "english": "Kirk, Alluring Upstart",
+      "field_use": ["Cards.AltTitleId"],
+      "identity": {"cards": [{"GrpId": 106934, "TitleId": 429966, "ExpansionCode": "SDS", "CollectorNumber": "4", "IsToken": 0, "IsPrimaryCard": 1, "IsDigitalOnly": 0, "IsRebalanced": 0, "LinkedFaceType": 0, "LinkedFaceGrpIds": ""}]},
+      "chinese": "迷人新贵柯克",
+      "translation_kind": "community-localization", "source_coverage": "exact-full-text",
+      "sources": [{"url": "https://mtgch.com/api/v2/card?set=sds&collector_number=4", "retrieved_at": "2026-11-15T16:01:31.281566+00:00", "snapshot_sha256": "52ebe7ac922fd67b1ff85ca526d9286ed72c5aa61999681423ecd8e20c9239f3", "snapshot_bytes": 5547, "field": "zhs_flavor.flavor_name", "source_kind": "community-localization", "source_declared": "MTGZH", "source_english": "Kirk, Alluring Upstart", "source_chinese": "迷人新贵柯克"}],
+      "adaptation": "Translate the alternate display identity, not a different Kirk card."
+    },
+    {
+      "layer": "client", "key": "AbilityHanger/Keyword/DiscoverN_Title",
+      "english": "Discover {numeral}",
+      "field_use": ["Loc.enUS"], "identity": {"client_key": "AbilityHanger/Keyword/DiscoverN_Title"},
+      "chinese": "倾探{numeral}",
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source", "source_coverage": "source-backed-concepts", "ai_expression": true,
+      "sources": [{"url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=3&include_extras=true", "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=221", "retrieved_at": "2026-11-14T06:13:59.199255+00:00", "snapshot_sha256": "7089fd4821dc90beea93879528fe1cc56cc17abbb0750be2faafcdea319ca06b", "snapshot_bytes": 494550, "field": "zhs_oracle.oracle_text", "source_kind": "community-oracle", "source_declared": "MTGZH", "source_english": "discover 5", "source_chinese": "倾探5"}],
+      "adaptation": "Dynamic numeral replaces the source card's fixed 5. This is an AI-adapted tooltip, not official UI wording."
+    },
+    {
+      "layer": "client", "key": "AbilityHanger/Keyword/DiscoverN_Body",
+      "english": "Exile cards from the top of your library until you exile a nonland card with mana value {numeral} or less. You may cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.",
+      "field_use": ["Loc.enUS"], "identity": {"client_key": "AbilityHanger/Keyword/DiscoverN_Body"},
+      "chinese": "从你的牌库顶开始放逐牌，直到放逐一张法术力值等于或小于{numeral}的非地牌为止。你可以施放该牌，且不需支付其法术力费用，或将之置于你手上。将其余的牌以随机顺序置于你牌库底。",
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source", "source_coverage": "source-backed-concepts", "ai_expression": true,
+      "sources": [{"url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=3&include_extras=true", "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=221", "retrieved_at": "2026-11-14T06:13:59.199255+00:00", "snapshot_sha256": "7089fd4821dc90beea93879528fe1cc56cc17abbb0750be2faafcdea319ca06b", "snapshot_bytes": 494550, "field": "zhs_oracle.oracle_text", "source_kind": "community-oracle", "source_declared": "MTGZH", "source_english": "Exile cards from the top of your library until you exile a nonland card with mana value 5 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.", "source_chinese": "从你的牌库顶开始放逐牌，直到放逐一张法术力值等于或小于5的非地牌为止。施放之且不需支付其法术力费用，或将之置于你手上。将其余的牌以随机顺序置于你牌库底。"}],
+      "adaptation": "Retain current optional cast/hand choice, dynamic numeral, nonland bound, exile and random bottom ordering. Full tooltip wording is AI-adapted from the matching community reminder."
+    }
+  ]
+}

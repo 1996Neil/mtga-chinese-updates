@@ -275,7 +275,8 @@ def verify_remote_asset(repo, tag, name, item, scratch, *, draft=False):
         raise ValueError('GitHub 资产指纹与冻结文件不符：'+name)
     headers=scratch/(name+'.headers')
     code=run(['/usr/bin/curl','--disable','--fail','--silent','--show-error','--head','--location',
-        '--max-redirs','5','--proto','=https','--proto-redir','=https','--connect-timeout','15','--max-time','180',
+        '--max-redirs','5','--proto','=https','--proto-redir','=https','--connect-timeout','5','--max-time','20',
+        '--retry','2','--retry-all-errors','--retry-max-time','40',
         '--dump-header',headers,'--output','/dev/null','--write-out','%{http_code}',url]).strip()
     if code!='200':raise ValueError('匿名下载地址不可用：'+name)
     blocks=[b for b in headers.read_text().replace('\r\n','\n').split('\n\n') if b.startswith('HTTP/')]

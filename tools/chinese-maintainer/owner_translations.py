@@ -31,7 +31,7 @@ def import_translations(registry, contexts, version):
             expected = {name: row[name] for name in ('english', 'field_use', 'identity')}
             if contexts.get(key) != expected:
                 continue  # Never lend an old translation to changed identity/use/English.
-            require(key[0] == 'card' and row['field_use'] and row.get('sources') and
+            require(key[0] in {'card', 'client'} and row['field_use'] and row.get('sources') and
                     has_chinese(row['chinese']) and
                     not safe_format(row['english'], row['chinese']),
                     'Owner translation lacks source/use or has unsafe format: ' + key[1])

@@ -1,0 +1,396 @@
+{
+  "schema": "MTGA_CN_OWNER_TRANSLATIONS_V1",
+  "source_version": "2026.65.0",
+  "owner_authorization": "Complete Star Trek rules and new keyword explanations; no independent engineering review or new game acceptance required.",
+  "human_acceptance": false,
+  "runtime_acceptance": false,
+  "independent_review": "NOT_REQUIRED_BY_OWNER_POLICY",
+  "scope": "Star Trek keyword tooltip title/body and shared Surveil/Affinity explanations. Card names and English import names unchanged.",
+  "recorded_at": "2026-11-15T09:29:38.352722+00:00",
+  "records": [
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/Assimilate_Title",
+      "english": "Assimilate",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/Assimilate_Title"
+      },
+      "chinese": "同化",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRC&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:14:07.533451+00:00",
+          "snapshot_sha256": "4bb6b499e2ce0bb91f76e96db7fcfc3729f8942bd27e03ab885d6e2fb48cfcb9",
+          "snapshot_bytes": 469589,
+          "card_url": "https://mtgch.com/api/v2/card?set=trc&collector_number=197",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGZH",
+          "source_english": "Artifact creatures you control get +2/+0.\nWhen Borg Queen enters, assimilate target creature card from an opponent's graveyard. (Put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.)",
+          "source_chinese": "由你操控的神器生物得+2/+0。\\n当博格女王进场时，从任一对手的坟墓场同化目标生物牌。（将它在你的操控下放进战场，且上面有一个+1/+1指示物。它是博格人神器生物，并失去所有其他生物类别。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/Assimilate_Body",
+      "english": "To assimilate a card, put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/Assimilate_Body"
+      },
+      "chinese": "同化一张牌的方式为：将它在你的操控下放进战场，且上面有一个+1/+1指示物。它是博格人神器生物，并失去所有其他生物类别。",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRC&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:14:07.533451+00:00",
+          "snapshot_sha256": "4bb6b499e2ce0bb91f76e96db7fcfc3729f8942bd27e03ab885d6e2fb48cfcb9",
+          "snapshot_bytes": 469589,
+          "card_url": "https://mtgch.com/api/v2/card?set=trc&collector_number=197",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGZH",
+          "source_english": "Artifact creatures you control get +2/+0.\nWhen Borg Queen enters, assimilate target creature card from an opponent's graveyard. (Put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.)",
+          "source_chinese": "由你操控的神器生物得+2/+0。\\n当博格女王进场时，从任一对手的坟墓场同化目标生物牌。（将它在你的操控下放进战场，且上面有一个+1/+1指示物。它是博格人神器生物，并失去所有其他生物类别。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/BeamMeUp_Title",
+      "english": "Beam me up {abilityCost}",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/BeamMeUp_Title"
+      },
+      "chinese": "光束传送 {abilityCost}",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:59.008721+00:00",
+          "snapshot_sha256": "2ad2f155c0451253c7072ec423d7285eb6c0e5c8b291cef47d65133865dc5363",
+          "snapshot_bytes": 492709,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=139",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "Create a 2/1 red Klingon Warrior creature token with haste.\nBeam me up {2}{R} (You may cast this card from your graveyard for {2}{R} if you also return a creature you control to its owner's hand. Then exile this spell.)",
+          "source_chinese": "派出一个2/1，具敏捷异能的红色克林贡人／战士衍生生物。\\n光束传送{2}{R}（如果你额外将一个由你操控的生物移回其拥有者手上，则可以支付{2}{R}来从你坟墓场施放此牌，然后放逐此咒语。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/BeamMeUp_Body",
+      "english": "You may cast this card from your graveyard for {abilityCost} if you also return a creature you control to its owner's hand. Then exile this spell.",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/BeamMeUp_Body"
+      },
+      "chinese": "如果你额外将一个由你操控的生物移回其拥有者手上，则可以支付{abilityCost}来从你坟墓场施放此牌。然后放逐此咒语。",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:59.008721+00:00",
+          "snapshot_sha256": "2ad2f155c0451253c7072ec423d7285eb6c0e5c8b291cef47d65133865dc5363",
+          "snapshot_bytes": 492709,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=139",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "Create a 2/1 red Klingon Warrior creature token with haste.\nBeam me up {2}{R} (You may cast this card from your graveyard for {2}{R} if you also return a creature you control to its owner's hand. Then exile this spell.)",
+          "source_chinese": "派出一个2/1，具敏捷异能的红色克林贡人／战士衍生生物。\\n光束传送{2}{R}（如果你额外将一个由你操控的生物移回其拥有者手上，则可以支付{2}{R}来从你坟墓场施放此牌，然后放逐此咒语。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/BeamMeUp_Reference_Title",
+      "english": "Beam me up",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/BeamMeUp_Reference_Title"
+      },
+      "chinese": "光束传送",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:59.008721+00:00",
+          "snapshot_sha256": "2ad2f155c0451253c7072ec423d7285eb6c0e5c8b291cef47d65133865dc5363",
+          "snapshot_bytes": 492709,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=139",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "Create a 2/1 red Klingon Warrior creature token with haste.\nBeam me up {2}{R} (You may cast this card from your graveyard for {2}{R} if you also return a creature you control to its owner's hand. Then exile this spell.)",
+          "source_chinese": "派出一个2/1，具敏捷异能的红色克林贡人／战士衍生生物。\\n光束传送{2}{R}（如果你额外将一个由你操控的生物移回其拥有者手上，则可以支付{2}{R}来从你坟墓场施放此牌，然后放逐此咒语。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/BeamMeUp_Reference_Body",
+      "english": "You may cast an instant or sorcery card from your graveyard for its Beam me up cost if you also return a creature you control to its owner's hand. Then exile the spell.",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/BeamMeUp_Reference_Body"
+      },
+      "chinese": "如果你额外将一个由你操控的生物移回其拥有者手上，则可以支付瞬间或法术牌的光束传送费用，来从你坟墓场施放该牌。然后放逐该咒语。",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:59.008721+00:00",
+          "snapshot_sha256": "2ad2f155c0451253c7072ec423d7285eb6c0e5c8b291cef47d65133865dc5363",
+          "snapshot_bytes": 492709,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=139",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "Create a 2/1 red Klingon Warrior creature token with haste.\nBeam me up {2}{R} (You may cast this card from your graveyard for {2}{R} if you also return a creature you control to its owner's hand. Then exile this spell.)",
+          "source_chinese": "派出一个2/1，具敏捷异能的红色克林贡人／战士衍生生物。\\n光束传送{2}{R}（如果你额外将一个由你操控的生物移回其拥有者手上，则可以支付{2}{R}来从你坟墓场施放此牌，然后放逐此咒语。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/FaceADilemma_Title",
+      "english": "Face a Dilemma",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/FaceADilemma_Title"
+      },
+      "chinese": "面临两难",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:59.008721+00:00",
+          "snapshot_sha256": "2ad2f155c0451253c7072ec423d7285eb6c0e5c8b291cef47d65133865dc5363",
+          "snapshot_bytes": 492709,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=132",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "When this enchantment enters, target opponent may have you draw a card. If they don't, they lose 4 life and you surveil 1.\nWhenever you face a dilemma, you may return this enchantment to its owner's hand. (You face a dilemma as you choose one or more modes for a spell or ability.)",
+          "source_chinese": "当此结界进场时，目标对手可以令你抓一张牌。若其未如此作，则其失去4点生命且你刺探1。\\n每当你面临两难时，你可以将此结界移回其拥有者手上。（你为咒语或异能选择一项或多项模式时，便面临两难。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/FaceADilemma_Body",
+      "english": "You face a dilemma as you choose one or more modes for a spell or ability.",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/FaceADilemma_Body"
+      },
+      "chinese": "你为咒语或异能选择一项或多项模式时，便面临两难。",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=2&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:59.008721+00:00",
+          "snapshot_sha256": "2ad2f155c0451253c7072ec423d7285eb6c0e5c8b291cef47d65133865dc5363",
+          "snapshot_bytes": 492709,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=132",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "When this enchantment enters, target opponent may have you draw a card. If they don't, they lose 4 life and you surveil 1.\nWhenever you face a dilemma, you may return this enchantment to its owner's hand. (You face a dilemma as you choose one or more modes for a spell or ability.)",
+          "source_chinese": "当此结界进场时，目标对手可以令你抓一张牌。若其未如此作，则其失去4点生命且你刺探1。\\n每当你面临两难时，你可以将此结界移回其拥有者手上。（你为咒语或异能选择一项或多项模式时，便面临两难。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/AffinityForArtifactCreatures_Title",
+      "english": "Affinity for Artifact Creatures",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/AffinityForArtifactCreatures_Title"
+      },
+      "chinese": "神器生物共鸣",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=6&include_extras=true",
+          "retrieved_at": "2026-11-14T06:14:04.364990+00:00",
+          "snapshot_sha256": "968b4d2591a9323c55bb109e7dfd892f14150744642f7d3ea497a01c0b480ced",
+          "snapshot_bytes": 366379,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=555",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "Affinity for artifact creatures\nWhenever this Spacecraft enters or attacks, assimilate a creature card exiled with it. If you can't, exile up to one target creature. (To assimilate a card, put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.)\nStation\n12+ | Artifact creatures you control have flying.",
+          "source_chinese": "神器生物共鸣\\n每当此太空船进场或攻击时，同化一张以此放逐的生物牌。若你无法如此作，则放逐至多一个目标生物。（同化一张牌的流程，是将该牌在你操控下放进战场，且上面有一个+1/+1指示物。它是博格人神器生物，并失去所有其他生物类别。）\\n蓄势\\n12+ | 由你操控的神器生物具有飞行异能。",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/AffinityForArtifactCreatures_Body",
+      "english": "This spell costs {o1} less to cast for each Artifact Creature you control.",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/AffinityForArtifactCreatures_Body"
+      },
+      "chinese": "你每操控一个神器生物，施放此咒语的费用便减少{o1}。",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=6&include_extras=true",
+          "retrieved_at": "2026-11-14T06:14:04.364990+00:00",
+          "snapshot_sha256": "968b4d2591a9323c55bb109e7dfd892f14150744642f7d3ea497a01c0b480ced",
+          "snapshot_bytes": 366379,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=555",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "Affinity for artifact creatures\nWhenever this Spacecraft enters or attacks, assimilate a creature card exiled with it. If you can't, exile up to one target creature. (To assimilate a card, put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.)\nStation\n12+ | Artifact creatures you control have flying.",
+          "source_chinese": "神器生物共鸣\\n每当此太空船进场或攻击时，同化一张以此放逐的生物牌。若你无法如此作，则放逐至多一个目标生物。（同化一张牌的流程，是将该牌在你操控下放进战场，且上面有一个+1/+1指示物。它是博格人神器生物，并失去所有其他生物类别。）\\n蓄势\\n12+ | 由你操控的神器生物具有飞行异能。",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/SurveilN_Title",
+      "english": "Surveil {numeral}",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/SurveilN_Title"
+      },
+      "chinese": "刺探{numeral}",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=1&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:56.221393+00:00",
+          "snapshot_sha256": "29e54174b5b60c09ef4a5e610c4c6c6ccd6654713431e73145f28ff78ac4a985",
+          "snapshot_bytes": 488826,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=55",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "When this creature enters, choose one —\n• Return target Spacecraft card from your graveyard to your hand.\n• Surveil 2. (Look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)",
+          "source_chinese": "当此生物进场时，选择一项～\\n•将目标太空船牌从你坟墓场移回你手上。\\n•刺探2。（检视你牌库顶的两张牌，然后将其中任意数量置入你坟墓场，其余则以任意顺序置于你牌库顶。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    },
+    {
+      "layer": "client",
+      "key": "AbilityHanger/Keyword/SurveilN_Body",
+      "english": "Look at the top {numeral} cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.",
+      "field_use": [
+        "Loc.enUS"
+      ],
+      "identity": {
+        "client_key": "AbilityHanger/Keyword/SurveilN_Body"
+      },
+      "chinese": "检视你牌库顶的{numeral}张牌，然后将其中任意数量置入你坟墓场，其余则以任意顺序置于你牌库顶。",
+      "human_acceptance": false,
+      "runtime_acceptance": false,
+      "translation_kind": "AI-client-tooltip-adaptation-from-community-rule-source",
+      "source_coverage": "source-backed-concepts",
+      "ai_expression": true,
+      "sources": [
+        {
+          "url": "https://mtgch.com/api/v2/result?q=set%3ATRK&view=0&page_size=100&unique=scryfall_id&page=1&include_extras=true",
+          "retrieved_at": "2026-11-14T06:13:56.221393+00:00",
+          "snapshot_sha256": "29e54174b5b60c09ef4a5e610c4c6c6ccd6654713431e73145f28ff78ac4a985",
+          "snapshot_bytes": 488826,
+          "card_url": "https://mtgch.com/api/v2/card?set=trk&collector_number=55",
+          "source_kind": "community-oracle",
+          "source_declared": "MTGso",
+          "source_english": "When this creature enters, choose one —\n• Return target Spacecraft card from your graveyard to your hand.\n• Surveil 2. (Look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)",
+          "source_chinese": "当此生物进场时，选择一项～\\n•将目标太空船牌从你坟墓场移回你手上。\\n•刺探2。（检视你牌库顶的两张牌，然后将其中任意数量置入你坟墓场，其余则以任意顺序置于你牌库顶。）",
+          "field": "zhs_oracle.oracle_text"
+        }
+      ],
+      "adaptation": "Adapt community card reminder/rule concepts to the current exact Arena tooltip, retaining dynamic cost/count parameters. Not a claim of official UI wording."
+    }
+  ]
+}

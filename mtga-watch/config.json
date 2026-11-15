@@ -9,8 +9,8 @@
     "macos_manifest": "8048548968671105700",
     "external_name": "External_2026.65.0.6039.1335447-macos.mtga",
     "localization_manifest": "Manifest_Localization_8f581039f288fa8a537715cae1972082.mtga",
-    "published_release_id": "2026.65.0-26149138-r6",
-    "observed_at": "2026-11-14T06:57:26.022206+00:00",
+    "published_release_id": "2026.65.0-26149138-r7",
+    "observed_at": "2026-11-15T09:58:32.179910+00:00",
     "provenance": "Local official manifest and public macOS CDN pointer only; no account, log or payload uploaded."
   },
   "maintainer_notifications": "issues"

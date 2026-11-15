@@ -23,6 +23,92 @@ struct Release: Codable {
     let resources: [Resource]; let protected_files: [Protected]
 }
 struct Profile: Codable { let schema: String; let feed: String; let public_key: String; let channel: String }
+struct NetworkSettings: Codable {
+    var mode: String = "auto"
+    var proxy: String? = nil
+    var mirror: String? = nil
+    func validate() throws {
+        try need(["auto", "direct", "proxy", "mirror"].contains(mode), "下载方式无效。")
+        if let value = proxy {
+            guard let u = URLComponents(string: value) else { throw Problem(description: "代理地址无效。") }
+            try need(["http", "https", "socks5h"].contains(u.scheme ?? "") && u.host != nil &&
+                     (1...65535).contains(u.port ?? 0) && u.user == nil && u.password == nil && u.query == nil &&
+                     u.fragment == nil && (u.path.isEmpty || u.path == "/"),
+                     "代理须为 http、https 或 socks5h 地址，包含端口且不含账号密码。")
+        }
+        if let value = mirror {
+            guard let u = URLComponents(string: value) else { throw Problem(description: "备用源地址无效。") }
+            try need(u.scheme == "https" && u.host != nil && u.user == nil && u.password == nil &&
+                     u.query == nil && u.fragment == nil && !u.path.contains("%") &&
+                     !u.path.split(separator: "/").contains(".."), "备用源必须为不含凭据的 HTTPS 目录。")
+        }
+        try need(mode != "mirror" || mirror != nil, "备用源尚未配置，请先填写备用源地址。")
+    }
+}
+struct DownloadRoute {
+    let label: String
+    let proxy: String?
+    let mirror: String?
+    var key: String { label + (proxy ?? "") + (mirror ?? "") }
+    var arguments: [String] { proxy.map { ["--proxy", $0, "--noproxy", ""] } ?? ["--proxy", "", "--noproxy", "*"] }
+    func url(_ original: URL) throws -> URL {
+        guard let mirror = mirror else { return original }
+        // Mirror layout is <base>/<original-host>/<original-path>. The original
+        // signed URL is validated first; the mirror never supplies a new identity.
+        try need(["github.com", "raw.githubusercontent.com"].contains(original.host ?? "") &&
+                 original.query == nil && original.fragment == nil, "此地址不支持备用源映射。")
+        guard let base = URL(string: mirror), let host = original.host else { throw Problem(description: "备用源地址无效。") }
+        return base.appendingPathComponent(host).appendingPathComponent(original.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+    }
+}
+let transportFailures: Set<Int32> = [5, 6, 7, 18, 28, 35, 52, 55, 56, 60]
+var networkSettings = NetworkSettings()
+var preferredDownloadRoute: String?
+func downloadRoutes() throws -> [DownloadRoute] {
+    try networkSettings.validate()
+    var proxies = [String]()
+    func add(_ value: String?) {
+        guard let value = value, !value.isEmpty, !proxies.contains(value),
+              (try? NetworkSettings(mode: "proxy", proxy: value).validate()) != nil else { return }
+        proxies.append(value)
+    }
+    add(networkSettings.proxy)
+    let env = ProcessInfo.processInfo.environment
+    for name in ["https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY", "http_proxy", "HTTP_PROXY"] { add(env[name]) }
+    // Read only static system proxy settings; do not change them or execute PAC.
+    var inspectSystem = true
+    #if TESTING
+    inspectSystem = env["MTGA_TEST_SYSTEM_PROXY"] == "1"
+    #endif
+    if inspectSystem, let result = try? run("/usr/sbin/scutil", ["--proxy"]), result.0 == 0 {
+        var values = [String: String]()
+        for line in result.1.components(separatedBy: "\n") {
+            let pair = line.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            if pair.count == 2 { values[pair[0]] = pair[1] }
+        }
+        for (kind, scheme) in [("HTTPS", "http"), ("HTTP", "http"), ("SOCKS", "socks5h")] {
+            if values[kind + "Enable"] == "1", let host = values[kind + "Proxy"], let port = values[kind + "Port"] {
+                add("\(scheme)://\(host.contains(":") ? "[\(host)]" : host):\(port)")
+            }
+        }
+    }
+    let direct = DownloadRoute(label: "直连", proxy: nil, mirror: nil)
+    let proxyRoutes = proxies.enumerated().map { DownloadRoute(label: "代理 \($0.offset + 1)", proxy: $0.element, mirror: nil) }
+    let mirrors = networkSettings.mirror.map { [DownloadRoute(label: "备用源", proxy: nil, mirror: $0)] } ?? []
+    var routes: [DownloadRoute]
+    switch networkSettings.mode {
+    case "direct": routes = [direct]
+    case "proxy":
+        try need(!proxyRoutes.isEmpty, "未找到可用代理配置，请在菜单 7 填写代理地址或启用系统代理。")
+        routes = proxyRoutes
+    case "mirror": routes = mirrors
+    default: routes = [direct] + proxyRoutes + mirrors
+    }
+    if let preferred = preferredDownloadRoute, let i = routes.firstIndex(where: { $0.key == preferred }) {
+        let route = routes.remove(at: i); routes.insert(route, at: 0)
+    }
+    return routes
+}
 struct Row: Codable { let layer: String; let relative: String; let before: Fingerprint; let after: Fingerprint; let original: Fingerprint; let original_available: Bool? }
 struct Journal: Codable {
     let schema: String; let id: String; let release_id: String; let revision: Int64; let game: String
@@ -216,17 +302,18 @@ func downloadMetadata(feed: String, name: String, target: URL, limit: Int) throw
     #if TESTING
     curl = ProcessInfo.processInfo.environment["MTGA_TEST_CURL"] ?? curl
     #endif
-    func transfer(_ url: URL, fallback: Bool) throws -> Int32 {
+    func transfer(_ url: URL, fallback: Bool, route: DownloadRoute) throws -> Int32 {
         let incoming = target.deletingLastPathComponent().appendingPathComponent(
             "." + UUID().uuidString + "-metadata")
         defer { try? fm.removeItem(at: incoming) }
         var args = ["--disable", "--fail", "--silent", "--show-error",
-                    "--retry", fallback ? "1" : "0", "--retry-max-time", fallback ? "35" : "15",
+                    "--retry", "0",
                     "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https",
-                    "--connect-timeout", fallback ? "10" : "5", "--max-time", fallback ? "30" : "15",
+                    "--connect-timeout", "5", "--max-time", "12",
                     "--max-filesize", String(limit), "--output", incoming.path]
         if fallback { args += ["--header", "Accept: application/vnd.github.raw+json"] }
-        args.append(url.absoluteString)
+        args += route.arguments
+        args.append(try route.url(url).absoluteString)
         let result = try run(curl, args)
         if result.0 == 0 {
             _ = try small(incoming, limit: limit)
@@ -235,13 +322,17 @@ func downloadMetadata(feed: String, name: String, target: URL, limit: Int) throw
         }
         return result.0
     }
-    let status = try transfer(primary, fallback: false)
-    if status == 0 { return }
-    // Invalid successful JSON/signatures and HTTP errors are never retried via a
-    // different transport. Only connection/TLS/timeout/interrupted-body errors.
-    let transportFailures: Set<Int32> = [5, 6, 7, 18, 28, 35, 52, 55, 56, 60]
-    if transportFailures.contains(status), let alternate = metadataAPIURL(feed: feed, name: name) {
-        if try transfer(alternate, fallback: true) == 0 { return }
+    for route in try downloadRoutes() {
+        print("下载通道：\(route.label)"); fflush(stdout)
+        let status = try transfer(primary, fallback: false, route: route)
+        if status == 0 { preferredDownloadRoute = route.key; return }
+        if !transportFailures.contains(status) { break }
+        if route.mirror == nil, let alternate = metadataAPIURL(feed: feed, name: name) {
+            let alternateStatus = try transfer(alternate, fallback: true, route: route)
+            if alternateStatus == 0 { preferredDownloadRoute = route.key; return }
+            if !transportFailures.contains(alternateStatus) { break }
+        }
+        print("当前通道连接失败，尝试下一通道（如有）。"); fflush(stdout)
     }
     throw Problem(description: "下载失败：\(name)。请检查网络或更新源权限后重试。原有游戏文件未因下载而改变。")
 }
@@ -525,6 +616,8 @@ final class Client {
         // The curl child inherits client.lock as stdin. If this parent is killed,
         // the child keeps that lock until it exits; a new client cannot race it.
         let inheritedLock = FileHandle(fileDescriptor: lockFD, closeOnDealloc: false)
+        for route in try downloadRoutes() {
+        print("下载通道：\(route.label)"); fflush(stdout)
         for attempt in 0..<2 {
             let offset = try cacheRegular(partial)
             let token = UUID().uuidString
@@ -534,15 +627,17 @@ final class Client {
             defer { try? fm.removeItem(at: incoming); try? fm.removeItem(at: headers) }
             print("\(offset > 0 ? "继续下载" : "正在下载")：\(name)（\(String(format: "%.1f", Double(offset) / 1048576))/\(String(format: "%.1f", Double(fp.bytes) / 1048576)) MiB）。完成完整校验前不修改游戏。")
             fflush(stdout)
-            var args = ["--disable", "--fail", "--silent", "--show-error", "--retry", "0", "--speed-limit", "1024", "--speed-time", "90", "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", "10", "--max-time", "3600", "--max-filesize", String(fp.bytes - offset), "--dump-header", headers.path, "--output", incoming.path]
+            var args = ["--disable", "--fail", "--silent", "--show-error", "--retry", "0", "--speed-limit", "1024", "--speed-time", "15", "--location", "--max-redirs", "3", "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", "5", "--max-time", "3600", "--max-filesize", String(fp.bytes - offset), "--dump-header", headers.path, "--output", incoming.path]
             if offset > 0 { args += ["--range", "\(offset)-"] }
-            args.append(url.absoluteString)
+            args += route.arguments
+            args.append(try route.url(url).absoluteString)
             var curl = "/usr/bin/curl"
             #if TESTING
             curl = ProcessInfo.processInfo.environment["MTGA_TEST_CURL"] ?? curl
             #endif
             let r = try run(curl, args, input: inheritedLock)
             let received = try cacheRegular(incoming)
+            if received == 0 && transportFailures.contains(r.0) { break }
             var response = 0
             do { response = try responseStatus(headers, offset: offset, total: fp.bytes) }
             catch {
@@ -566,11 +661,15 @@ final class Client {
             }
             if try cacheRegular(partial) == fp.bytes {
                 if try fingerprint(partial) != fp { try fm.removeItem(at: partial); throw Problem(description: "下载完整校验失败，已丢弃缓存。请重试完整下载。") }
-                try fm.moveItem(at: partial, to: complete); try syncDirectory(dir); return complete
+                try fm.moveItem(at: partial, to: complete); try syncDirectory(dir)
+                preferredDownloadRoute = route.key; return complete
             }
+            if transportFailures.contains(r.0) { break }
             throw Problem(description: "下载未完成：\(name)（curl \(r.0)）。已保存断点，下次重试会继续；游戏文件未修改。")
         }
-        throw Problem(description: "下载失败，游戏文件未修改。")
+        print("当前通道连接失败，保留断点并尝试下一通道（如有）。"); fflush(stdout)
+        }
+        throw Problem(description: "下载未完成：\(name)。已保留断点；可在菜单 7 更换下载方式后重试，游戏文件未修改。")
     }
     func fetch(_ name: String, expected: Fingerprint? = nil, limit: Int = 4*1024*1024, remote: String? = nil) throws -> URL {
         try basename(name)
@@ -757,7 +856,8 @@ final class Client {
 
 func options(_ args: [String]) throws -> (String, [String: String]) {
     let command = args.first ?? "help"; var values: [String: String] = [:]; var i = 1
-    let flags = Set(["--state", "--profile", "--steam-library", "--key", "--input", "--output"])
+    let flags = Set(["--state", "--profile", "--steam-library", "--key", "--input", "--output",
+                     "--network-mode", "--proxy", "--mirror"])
     while i < args.count { try need(flags.contains(args[i]) && i+1 < args.count && values[args[i]] == nil, "参数无效，执行 help 查看说明。") ; values[args[i]] = args[i+1]; i += 2 }
     return (command, values)
 }
@@ -771,7 +871,9 @@ MTGA 中文维护 · 使用说明
 
 1 查看当前汉化；5 撤销上次更新（安装中断也用它，必须先退出游戏）。
 撤销恢复到更新前实际状态，不一定是官方原版；Steam 已升级游戏时可能无法恢复。
-下载失败可重选 3；没有适配版本就等待发布。出错请保留完整提示反馈。
+下载失败可重选 3，或在 7「下载设置」选择自动、直连、代理或已配置的备用源。
+自动模式会尝试直连、已配置/环境/系统代理、备用源；不会修改系统网络设置。
+代理关闭且未配置地址时，不会自动启动代理软件。没有适配版本就等待发布。
 
 普通汉化修正不用重装工具。安装完成后，联网安装包的 ZIP 和解压文件夹都可删除。
 保留桌面入口及工具的安装目录：~/Library/Application Support/MTGAChineseSubscriber
@@ -781,7 +883,7 @@ MTGA 中文维护 · 使用说明
 收到朋友转发的安装包也可从这里找到后续更新；提示需要升级工具时再重新下载安装。
 """
 let help = """
-MTGA 中文维护订阅客户端 v3.5（macOS + Steam）
+MTGA 中文维护订阅客户端 v3.6（macOS + Steam）
 check      检查维护者是否发布了适合当前游戏的版本
 preview    下载并检查更新文件；不修改游戏
 update     下载并应用已签名的匹配版本；必须先退出游戏
@@ -790,10 +892,13 @@ rollback   恢复到最近一次更新前的文件状态
 recover    恢复未完成的安装；游戏更新后会拒绝跨版本覆盖
 setup      从当前安装包安装到用户目录（不需要管理员权限）
 guide      显示中文菜单使用说明
+network    查看/保存下载方式（不联网、不修改游戏）
 help       显示命令行说明
 
 默认配置在用户 Library/Application Support/MTGAChineseSubscriber/profile.json。
 可用 --steam-library 指定 Steam 库目录，--state 指定独立状态目录。
+network --network-mode auto|direct|proxy|mirror；--proxy 地址；--mirror HTTPS目录。
+代理/备用源地址传空字符串可清除。备用源未部署时不能选择 mirror。
 日常汉化修订直接执行 update；仅工具协议升级时需要重新安装客户端。
 此工具不修改主程序、动态库、账号、牌组或官方清单。它只处理签名清单允许的五层汉化资源。
 """
@@ -839,6 +944,25 @@ func main() throws {
         let envelope = Envelope(payload: data.base64EncodedString(), signature: try key.signature(for: data).base64EncodedString())
         try save(envelope, URL(fileURLWithPath: output)); return
     }
+    let networkPath = state.appendingPathComponent("network.json")
+    let usesNetwork = ["check", "preview", "update", "setup", "network"].contains(command)
+    if usesNetwork && fm.fileExists(atPath: networkPath.path) { networkSettings = try json(NetworkSettings.self, small(networkPath, limit: 16384)) }
+    if let mode = opt["--network-mode"] { networkSettings.mode = mode }
+    if let proxy = opt["--proxy"] { networkSettings.proxy = proxy.isEmpty ? nil : proxy }
+    if let mirror = opt["--mirror"] {
+        networkSettings.mirror = mirror.isEmpty ? nil : mirror
+        if mirror.isEmpty && networkSettings.mode == "mirror" { networkSettings.mode = "auto" }
+    }
+    try networkSettings.validate()
+    if command == "network" {
+        if ["--network-mode", "--proxy", "--mirror"].contains(where: { opt[$0] != nil }) { try save(networkSettings, networkPath) }
+        let names = ["auto": "自动", "direct": "直连", "proxy": "代理", "mirror": "备用源"]
+        print("下载方式：\(names[networkSettings.mode] ?? networkSettings.mode)")
+        print("自定义代理：\(networkSettings.proxy ?? "未配置（可读取环境/系统代理）")")
+        print("备用源：\(networkSettings.mirror ?? "未配置，暂不可用")")
+        print("只影响本工具下载；不修改系统代理、DNS、更新源或公钥。")
+        return
+    }
     let exe = URL(fileURLWithPath: CommandLine.arguments[0]).standardizedFileURL.resolvingSymlinksInPath()
     if command == "setup" {
         let source = URL(fileURLWithPath: opt["--profile"] ?? exe.deletingLastPathComponent().appendingPathComponent("profile.json").path)
@@ -870,8 +994,29 @@ func main() throws {
          print '  4 安装或更新汉化（先备份，再安装）'
          print '  5 撤销上次更新（也用于安装中断）'
          print '  6 使用说明'
+         print '  7 下载设置'
          print '  0 退出'
          read -r 'choice?请输入数字并按回车：' || exit 0
+         if [[ "$choice" == 7 ]]; then
+          "$ROOT/mtga-cn" network --state "$ROOT"
+          print '  1 自动（推荐）  2 直连  3 代理  4 备用源（需先配置）'
+          print '  5 填写/清除代理地址  6 填写/清除备用源地址  0 返回'
+          read -r 'route?请选择：' || exit 0
+          case "$route" in
+           1) "$ROOT/mtga-cn" network --state "$ROOT" --network-mode auto;;
+           2) "$ROOT/mtga-cn" network --state "$ROOT" --network-mode direct;;
+           3) "$ROOT/mtga-cn" network --state "$ROOT" --network-mode proxy;;
+           4) "$ROOT/mtga-cn" network --state "$ROOT" --network-mode mirror;;
+           5) read -r 'address?代理地址（例：http://127.0.0.1:7897；留空清除）：' || exit 0
+              "$ROOT/mtga-cn" network --state "$ROOT" --proxy "$address";;
+           6) read -r 'address?备用源 HTTPS 目录（未部署请留空；留空清除）：' || exit 0
+              "$ROOT/mtga-cn" network --state "$ROOT" --mirror "$address";;
+           0) continue;;
+           *) print '请输入菜单中的数字。';;
+          esac
+          read -r '?按回车返回菜单。' || exit 0
+          continue
+         fi
          case "$choice" in
          1) cmd=status;; 2) cmd=check;; 3) cmd=preview;; 4) cmd=update;; 5) cmd=recover;; 6) cmd=guide;; 0) exit 0;; *) print '请输入菜单中的数字。'; continue;;
          esac
@@ -887,7 +1032,7 @@ func main() throws {
     let profile = try json(Profile.self, small(URL(fileURLWithPath: opt["--profile"] ?? state.appendingPathComponent("profile.json").path)))
     let (library, game) = try discover(opt["--steam-library"])
     let client = try Client(state: state, profile: profile, library: library, game: game)
-    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.5")
+    print("MTGA \(game.version) / Steam \(game.build)；更新工具：v3.6")
     if command == "status" { if let j = try client.journal() { let labels = ["prepared": "文件已准备，安装未完成", "installing": "上次安装中断，请选择 5 撤销上次更新", "installed": "已安装", "rolling-back": "上次恢复中断，请选择 5 继续恢复", "rolled-back": "已撤销上次更新"]; print("上次更新：\(j.release_id)；状态：\(labels[j.state] ?? j.state)"); if j.state == "installed" { try client.guardGame(j, partial: false); print("本机已安装资源校验通过。") } } else { print("尚无本工具的安装记录。") }; return }
     if command == "rollback" || command == "recover" { guard let j = try client.journal() else { print("没有需要恢复的安装记录。"); return }; if j.state == "rolled-back" { print("此前已完成恢复。"); return }; try client.restore(j); return }
     guard let release = try client.selected() else { print("维护者尚未发布适合本机版本的更新。请等待适配当前游戏的汉化发布后，再选择 2「检查更新」。"); return }

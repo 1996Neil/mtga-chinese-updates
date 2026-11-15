@@ -145,7 +145,7 @@ def prepare_online(config_path=None):
     profile.write_text(json.dumps(profile_value, indent=2) + '\n')
     installer_id = hashlib.sha256((fingerprint(client)['sha256'] +
                                   fingerprint(profile)['sha256']).encode()).hexdigest()[:20]
-    folder = tools / 'installers' / installer_id / 'MTGA-Chinese-Subscriber-v3.3'
+    folder = tools / 'installers' / installer_id / 'MTGA-Chinese-Subscriber-v3.6'
     archive = Path(str(folder) + '.zip')
     if not archive.exists():
         run([__import__('sys').executable, ROOT / 'tools/subscriber/package_installer.py',

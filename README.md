@@ -2,7 +2,7 @@
 
 macOS + Steam 版《万智牌：竞技场》汉化，支持中英文牌表导入，免费使用。
 
-**[下载更新工具](https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.3-channel-fix/MTGA-Chinese-Subscriber-v3.3.zip)** · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)
+**[下载更新工具 v3.6](https://github.com/1996Neil/mtga-chinese-updates/releases/download/client-v3.6-network/MTGA-Chinese-Subscriber-v3.6.zip)** · [版本记录](https://github.com/1996Neil/mtga-chinese-updates/releases) · [反馈问题](https://github.com/1996Neil/mtga-chinese-updates/issues/new)
 
 适用于 **M 系列 Mac、macOS 13 及以上**。Windows 用户可查看[其他维护者的工具](https://shiqidi.lenitatis.com/mod)。
 
@@ -55,7 +55,7 @@ flowchart TD
 
 输入数字后按回车；操作结束后按回车返回菜单，**0** 退出。**游戏语言一直保持 English。**
 
-- **下载失败：** 检查网络，再选 **3**。没有适配版本时，等待发布后再检查。
+- **下载失败：** v3.6 默认自动尝试直连及已配置代理，也可选 **7 下载设置**手动指定直连、代理或备用源，然后重选 **3**。系统代理关闭时可填写现有代理地址；备用镜像尚未部署，未配置时不可用。旧工具需从本页安装一次新版；没有适配版本时，等待发布后再检查。
 - **更新后有问题或安装中断：** 退出游戏，选 **5 撤销上次更新**。恢复到更新前的实际状态，不一定是官方原版；Steam 已更新游戏时，旧备份可能无法恢复。
 - **想看当前安装情况：** 选 **1 查看当前汉化**。操作要点也可在菜单 **6 使用说明**里查看。
 

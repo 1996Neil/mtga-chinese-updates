@@ -9,9 +9,17 @@ feed=Path(os.environ['MTGA_FIXTURE_FEED']); url=urlsplit(args[-1]); name=url.pat
 body=(feed/name).read_bytes(); offset=int(arg('--range').rstrip('-')) if '--range' in args else 0
 log=Path(os.environ['MTGA_FIXTURE_LOG'])
 with log.open('a') as h:h.write(json.dumps({'name':name,'offset':offset,'pid':os.getpid(),
-                                         'host':url.hostname,'query':url.query,
+                                         'host':url.hostname,'path':url.path,'query':url.query,
+                                         'proxy':arg('--proxy') if '--proxy' in args else None,
+                                         'noproxy':arg('--noproxy') if '--noproxy' in args else None,
                                          'headers':[args[i+1] for i,x in enumerate(args[:-1]) if x=='--header']})+'\n')
 out=Path(arg('--output')); mode=os.environ.get('MTGA_FIXTURE_MODE','normal')
+via_proxy='--proxy' in args and bool(arg('--proxy'))
+if mode=='route-direct-down' and not via_proxy:sys.exit(7)
+if mode=='route-proxy-down' and via_proxy:sys.exit(7)
+if mode=='route-direct-cut' and not via_proxy and name.endswith('.delta'):mode='disconnect'
+if mode=='route-mirror-tamper' and url.hostname=='mirror.example' and name.endswith('.json'):
+    out.write_bytes(b'{"payload":"e30=","signature":"bad"}');sys.exit(0)
 if name.endswith('.json'):
     api=url.hostname=='api.github.com'
     if mode.startswith('metadata-'):
